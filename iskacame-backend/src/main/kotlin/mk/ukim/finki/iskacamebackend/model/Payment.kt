@@ -8,17 +8,17 @@ import mk.ukim.finki.iskacamebackend.model.enums.PaidStatus
 @Table(name = "payments")
 class Payment(
     @Column(name = "amount_paid")
-    val amountPaid: Double,
+    var amountPaid: Double,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "paid_status")
-    val paidStatus: PaidStatus,
+    var paidStatus: PaidStatus,
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    val user: User,
+    var user: User,
 
     @ManyToOne
     @JoinColumn(name = "gathering_id")
-    val gathering: Gathering
+    var gathering: Gathering
 ) : BaseEntity<Long>()

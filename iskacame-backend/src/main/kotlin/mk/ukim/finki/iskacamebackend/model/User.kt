@@ -5,21 +5,21 @@ import mk.ukim.finki.iskacamebackend.model.BaseEntity
 @Table(name = "users")
 class User(
     @Column(name = "name")
-    val name: String,
+    var name: String,
 
     @Column(name = "username", unique = true, nullable = false, length = 30)
-    val username: String,
+    var username: String,
 
     @Column(name = "email")
-    val email: String,
+    var email: String,
 
     @Column(name = "password")
-    val password: String,
+    var password: String,
 
     @Lob
     @Column(name = "profile_pic")
-    val profilePic: ByteArray? = null,
+    var profilePic: ByteArray? = null,
 
     @Column(name = "is_verified")
-    val isVerified: Boolean = false,
+    var isVerified: Boolean = false,
 ) : BaseEntity<Long>()

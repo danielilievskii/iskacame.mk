@@ -7,13 +7,13 @@ import jakarta.persistence.*
 @Table(name = "chat_messages")
 class ChatMessage(
     @Column(name = "content")
-    val content: String,
+    var content: String,
 
     @ManyToOne
     @JoinColumn(name = "sender_id")
-    val sender: User,
+    var sender: User,
 
     @ManyToOne
     @JoinColumn(name = "gathering_id")
-    val gathering: Gathering
+    var gathering: Gathering
 ) : BaseEntity<Long>()

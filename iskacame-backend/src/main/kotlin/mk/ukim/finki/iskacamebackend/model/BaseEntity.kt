@@ -18,10 +18,10 @@ class BaseEntity<T : Serializable> {
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    val createdAt: Instant? = null
+    var createdAt: Instant? = null
 
     @LastModifiedDate
-    val lastModifiedAt: Instant? = null
+    var lastModifiedAt: Instant? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

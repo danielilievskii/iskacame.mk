@@ -16,27 +16,28 @@ import java.time.LocalDateTime
 class Gathering(
     @ManyToOne
     @JoinColumn(name = "creator_id")
-    val creator: User,
+    var creator: User,
 
     @Column(name = "title")
-    val title: String,
+    var title: String,
 
     @Column(name = "description")
-    val description: String?,
+    var description: String?,
 
     @Column(name = "start_date")
-    val startDate: LocalDateTime?,
+    var startDate: LocalDateTime?,
 
     @Column(name = "end_date")
-    val endDate: LocalDateTime?,
+    var endDate: LocalDateTime?,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    val status: GatheringStatus,
+    var status: GatheringStatus,
 
     @Column(name = "finalized_time")
-    val finalizedTime: LocalDateTime?,
+    var finalizedTime: LocalDateTime?,
 
-    @Column(name = "finalized_place_id")
-    val finalizedPlaceId: Long?,
+    @ManyToOne
+    @JoinColumn(name = "finalized_place_id")
+    var finalizedPlace: Place?,
 ) : BaseEntity<Long>()

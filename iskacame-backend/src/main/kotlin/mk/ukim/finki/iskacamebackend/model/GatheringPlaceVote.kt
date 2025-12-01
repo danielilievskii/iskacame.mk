@@ -8,13 +8,13 @@ import jakarta.persistence.*
 class GatheringPlaceVote(
     @ManyToOne
     @JoinColumn(name = "user_id")
-    val user: User,
+    var user: User,
 
     @ManyToOne
     @JoinColumn(name = "gathering_id")
-    val gathering: Gathering,
+    var gathering: Gathering,
 
     @ManyToOne
     @JoinColumn(name = "place_id")
-    val place: Place
+    var place: Place
 ) : BaseEntity<Long>()

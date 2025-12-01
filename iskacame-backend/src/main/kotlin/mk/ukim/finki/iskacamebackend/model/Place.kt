@@ -15,29 +15,29 @@ import mk.ukim.finki.iskacamebackend.model.enums.PlaceType
 @Table(name = "places")
 class Place(
     @Column(name = "name")
-    val name: String,
+    var name: String,
 
     @Column(name = "address")
-    val address: String?,
+    var address: String?,
 
     @Column(name = "longitude")
-    val longitude: Double?,
+    var longitude: Double?,
 
     @Column(name = "latitude")
-    val latitude: Double?,
+    var latitude: Double?,
 
     @Column(name = "type")
     @Enumerated(EnumType.STRING)
-    val type: PlaceType,
+    var type: PlaceType,
 
     @Column(name = "price_level")
     @Enumerated(EnumType.STRING)
-    val priceLevel: PlaceLevel,
+    var priceLevel: PlaceLevel,
 
     @Column(name = "link")
-    val link: String?,
+    var link: String?,
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
-    val owner: User?
+    var owner: User?
 ) : BaseEntity<Long>()

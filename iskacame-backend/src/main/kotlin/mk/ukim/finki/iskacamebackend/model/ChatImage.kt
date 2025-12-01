@@ -7,17 +7,17 @@ import jakarta.persistence.*
 @Table(name = "chat_images")
 class ChatImage(
     @Column(name = "format")
-    val format: String,
+    var format: String,
 
     @Lob
     @Column(name = "image")
-    val image: ByteArray,
+    var image: ByteArray,
 
     @ManyToOne
     @JoinColumn(name = "sender_id")
-    val sender: User,
+    var sender: User,
 
     @ManyToOne
     @JoinColumn(name = "gathering_id")
-    val gathering: Gathering
+    var gathering: Gathering
 ) : BaseEntity<Long>()
