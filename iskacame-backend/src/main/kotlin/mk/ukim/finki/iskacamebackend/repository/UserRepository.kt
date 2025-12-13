@@ -1,6 +1,6 @@
 package mk.ukim.finki.iskacamebackend.repository
 
-import User
+import mk.ukim.finki.iskacamebackend.model.User
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface UserRepository : JpaRepository<User, Long> {

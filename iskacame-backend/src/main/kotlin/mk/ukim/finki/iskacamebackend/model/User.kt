@@ -1,5 +1,6 @@
+package mk.ukim.finki.iskacamebackend.model
+
 import jakarta.persistence.*
-import mk.ukim.finki.iskacamebackend.model.BaseEntity
 
 @Entity
 @Table(name = "users")
