@@ -1,6 +1,5 @@
 package mk.ukim.finki.iskacamebackend.model
 
-import User
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

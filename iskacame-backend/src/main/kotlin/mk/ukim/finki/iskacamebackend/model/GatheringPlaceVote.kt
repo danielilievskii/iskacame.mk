@@ -1,6 +1,5 @@
 package mk.ukim.finki.iskacamebackend.model
 
-import User
 import jakarta.persistence.*
 
 @Entity

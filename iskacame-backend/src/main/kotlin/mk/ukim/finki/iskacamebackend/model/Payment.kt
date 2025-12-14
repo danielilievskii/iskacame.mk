@@ -1,6 +1,5 @@
 package mk.ukim.finki.iskacamebackend.model
 
-import User
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.enums.PaidStatus
 
