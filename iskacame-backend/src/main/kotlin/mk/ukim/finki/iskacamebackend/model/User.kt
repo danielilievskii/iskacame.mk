@@ -2,6 +2,7 @@ package mk.ukim.finki.iskacamebackend.model
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
+import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 
 @Entity
 @Table(name = "users")
@@ -18,10 +19,16 @@ class User(
     @Column(name = "password")
     var password: String,
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var roles: MutableSet<UserRole>,
+
     @Lob
     @Column(name = "profile_pic")
     var profilePic: ByteArray? = null,
 
-    @Column(name = "is_verified")
-    var isVerified: Boolean = false,
+    @Column(name = "email_verified")
+    var emailVerified: Boolean = false,
 ) : BaseEntity<Long>()
