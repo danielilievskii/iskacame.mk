@@ -1,0 +1,55 @@
+package mk.ukim.finki.iskacamebackend.mapper
+
+import mk.ukim.finki.iskacamebackend.dto.UserDTO
+import mk.ukim.finki.iskacamebackend.model.User
+import mk.ukim.finki.iskacamebackend.model.enums.UserRole
+import mk.ukim.finki.iskacamebackend.security.UserPrincipal
+import org.mapstruct.Mapper
+import org.mapstruct.Mapping
+import org.mapstruct.Named
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+
+/**
+ * Class for mapping between to [User] entities and DTOs.
+ */
+@Mapper(componentModel = "spring")
+interface UserMapper {
+
+  /**
+   * Maps a [User] object to a [UserDTO] object.
+   *
+   * @param user the User entity object
+   * @return the mapped UserDTO object
+   */
+  fun toUserDTO(user: User): UserDTO
+
+  /**
+   * Maps a [User] object to a [UserPrincipal] object.
+   *
+   * @param user the User entity object
+   * @return the mapped UserPrincipal object
+   */
+  @Mapping(target = "authorities", source = "roles", qualifiedByName = ["mapAuthorities"])
+  fun toUserPrincipal(user: User): UserPrincipal
+
+  /**
+   * This method is exposed as a static Java method via [JvmStatic] so that
+   * MapStruct can invoke it during mapping.
+   */
+  companion object {
+
+    /**
+     * Maps a collection of [UserRole] enums to a collection of Spring Security
+     * [GrantedAuthority] objects.
+     *
+     * @param roles the collection of roles associated with a user
+     * @return a collection of granted authorities derived from the roles
+     */
+    @JvmStatic
+    @Named("mapAuthorities")
+    fun mapAuthorities(roles: Collection<UserRole>): Collection<GrantedAuthority> {
+      return roles.map { SimpleGrantedAuthority(it.name) }
+    }
+  }
+}

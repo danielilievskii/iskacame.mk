@@ -1,6 +1,7 @@
 package mk.ukim.finki.iskacamebackend.model
 
 import jakarta.persistence.*
+import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 
 @Entity
 @Table(name = "gathering_place_votes")

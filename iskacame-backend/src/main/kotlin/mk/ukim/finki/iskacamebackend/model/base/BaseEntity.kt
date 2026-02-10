@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.model
+package mk.ukim.finki.iskacamebackend.model.base
 
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate

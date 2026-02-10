@@ -1,5 +1,7 @@
 package mk.ukim.finki.iskacamebackend.exception.handler
 
+import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
+import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import org.springframework.http.HttpStatus
@@ -10,23 +12,79 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
+  /**
+   * Handles invalid method arguments.
+   */
   @ExceptionHandler(IllegalArgumentException::class)
-  fun handleIllegalArgumentException(e: Exception): ResponseEntity<String> {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+  fun handleIllegalArgument(exception: IllegalArgumentException): ResponseEntity<String> {
+
+    val message = exception.message ?: GlobalExceptionMessages.INVALID_ARGUMENT
+
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(message)
   }
 
+  /**
+   * Handles illegal state exceptions.
+   */
   @ExceptionHandler(IllegalStateException::class)
-  fun handleIllegalStateException(e: Exception): ResponseEntity<String> {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+  fun handleIllegalState(exception: IllegalStateException): ResponseEntity<String> {
+
+    val message = exception.message ?: GlobalExceptionMessages.ILLEGAL_STATE
+
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(message)
   }
 
+  /**
+   * Handles resource not found exceptions.
+   */
   @ExceptionHandler(ResourceNotFoundException::class)
-  fun handleResourceNotFoundException(e: ResourceNotFoundException): ResponseEntity<String> {
-    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
+  fun handleResourceNotFound(exception: ResourceNotFoundException): ResponseEntity<String> {
+
+    val message = exception.message ?: GlobalExceptionMessages.RESOURCE_NOT_FOUND
+
+    return ResponseEntity
+      .status(HttpStatus.NOT_FOUND)
+      .body(message)
   }
 
+  /**
+   * Handles conflict exceptions.
+   */
   @ExceptionHandler(ConflictException::class)
-  fun handleConflictException(e: ConflictException): ResponseEntity<String> {
-    return ResponseEntity.status(HttpStatus.CONFLICT).body(e.message)
+  fun handleConflict(exception: ConflictException): ResponseEntity<String> {
+
+    val message = exception.message ?: GlobalExceptionMessages.CONFLICT
+
+    return ResponseEntity
+      .status(HttpStatus.CONFLICT)
+      .body(message)
+  }
+
+  /**
+   * Handles bad request exceptions.
+   */
+  @ExceptionHandler(BadRequestException::class)
+  fun handleBadRequest(exception: BadRequestException): ResponseEntity<String> {
+
+    val message = exception.message ?: GlobalExceptionMessages.BAD_REQUEST
+
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(message)
+  }
+
+  /**
+   * Handles all unexpected exceptions not caught by specific handlers.
+   */
+  @ExceptionHandler(Exception::class)
+  fun handleGlobal(): ResponseEntity<String> {
+
+    return ResponseEntity
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .body(GlobalExceptionMessages.INTERNAL_SERVER_ERROR)
   }
 }
