@@ -2,6 +2,7 @@ package mk.ukim.finki.iskacamebackend.exception.handler
 
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
+import mk.ukim.finki.iskacamebackend.exception.StorageException
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import org.springframework.http.HttpStatus
@@ -75,6 +76,17 @@ class GlobalExceptionHandler {
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
       .body(message)
+  }
+
+  /**
+   * Handles all unexpected storage exceptions.
+   */
+  @ExceptionHandler(StorageException::class)
+  fun handleStorage(exception: StorageException): ResponseEntity<String> {
+
+    return ResponseEntity
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .body(exception.message)
   }
 
   /**

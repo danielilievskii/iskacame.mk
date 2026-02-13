@@ -25,9 +25,8 @@ class User(
     @Column(nullable = false)
     var roles: MutableSet<UserRole>,
 
-    @Lob
-    @Column(name = "profile_pic")
-    var profilePic: ByteArray? = null,
+    @Embedded
+    var avatar: AvatarImage? = null,
 
     @Column(name = "email_verified")
     var emailVerified: Boolean = false,
