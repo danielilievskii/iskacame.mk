@@ -1,9 +1,12 @@
 package mk.ukim.finki.iskacamebackend.web
 
+import mk.ukim.finki.iskacamebackend.dto.UserDto
+import mk.ukim.finki.iskacamebackend.service.AuthService
 import mk.ukim.finki.iskacamebackend.service.UserService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -14,7 +17,15 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/users")
 class UserController(
   private val userService: UserService,
+  private val authService: AuthService,
 ) {
+
+  @GetMapping("/me")
+  fun getMe(): ResponseEntity<UserDto> {
+
+    val userDto: UserDto = authService.getCurrentUserDto()
+    return ResponseEntity.ok(userDto)
+  }
 
   @PostMapping("/me/avatar", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
   fun uploadAvatar(
