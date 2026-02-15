@@ -1,8 +1,8 @@
 package mk.ukim.finki.iskacamebackend.dto
 
-class UserDTO (
+class UserDto (
   val id: Long,
   val name: String,
   val username: String,
-  val email: String
+  val avatarUrl: String?
 )

@@ -1,6 +1,6 @@
 package mk.ukim.finki.iskacamebackend.mapper
 
-import mk.ukim.finki.iskacamebackend.dto.UserDTO
+import mk.ukim.finki.iskacamebackend.dto.UserDto
 import mk.ukim.finki.iskacamebackend.model.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import mk.ukim.finki.iskacamebackend.security.UserPrincipal
@@ -17,12 +17,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 interface UserMapper {
 
   /**
-   * Maps a [User] object to a [UserDTO] object.
+   * Maps a [User] object to a [UserDto] object.
    *
    * @param user the User entity object
-   * @return the mapped UserDTO object
+   * @return the mapped UserDto object
    */
-  fun toUserDTO(user: User): UserDTO
+  @Mapping(target = "avatarUrl", source = "avatar.url")
+  fun toUserDto(user: User): UserDto
 
   /**
    * Maps a [User] object to a [UserPrincipal] object.

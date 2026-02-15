@@ -2,7 +2,7 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
-import mk.ukim.finki.iskacamebackend.dto.UserDTO
+import mk.ukim.finki.iskacamebackend.dto.UserDto
 import mk.ukim.finki.iskacamebackend.dto.request.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.response.AuthResponse
@@ -34,7 +34,7 @@ class AuthServiceImpl(
   private val jwtService: JwtService,
 ) : AuthService {
 
-  override fun signUp(request: SignUpRequest): UserDTO {
+  override fun signUp(request: SignUpRequest): UserDto {
 
     if (userRepository.existsByEmail(request.email)) {
       throw ConflictException(AuthExceptionMessages.EMAIL_TAKEN)
@@ -59,7 +59,7 @@ class AuthServiceImpl(
     )
 
     return userRepository.save(user)
-      .let(userMapper::toUserDTO)
+      .let(userMapper::toUserDto)
   }
 
   override fun signIn(request: SignInRequest): AuthResponse {
@@ -78,7 +78,7 @@ class AuthServiceImpl(
     val user = userRepository.findByEmail(userPrincipal.email)
       ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
 
-    val userDto = userMapper.toUserDTO(user)
+    val userDto = userMapper.toUserDto(user)
 
     return AuthResponse(
       token = token,
@@ -98,6 +98,12 @@ class AuthServiceImpl(
 
     return userRepository.findByEmail(email)
       ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+  }
+
+  override fun getCurrentUserDto(): UserDto {
+
+    val user = getCurrentUser()
+    return userMapper.toUserDto(user)
   }
 
   override fun getCurrentUserId(): Long {

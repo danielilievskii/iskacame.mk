@@ -11,3 +11,6 @@ class ConflictException(message: String) : RuntimeException(message)
 
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 class BadRequestException(message: String) : RuntimeException(message)
+
+@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+class StorageException(message: String) : RuntimeException(message)

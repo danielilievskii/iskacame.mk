@@ -66,6 +66,9 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     implementation("com.h2database:h2")
 
+    // Cloud Storage
+    implementation("com.cloudinary:cloudinary-http5:2.0.0")
+
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
