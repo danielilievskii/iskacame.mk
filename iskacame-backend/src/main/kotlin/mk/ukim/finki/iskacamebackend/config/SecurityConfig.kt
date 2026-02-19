@@ -27,6 +27,7 @@ class SecurityConfig(
 
     http
       .csrf { it.disable() }
+      .headers { headers -> headers.frameOptions { frame -> frame.sameOrigin() } }
       .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
       .authorizeHttpRequests { auth ->
         auth
