@@ -40,7 +40,7 @@ class AuthServiceImpl(
       throw ConflictException(AuthExceptionMessages.EMAIL_TAKEN)
     }
 
-    if (userRepository.existsByUsername(request.email)) {
+    if (userRepository.existsByUsername(request.username)) {
       throw ConflictException(AuthExceptionMessages.USERNAME_TAKEN)
     }
 

@@ -7,6 +7,7 @@ import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -98,5 +99,19 @@ class GlobalExceptionHandler {
     return ResponseEntity
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .body(GlobalExceptionMessages.INTERNAL_SERVER_ERROR)
+  }
+
+  /**
+   * Handles validation errors from @Valid annotated DTOs.
+   */
+  @ExceptionHandler(MethodArgumentNotValidException::class)
+  fun handleValidationErrors(exception: MethodArgumentNotValidException): ResponseEntity<Map<String, String>> {
+    val errors = exception.bindingResult.fieldErrors
+      .groupBy { it.field }
+      .mapValues { (_, errs) ->
+        errs.mapNotNull { it.defaultMessage }.joinToString("; ").ifBlank { "Invalid value" }
+      }
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors)
   }
 }

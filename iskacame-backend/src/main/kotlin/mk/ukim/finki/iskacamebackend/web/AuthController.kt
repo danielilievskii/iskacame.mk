@@ -19,7 +19,7 @@ class AuthController(
   private val authService: AuthService
 ) {
 
-  @PostMapping("/signUp")
+  @PostMapping(path = ["/signUp", "/register"])
   @Operation(summary = "Registers a new user")
   fun signUp(@Valid @RequestBody signUpRequest: SignUpRequest): ResponseEntity<Void> {
 
@@ -27,7 +27,7 @@ class AuthController(
     return ResponseEntity.status(HttpStatus.CREATED).build()
   }
 
-  @PostMapping("/signIn")
+  @PostMapping(path = ["/signIn", "/login"])
   @Operation(summary = "Logs in a user")
   fun signIn(@Valid @RequestBody signInRequest: SignInRequest): ResponseEntity<AuthResponse> {
 
