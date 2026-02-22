@@ -37,6 +37,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-mail:4.0.2")
 
     // Kotlin + Jackson
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -53,8 +54,6 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
     kapt("org.mapstruct:mapstruct-processor:1.5.5.Final")
 
-    //Mail
-    implementation("org.springframework.boot:spring-boot-starter-mail:4.0.2")
     // Dotenv
     implementation("io.github.cdimascio:dotenv-kotlin:6.5.1")
 
