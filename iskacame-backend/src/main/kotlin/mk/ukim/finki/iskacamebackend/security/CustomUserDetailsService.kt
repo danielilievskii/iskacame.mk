@@ -2,7 +2,7 @@ package mk.ukim.finki.iskacamebackend.security
 
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
-import mk.ukim.finki.iskacamebackend.model.User
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService

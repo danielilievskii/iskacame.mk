@@ -53,6 +53,8 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
     kapt("org.mapstruct:mapstruct-processor:1.5.5.Final")
 
+    //Mail
+    implementation("org.springframework.boot:spring-boot-starter-mail:4.0.2")
     // Dotenv
     implementation("io.github.cdimascio:dotenv-kotlin:6.5.1")
 
@@ -74,7 +76,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
 }
 
 kotlin {

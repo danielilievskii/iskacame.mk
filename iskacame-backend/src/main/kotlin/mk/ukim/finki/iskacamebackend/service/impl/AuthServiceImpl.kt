@@ -2,20 +2,20 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
-import mk.ukim.finki.iskacamebackend.dto.UserDto
-import mk.ukim.finki.iskacamebackend.dto.request.SignInRequest
-import mk.ukim.finki.iskacamebackend.dto.request.SignUpRequest
-import mk.ukim.finki.iskacamebackend.dto.response.AuthResponse
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
-import mk.ukim.finki.iskacamebackend.model.User
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import mk.ukim.finki.iskacamebackend.security.JwtService
 import mk.ukim.finki.iskacamebackend.security.UserPrincipal
-import mk.ukim.finki.iskacamebackend.service.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder

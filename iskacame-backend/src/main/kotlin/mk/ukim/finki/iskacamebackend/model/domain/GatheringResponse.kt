@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.model
+package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity

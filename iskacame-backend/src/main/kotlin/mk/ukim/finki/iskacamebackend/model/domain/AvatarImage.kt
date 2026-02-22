@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.model
+package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable

@@ -1,7 +1,7 @@
 package mk.ukim.finki.iskacamebackend.mapper
 
-import mk.ukim.finki.iskacamebackend.dto.UserDto
-import mk.ukim.finki.iskacamebackend.model.User
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import mk.ukim.finki.iskacamebackend.security.UserPrincipal
 import org.mapstruct.Mapper

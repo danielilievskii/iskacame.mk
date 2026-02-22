@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.service
+package mk.ukim.finki.iskacamebackend.service.intf
 
 import mk.ukim.finki.iskacamebackend.dto.response.CloudinaryUploadResponse
 import org.springframework.web.multipart.MultipartFile

@@ -1,17 +1,13 @@
-package mk.ukim.finki.iskacamebackend.model
+package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 
 @Entity
-@Table(name = "chat_images")
-class ChatImage(
-    @Column(name = "format")
-    var format: String,
-
-    @Lob
-    @Column(name = "image")
-    var image: ByteArray,
+@Table(name = "chat_messages")
+class ChatMessage(
+    @Column(name = "content")
+    var content: String,
 
     @ManyToOne
     @JoinColumn(name = "sender_id")

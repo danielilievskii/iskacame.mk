@@ -2,10 +2,10 @@ package mk.ukim.finki.iskacamebackend.web
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
-import mk.ukim.finki.iskacamebackend.dto.request.SignInRequest
-import mk.ukim.finki.iskacamebackend.dto.request.SignUpRequest
-import mk.ukim.finki.iskacamebackend.dto.response.AuthResponse
-import mk.ukim.finki.iskacamebackend.service.AuthService
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping

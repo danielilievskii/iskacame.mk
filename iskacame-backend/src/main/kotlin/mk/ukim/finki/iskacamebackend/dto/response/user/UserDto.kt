@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.dto
+package mk.ukim.finki.iskacamebackend.dto.response.user
 
 class UserDto (
   val id: Long,

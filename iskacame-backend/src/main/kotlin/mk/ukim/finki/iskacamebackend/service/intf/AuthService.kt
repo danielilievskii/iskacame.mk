@@ -1,10 +1,10 @@
-package mk.ukim.finki.iskacamebackend.service
+package mk.ukim.finki.iskacamebackend.service.intf
 
-import mk.ukim.finki.iskacamebackend.dto.UserDto
-import mk.ukim.finki.iskacamebackend.dto.request.SignInRequest
-import mk.ukim.finki.iskacamebackend.dto.request.SignUpRequest
-import mk.ukim.finki.iskacamebackend.dto.response.AuthResponse
-import mk.ukim.finki.iskacamebackend.model.User
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
