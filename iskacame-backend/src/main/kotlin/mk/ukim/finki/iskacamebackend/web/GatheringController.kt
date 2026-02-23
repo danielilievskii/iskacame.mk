@@ -26,7 +26,7 @@ class GatheringController(
         return ResponseEntity.status(HttpStatus.CREATED).body(gathering)
     }
 
-    @PutMapping("/{gatheringId}")
+    @PatchMapping("/{gatheringId}")
     @Operation(summary = "Update a gathering (creator only)")
     fun updateGathering(
         @PathVariable gatheringId: Long,

@@ -6,16 +6,16 @@ import java.time.LocalDateTime
 
 data class GatheringDetailsDto(
     val id: Long,
-    val creator: UserDto,
+    val creatorId: Long,
     val title: String,
     val description: String?,
-    val startDate: LocalDateTime?,
-    val endDate: LocalDateTime?,
+    val startDate: LocalDateTime,
+    val endDate: LocalDateTime,
     val status: GatheringStatus,
     val finalizedTime: LocalDateTime?,
     val finalizedPlace: PlaceDto?,
-    val participants: List<ParticipantDto>,
-    val suggestedPlaces: List<PlaceDto>
+    val participants: List<ParticipantDto>?,
+    val suggestedPlaces: List<PlaceDto>?
 )
 
 data class ParticipantDto(

@@ -5,7 +5,12 @@ import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 import mk.ukim.finki.iskacamebackend.model.enums.InviteStatus
 
 @Entity
-@Table(name = "gathering_invitation")
+@Table(
+    name = "gathering_invitation",
+    uniqueConstraints = [
+        UniqueConstraint(columnNames = ["user_id", "gathering_id"])
+    ]
+)
 class GatheringInvitation(
     @ManyToOne
     @JoinColumn(name = "user_id")

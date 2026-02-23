@@ -19,10 +19,10 @@ class Gathering(
     var description: String?,
 
     @Column(name = "start_date")
-    var startDate: LocalDateTime?,
+    var startDate: LocalDateTime,
 
     @Column(name = "end_date")
-    var endDate: LocalDateTime?,
+    var endDate: LocalDateTime,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

@@ -7,8 +7,17 @@ import mk.ukim.finki.iskacamebackend.dto.response.GatheringSummaryDto
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.CustomAccessDeniedException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
+import mk.ukim.finki.iskacamebackend.model.Gathering
 
 interface GatheringService {
+
+    /**
+     * Retrieves a gathering by ID
+     *
+     * @param id the ID of the gathering to retrieve
+     * @return the Gathering entity
+     */
+    fun getGatheringById(id: Long): Gathering
 
     /**
      * Creates a new gathering with the given details and invites participants.
