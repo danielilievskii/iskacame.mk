@@ -4,7 +4,7 @@ import mk.ukim.finki.iskacamebackend.dto.UserDto
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import java.time.LocalDateTime
 
-data class GatheringDto(
+data class GatheringDetailsDto(
     val id: Long,
     val creator: UserDto,
     val title: String,

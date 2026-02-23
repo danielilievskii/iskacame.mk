@@ -2,7 +2,8 @@ package mk.ukim.finki.iskacamebackend.service
 
 import mk.ukim.finki.iskacamebackend.dto.request.CreateGatheringRequest
 import mk.ukim.finki.iskacamebackend.dto.request.UpdateGatheringRequest
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDto
+import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.GatheringSummaryDto
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.CustomAccessDeniedException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
@@ -16,7 +17,7 @@ interface GatheringService {
      * @return the created gathering as a DTO
      * @throws BadRequestException if the date range is invalid or no participants are invited
      */
-    fun createGathering(request: CreateGatheringRequest): GatheringDto
+    fun createGathering(request: CreateGatheringRequest): GatheringDetailsDto
 
     /**
      * Updates an existing gathering. Only the creator can update the gathering.
@@ -28,7 +29,7 @@ interface GatheringService {
      * @throws CustomAccessDeniedException if the current user is not the creator
      * @throws BadRequestException if the gathering is finalized or cancelled
      */
-    fun updateGathering(gatheringId: Long, request: UpdateGatheringRequest): GatheringDto
+    fun updateGathering(gatheringId: Long, request: UpdateGatheringRequest): GatheringDetailsDto
 
     /**
      * Cancels a gathering. Only the creator can cancel the gathering.
@@ -49,12 +50,13 @@ interface GatheringService {
      * @throws ResourceNotFoundException if the gathering is not found
      * @throws CustomAccessDeniedException if the current user is not a participant
      */
-    fun getGatheringDetails(gatheringId: Long): GatheringDto
+    fun getGatheringDetails(gatheringId: Long): GatheringDetailsDto
 
     /**
-     * Retrieves all gatherings where the current user is a participant.
+     * Retrieves all gatherings that the current user has joined
+     * (accepted invitations).
      *
-     * @return list of gatherings
+     * @return list of gathering summaries the user is participating in
      */
-    fun getMyGatherings(): List<GatheringDto>
+    fun getMyGatherings(): List<GatheringSummaryDto>
 }

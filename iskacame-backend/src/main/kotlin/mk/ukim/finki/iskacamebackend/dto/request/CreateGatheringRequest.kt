@@ -8,5 +8,4 @@ data class CreateGatheringRequest(
     val startDate: LocalDateTime?,
     val endDate: LocalDateTime?,
     val participantIds: List<Long>,
-    val suggestedPlaceIds: List<Long>?
 )

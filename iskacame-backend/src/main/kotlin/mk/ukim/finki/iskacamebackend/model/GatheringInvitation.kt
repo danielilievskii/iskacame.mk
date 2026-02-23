@@ -5,8 +5,8 @@ import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 import mk.ukim.finki.iskacamebackend.model.enums.InviteStatus
 
 @Entity
-@Table(name = "user_gathering_invites")
-class UserGatheringInvite(
+@Table(name = "gathering_invitation")
+class GatheringInvitation(
     @ManyToOne
     @JoinColumn(name = "user_id")
     var user: User,
