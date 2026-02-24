@@ -2,16 +2,16 @@ package mk.ukim.finki.iskacamebackend.model
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
-import mk.ukim.finki.iskacamebackend.model.enums.InviteStatus
+import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 
 @Entity
 @Table(
-    name = "gathering_invitation",
+    name = "gathering_participation",
     uniqueConstraints = [
         UniqueConstraint(columnNames = ["user_id", "gathering_id"])
     ]
 )
-class GatheringInvitation(
+class GatheringParticipation(
     @ManyToOne
     @JoinColumn(name = "user_id")
     var user: User,
@@ -22,5 +22,5 @@ class GatheringInvitation(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    var status: InviteStatus = InviteStatus.PENDING
+    var status: ParticipationStatus = ParticipationStatus.INVITED
 ) : BaseEntity<Long>()

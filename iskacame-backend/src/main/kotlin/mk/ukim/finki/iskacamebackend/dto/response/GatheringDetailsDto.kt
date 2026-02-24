@@ -20,7 +20,7 @@ data class GatheringDetailsDto(
 
 data class ParticipantDto(
     val user: UserDto,
-    val inviteStatus: String
+    val participationStatus: String
 )
 
 data class PlaceDto(

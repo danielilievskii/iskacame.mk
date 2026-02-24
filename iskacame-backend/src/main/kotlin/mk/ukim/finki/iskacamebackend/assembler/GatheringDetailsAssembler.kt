@@ -1,11 +1,11 @@
 package mk.ukim.finki.iskacamebackend.assembler
 
 import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.mapper.GatheringInvitationMapper
+import mk.ukim.finki.iskacamebackend.mapper.GatheringParticipationMapper
 import mk.ukim.finki.iskacamebackend.mapper.GatheringMapper
 import mk.ukim.finki.iskacamebackend.mapper.PlaceMapper
 import mk.ukim.finki.iskacamebackend.model.Gathering
-import mk.ukim.finki.iskacamebackend.repository.GatheringInvitationRepository
+import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringPlaceRepository
 import org.springframework.stereotype.Component
 
@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component
  */
 @Component
 class GatheringDetailsAssembler(
-    private val gatheringInvitationRepository: GatheringInvitationRepository,
+    private val gatheringParticipationRepository: GatheringParticipationRepository,
     private val gatheringPlaceRepository: GatheringPlaceRepository,
     private val gatheringMapper: GatheringMapper,
-    private val gatheringInvitationMapper: GatheringInvitationMapper,
+    private val gatheringParticipationMapper: GatheringParticipationMapper,
     private val placeMapper: PlaceMapper
 ) {
 
@@ -31,9 +31,9 @@ class GatheringDetailsAssembler(
      */
     fun assemble(gathering: Gathering): GatheringDetailsDto {
 
-        val participants = gatheringInvitationRepository
+        val participants = gatheringParticipationRepository
             .findAllByGatheringId(gathering.id!!)
-            .map { gatheringInvitationMapper.toParticipantDto(it) }
+            .map { gatheringParticipationMapper.toParticipantDto(it) }
 
         val suggestedPlaces = gatheringPlaceRepository
             .findAllByGatheringId(gathering.id!!)

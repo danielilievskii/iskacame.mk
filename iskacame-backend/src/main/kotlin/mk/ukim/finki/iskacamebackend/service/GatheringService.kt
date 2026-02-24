@@ -16,6 +16,7 @@ interface GatheringService {
      *
      * @param id the ID of the gathering to retrieve
      * @return the Gathering entity
+     * @throws ResourceNotFoundException if no gathering with the given ID exists
      */
     fun getGatheringById(id: Long): Gathering
 
@@ -29,7 +30,8 @@ interface GatheringService {
     fun createGathering(request: CreateGatheringRequest): GatheringDetailsDto
 
     /**
-     * Updates an existing gathering. Only the creator can update the gathering.
+     * Updates an existing gathering.
+     * Only the creator can update the gathering.
      *
      * @param gatheringId the ID of the gathering to update
      * @param request the update request containing new values

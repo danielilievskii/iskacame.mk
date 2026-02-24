@@ -10,10 +10,10 @@ import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.GatheringMapper
 import mk.ukim.finki.iskacamebackend.model.Gathering
-import mk.ukim.finki.iskacamebackend.model.GatheringInvitation
+import mk.ukim.finki.iskacamebackend.model.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.User
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
-import mk.ukim.finki.iskacamebackend.model.enums.InviteStatus
+import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.repository.*
 import mk.ukim.finki.iskacamebackend.service.AuthService
 import mk.ukim.finki.iskacamebackend.service.GatheringService
@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class GatheringServiceImpl(
     private val gatheringRepository: GatheringRepository,
-    private val gatheringInvitationRepository: GatheringInvitationRepository,
+    private val gatheringParticipationRepository: GatheringParticipationRepository,
     private val userRepository: UserRepository,
     private val authService: AuthService,
     private val gatheringMapper: GatheringMapper,
@@ -41,6 +41,7 @@ class GatheringServiceImpl(
     override fun createGathering(request: CreateGatheringRequest): GatheringDetailsDto {
 
         val currentUser = authService.getCurrentUser()
+
         validateGatheringCreate(request, currentUser)
 
         val gathering = Gathering(
@@ -53,54 +54,34 @@ class GatheringServiceImpl(
             finalizedTime = null,
             finalizedPlace = null
         )
-
         val savedGathering = gatheringRepository.save(gathering)
 
-        val invitation = GatheringInvitation(
+        val creatorParticipation = GatheringParticipation(
             user = currentUser,
             gathering = savedGathering,
-            status = InviteStatus.ACCEPTED
+            status = ParticipationStatus.JOINED
         )
+        gatheringParticipationRepository.save(creatorParticipation)
 
-        gatheringInvitationRepository.save(invitation)
-
-        val participantInvitations = userRepository
+        val invitedParticipations = userRepository
             .findAllById(request.participantIds)
             .map { participant ->
-                GatheringInvitation(
+                GatheringParticipation(
                     user = participant,
                     gathering = savedGathering,
-                    status = InviteStatus.PENDING
+                    status = ParticipationStatus.INVITED
                 )
             }
-
-        gatheringInvitationRepository.saveAll(participantInvitations)
+        gatheringParticipationRepository.saveAll(invitedParticipations)
 
         return gatheringDetailsAssembler.assemble(gathering)
     }
-
-    private fun validateGatheringCreate(request: CreateGatheringRequest, currentUser: User) {
-
-        if (request.endDate.isBefore(request.startDate)) {
-            throw BadRequestException(GatheringExceptionMessages.INVALID_DATE_RANGE)
-        }
-
-        if (request.participantIds.contains(currentUser.id)) {
-            throw BadRequestException(GatheringExceptionMessages.CREATOR_IN_PARTICIPANTS)
-        }
-
-        if (request.participantIds.isEmpty()) {
-            throw BadRequestException(GatheringExceptionMessages.INVALID_PARTICIPANTS)
-        }
-    }
-
 
     @Transactional
     @PreAuthorize("@permissionService.isGatheringCreator(#gatheringId, authentication.principal.id)")
     override fun updateGathering(gatheringId: Long, request: UpdateGatheringRequest): GatheringDetailsDto {
 
-        val gathering = gatheringRepository.findById(gatheringId)
-            .orElseThrow { ResourceNotFoundException(GatheringExceptionMessages.GATHERING_NOT_FOUND) }
+        val gathering = getGatheringById(gatheringId)
 
         validateGatheringUpdate(gathering, request)
 
@@ -113,33 +94,11 @@ class GatheringServiceImpl(
         return gatheringDetailsAssembler.assemble(updatedGathering)
     }
 
-    private fun validateGatheringUpdate(gathering: Gathering, request: UpdateGatheringRequest) {
-
-        if (gathering.status == GatheringStatus.FINALIZED) {
-            throw BadRequestException(GatheringExceptionMessages.CANNOT_EDIT_FINALIZED_GATHERING)
-        }
-
-        if (gathering.status == GatheringStatus.CANCELLED) {
-            throw BadRequestException(GatheringExceptionMessages.CANNOT_EDIT_CANCELLED_GATHERING)
-        }
-
-        if (request.startDate != null || request.endDate != null) {
-            val newStartDate = request.startDate ?: gathering.startDate
-            val newEndDate = request.endDate ?: gathering.endDate
-
-            if (newEndDate.isBefore(newStartDate)) {
-                throw BadRequestException(GatheringExceptionMessages.INVALID_DATE_RANGE)
-            }
-        }
-    }
-
-
     @Transactional
     @PreAuthorize("@permissionService.isGatheringCreator(#gatheringId, authentication.principal.id)")
     override fun cancelGathering(gatheringId: Long) {
 
-        val gathering = gatheringRepository.findById(gatheringId)
-            .orElseThrow { ResourceNotFoundException(GatheringExceptionMessages.GATHERING_NOT_FOUND) }
+        val gathering = getGatheringById(gatheringId)
 
         if (gathering.status == GatheringStatus.CANCELLED) {
             throw BadRequestException(GatheringExceptionMessages.GATHERING_ALREADY_CANCELLED)
@@ -164,11 +123,64 @@ class GatheringServiceImpl(
 
         val currentUserId = authService.getCurrentUserId()
 
-        val acceptedInvites = gatheringInvitationRepository
-            .findAllByUserIdAndStatus(currentUserId, InviteStatus.ACCEPTED)
+        val participations = gatheringParticipationRepository
+            .findAllByUserIdAndStatus(currentUserId, ParticipationStatus.JOINED)
 
-        return acceptedInvites.map { invite ->
-            gatheringMapper.toGatheringSummaryDto(invite.gathering)
+        return participations.map { participation ->
+            gatheringMapper.toGatheringSummaryDto(participation.gathering)
+        }
+    }
+
+    /**
+     * Validates the gathering creation request.
+     * Ensures the date range is valid, the participant list is not empty,
+     * and the creator is not included in the participant list.
+     *
+     * @param request the gathering creation request
+     * @param currentUser the user creating the gathering
+     * @throws BadRequestException if any validation rule is violated
+     */
+    private fun validateGatheringCreate(request: CreateGatheringRequest, currentUser: User) {
+
+        if (request.endDate.isBefore(request.startDate)) {
+            throw BadRequestException(GatheringExceptionMessages.INVALID_DATE_RANGE)
+        }
+
+        if (request.participantIds.contains(currentUser.id)) {
+            throw BadRequestException(GatheringExceptionMessages.CREATOR_IN_PARTICIPANTS)
+        }
+
+        if (request.participantIds.isEmpty()) {
+            throw BadRequestException(GatheringExceptionMessages.INVALID_PARTICIPANTS)
+        }
+    }
+
+    /**
+     * Validates the gathering update request.
+     * Ensures the gathering is not finalized or cancelled, and that
+     * the updated date range is valid if new dates are provided.
+     *
+     * @param gathering the existing gathering to be updated
+     * @param request the gathering update request
+     * @throws BadRequestException if any validation rule is violated
+     */
+    private fun validateGatheringUpdate(gathering: Gathering, request: UpdateGatheringRequest) {
+
+        if (gathering.status == GatheringStatus.FINALIZED) {
+            throw BadRequestException(GatheringExceptionMessages.CANNOT_EDIT_FINALIZED_GATHERING)
+        }
+
+        if (gathering.status == GatheringStatus.CANCELLED) {
+            throw BadRequestException(GatheringExceptionMessages.CANNOT_EDIT_CANCELLED_GATHERING)
+        }
+
+        if (request.startDate != null || request.endDate != null) {
+            val newStartDate = request.startDate ?: gathering.startDate
+            val newEndDate = request.endDate ?: gathering.endDate
+
+            if (newEndDate.isBefore(newStartDate)) {
+                throw BadRequestException(GatheringExceptionMessages.INVALID_DATE_RANGE)
+            }
         }
     }
 }

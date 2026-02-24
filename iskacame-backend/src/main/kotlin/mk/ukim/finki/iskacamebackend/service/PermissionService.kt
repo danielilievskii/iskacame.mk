@@ -23,4 +23,13 @@ interface PermissionService {
      * @return `true` if the user is creator of the gathering, otherwise `false`.
      */
     fun isGatheringCreator(gatheringId: Long, userId: Long): Boolean
+
+    /**
+     * Checks whether the user owns the specified participation.
+     *
+     * @param participationId the ID of the gathering participation
+     * @param userId the ID of the user
+     * @return `true` if the participation belongs to the user, `false` otherwise
+     */
+    fun isParticipationOwner(participationId: Long, userId: Long): Boolean
 }
