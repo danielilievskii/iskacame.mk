@@ -9,6 +9,9 @@ import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.exception.CustomAccessDeniedException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
+import mk.ukim.finki.iskacamebackend.exception.VerificationTokenExpiredException
+import mk.ukim.finki.iskacamebackend.exception.VerificationTokenNotFoundException
+import mk.ukim.finki.iskacamebackend.exception.VerificationTokenUsedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
@@ -144,6 +147,45 @@ class AuthExceptionHandler {
 
     return ResponseEntity
       .status(HttpStatus.FORBIDDEN)
+      .body(message)
+  }
+
+  /**
+   * Handles invalid verification token for the application.
+   */
+  @ExceptionHandler(VerificationTokenNotFoundException::class)
+  fun handleVerificationTokenNotFound(ex: VerificationTokenNotFoundException): ResponseEntity<String> {
+
+    val message = ex.message ?: AuthExceptionMessages.VERIFICATION_TOKEN_NOT_FOUND
+
+    return ResponseEntity
+      .status(HttpStatus.NOT_FOUND)
+      .body(message)
+  }
+
+  /**
+   * Handles invalid verification token for the application.
+   */
+  @ExceptionHandler(VerificationTokenExpiredException::class)
+  fun handleVerificationTokenExpired(ex: VerificationTokenExpiredException): ResponseEntity<String> {
+
+    val message = ex.message ?: AuthExceptionMessages.VERIFICATION_TOKEN_EXPIRED
+
+    return ResponseEntity
+      .status(HttpStatus.GONE)
+      .body(message)
+  }
+
+  /**
+   * Handles invalid verification token for the application.
+   */
+  @ExceptionHandler(VerificationTokenUsedException::class)
+  fun handleVerificationTokenAlreadyUsed(ex: VerificationTokenUsedException): ResponseEntity<String> {
+
+    val message = ex.message ?: AuthExceptionMessages.VERIFICATION_TOKEN_USED
+
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
       .body(message)
   }
 }
