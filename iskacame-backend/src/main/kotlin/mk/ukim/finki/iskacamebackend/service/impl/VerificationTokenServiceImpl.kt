@@ -1,9 +1,10 @@
 package mk.ukim.finki.iskacamebackend.service.impl
 
+import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.config.VerificationTokenConfig
-import mk.ukim.finki.iskacamebackend.exception.VerificationTokenExpiredException
-import mk.ukim.finki.iskacamebackend.exception.VerificationTokenNotFoundException
-import mk.ukim.finki.iskacamebackend.exception.VerificationTokenUsedException
+import mk.ukim.finki.iskacamebackend.exception.ConflictException
+import mk.ukim.finki.iskacamebackend.exception.ResourceGoneException
+import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.domain.VerificationToken
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
@@ -36,11 +37,11 @@ class VerificationTokenServiceImpl(
 
   override fun verifyToken(token: String) {
     val verificationToken = verificationTokenRepository.findByToken(token)
-      ?: throw VerificationTokenNotFoundException("")
+      ?: throw ResourceNotFoundException(AuthExceptionMessages.VERIFICATION_TOKEN_NOT_FOUND)
 
-    if (verificationToken.used) throw VerificationTokenUsedException("")
+    if (verificationToken.used) throw ConflictException(AuthExceptionMessages.VERIFICATION_TOKEN_USED)
 
-    if (verificationToken.expiryDate.isBefore(Instant.now())) throw VerificationTokenExpiredException("")
+    if (verificationToken.expiryDate.isBefore(Instant.now())) throw ResourceGoneException(AuthExceptionMessages.VERIFICATION_TOKEN_EXPIRED)
 
     verificationToken.used = true
     verificationToken.user.emailVerified = true

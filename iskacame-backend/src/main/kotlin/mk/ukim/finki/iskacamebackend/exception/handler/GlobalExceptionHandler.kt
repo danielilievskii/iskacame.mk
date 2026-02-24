@@ -4,6 +4,7 @@ import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.StorageException
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
+import mk.ukim.finki.iskacamebackend.exception.ResourceGoneException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -37,6 +38,19 @@ class GlobalExceptionHandler {
 
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
+      .body(message)
+  }
+
+  /**
+   * Handles resource gone exceptions.
+   */
+  @ExceptionHandler(ResourceGoneException::class)
+  fun handleResourceGone(exception: ResourceGoneException): ResponseEntity<String> {
+
+    val message = exception.message ?: GlobalExceptionMessages.RESOURCE_GONE
+
+    return ResponseEntity
+      .status(HttpStatus.GONE)
       .body(message)
   }
 
