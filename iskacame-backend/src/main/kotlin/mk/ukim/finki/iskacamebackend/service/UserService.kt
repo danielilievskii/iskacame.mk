@@ -1,8 +1,17 @@
 package mk.ukim.finki.iskacamebackend.service
 
+import mk.ukim.finki.iskacamebackend.model.User
 import org.springframework.web.multipart.MultipartFile
 
 interface UserService {
+
+  /**
+   * Retrieves a user by ID
+   *
+   * @param id the ID of the user to retrieve
+   * @return the User entity
+   */
+  fun getUserById(id: Long): User
 
   /**
    * Uploads or updates a user's avatar.

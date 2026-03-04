@@ -1,6 +1,8 @@
 package mk.ukim.finki.iskacamebackend.service.impl
 
+import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.response.CloudinaryUploadResponse
+import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.model.AvatarImage
 import mk.ukim.finki.iskacamebackend.model.User
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
@@ -18,6 +20,12 @@ class UserServiceImpl(
   private val cloudinaryStorageService: CloudinaryStorageService,
 ) : UserService {
 
+  override fun getUserById(id: Long): User {
+
+    return userRepository.findById(id)
+      .orElseThrow{ ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND) }
+  }
+
   override fun uploadAvatar(file: MultipartFile): String {
 
     ImageValidator.validate(file)
@@ -25,8 +33,7 @@ class UserServiceImpl(
     val user: User = authService.getCurrentUser()
     val avatarPublicId = generateAvatarPublicId(user.id!!)
 
-    val response: CloudinaryUploadResponse =
-      cloudinaryStorageService.uploadFile(file, avatarPublicId)
+    val response: CloudinaryUploadResponse = cloudinaryStorageService.uploadFile(file, avatarPublicId)
 
     user.avatar = AvatarImage(
       url = response.url,
