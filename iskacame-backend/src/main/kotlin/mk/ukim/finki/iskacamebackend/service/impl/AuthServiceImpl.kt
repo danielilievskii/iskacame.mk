@@ -6,6 +6,7 @@ import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
+import mk.ukim.finki.iskacamebackend.events.MailEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
@@ -16,6 +17,8 @@ import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import mk.ukim.finki.iskacamebackend.security.JwtService
 import mk.ukim.finki.iskacamebackend.security.UserPrincipal
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -32,6 +35,8 @@ class AuthServiceImpl(
   private val userMapper: UserMapper,
   private val authenticationManager: AuthenticationManager,
   private val jwtService: JwtService,
+  private val verificationTokenService: VerificationTokenService,
+  private val eventPublisher: ApplicationEventPublisher,
 ) : AuthService {
 
   override fun signUp(request: SignUpRequest): UserDto {
@@ -55,11 +60,26 @@ class AuthServiceImpl(
       email = request.email,
       password = encodedPassword,
       roles = roles,
-      emailVerified = true,
+      emailVerified = false,
     )
 
-    return userRepository.save(user)
-      .let(userMapper::toUserDto)
+    val savedUser = userRepository.save(user)
+
+    val verificationToken = verificationTokenService.createVerificationToken(savedUser)
+
+    val mailEvent = MailEvent(
+      to = savedUser.email,
+      subject = "Iskacame.mk verification code",
+      templateName = "verification-email",
+      templateModel = mapOf(
+        "name" to savedUser.name,
+        "verificationCode" to verificationToken.token
+      )
+    )
+
+    eventPublisher.publishEvent(mailEvent)
+
+    return userMapper.toUserDto(savedUser)
   }
 
   override fun signIn(request: SignInRequest): AuthResponse {
