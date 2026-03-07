@@ -2,10 +2,12 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
-import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
@@ -23,7 +25,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
-import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
 
 /**
  * Implementation of the AuthService.
@@ -93,6 +94,22 @@ class AuthServiceImpl(
     return AuthResponse(
       token = token,
       user = userDto
+    )
+  }
+
+  override fun resendVerificationToken(request: ResendTokenRequest) {
+
+    val user = userRepository.findByEmail(request.email)
+      ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    if (user.emailVerified) {
+      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
+    }
+
+    val verificationToken = verificationTokenService.createVerificationToken(user)
+
+    eventPublisher.publishEvent(
+      UserRegisteredEvent(user, verificationToken)
     )
   }
 

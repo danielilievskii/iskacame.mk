@@ -12,8 +12,12 @@ import mk.ukim.finki.iskacamebackend.repository.VerificationTokenRepository
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import mk.ukim.finki.iskacamebackend.utils.TokenGenerator
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
+/**
+ * Implementation of the VerificationTokenService.
+ */
 @Service
 class VerificationTokenServiceImpl(
   private val verificationTokenRepository: VerificationTokenRepository,
@@ -22,7 +26,14 @@ class VerificationTokenServiceImpl(
 ) : VerificationTokenService {
 
   override fun createVerificationToken(user: User): VerificationToken {
-    val token = TokenGenerator.generateVerificationToken()
+    var token: String
+    var exists: Boolean
+
+    do {
+      token = TokenGenerator.generateVerificationToken()
+      exists = verificationTokenRepository.findByToken(token) != null
+    } while (exists)
+
     val expiry = Instant.now().plusMillis(verificationTokenConfig.expirationTime)
 
     val verificationToken = VerificationToken(
@@ -35,6 +46,7 @@ class VerificationTokenServiceImpl(
     return verificationTokenRepository.save(verificationToken)
   }
 
+  @Transactional
   override fun verifyToken(token: String) {
     val verificationToken = verificationTokenRepository.findByToken(token)
       ?: throw ResourceNotFoundException(AuthExceptionMessages.VERIFICATION_TOKEN_NOT_FOUND)

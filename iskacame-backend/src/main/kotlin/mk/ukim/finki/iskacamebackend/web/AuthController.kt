@@ -2,6 +2,7 @@ package mk.ukim.finki.iskacamebackend.web
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
@@ -33,5 +34,13 @@ class AuthController(
 
     val response = authService.signIn(signInRequest)
     return ResponseEntity.ok(response)
+  }
+
+  @PostMapping("/resend-verification-code")
+  @Operation(summary = "Resends a verification code to user")
+  fun resend(@Valid @RequestBody resendTokenRequest: ResendTokenRequest): ResponseEntity<Void> {
+
+    authService.resendVerificationToken(resendTokenRequest)
+    return ResponseEntity.status(HttpStatus.ACCEPTED).build()
   }
 }

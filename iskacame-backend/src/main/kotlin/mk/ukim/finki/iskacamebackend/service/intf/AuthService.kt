@@ -1,5 +1,6 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
@@ -8,6 +9,7 @@ import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
+import mk.ukim.finki.iskacamebackend.exception.ConflictException
 
 interface AuthService {
 
@@ -35,6 +37,16 @@ interface AuthService {
    * @throws org.springframework.security.core.userdetails.UsernameNotFoundException if the authenticated user cannot be found
    */
   fun signIn(request: SignInRequest): AuthResponse
+
+  /**
+   * Resends a verification token to the user associated with the provided email address.
+   *
+   * @param request the resend request containing the user's email
+   *
+   * @throws ResourceNotFoundException if no user exists with the provided email
+   * @throws ConflictException if the user's email is already verified
+   */
+  fun resendVerificationToken(request: ResendTokenRequest)
 
   /**
    * Returns the currently authenticated [User] from the current JWT
