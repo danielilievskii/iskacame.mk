@@ -2,13 +2,13 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.response.CloudinaryUploadResponse
+import mk.ukim.finki.iskacamebackend.model.domain.AvatarImage
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
-import mk.ukim.finki.iskacamebackend.model.AvatarImage
-import mk.ukim.finki.iskacamebackend.model.User
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
-import mk.ukim.finki.iskacamebackend.service.AuthService
-import mk.ukim.finki.iskacamebackend.service.CloudinaryStorageService
-import mk.ukim.finki.iskacamebackend.service.UserService
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.CloudinaryStorageService
+import mk.ukim.finki.iskacamebackend.service.intf.UserService
 import mk.ukim.finki.iskacamebackend.utils.ImageValidator
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile

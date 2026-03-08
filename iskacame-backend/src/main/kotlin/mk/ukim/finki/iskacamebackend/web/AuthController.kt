@@ -2,10 +2,12 @@ package mk.ukim.finki.iskacamebackend.web
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
-import mk.ukim.finki.iskacamebackend.dto.request.SignInRequest
-import mk.ukim.finki.iskacamebackend.dto.request.SignUpRequest
-import mk.ukim.finki.iskacamebackend.dto.response.AuthResponse
-import mk.ukim.finki.iskacamebackend.service.AuthService
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
+import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,7 +21,7 @@ class AuthController(
   private val authService: AuthService
 ) {
 
-  @PostMapping("/signUp")
+  @PostMapping(path = ["/signUp", "/register"])
   @Operation(summary = "Registers a new user")
   fun signUp(@Valid @RequestBody signUpRequest: SignUpRequest): ResponseEntity<Void> {
 
@@ -27,11 +29,27 @@ class AuthController(
     return ResponseEntity.status(HttpStatus.CREATED).build()
   }
 
-  @PostMapping("/signIn")
+  @PostMapping(path = ["/signIn", "/login"])
   @Operation(summary = "Logs in a user")
   fun signIn(@Valid @RequestBody signInRequest: SignInRequest): ResponseEntity<AuthResponse> {
 
     val response = authService.signIn(signInRequest)
     return ResponseEntity.ok(response)
+  }
+
+  @PostMapping("/resend-verification-code")
+  @Operation(summary = "Resends a verification code to user")
+  fun resend(@Valid @RequestBody resendTokenRequest: ResendTokenRequest): ResponseEntity<Void> {
+
+    authService.resendVerificationToken(resendTokenRequest)
+    return ResponseEntity.status(HttpStatus.ACCEPTED).build()
+  }
+
+  @PostMapping("/verify-email")
+  @Operation(summary = "Verifies user's email")
+  fun verifyEmail(@Valid @RequestBody verifyTokenRequest: VerifyTokenRequest): ResponseEntity<Void> {
+
+    authService.verifyEmail(verifyTokenRequest)
+    return ResponseEntity.ok().build()
   }
 }

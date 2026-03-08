@@ -11,6 +11,8 @@ object GlobalExceptionMessages {
   const val BAD_REQUEST = "The request could not be understood or was missing required parameters."
   const val CONFLICT = "The request could not be completed due to a conflict with the current state of the resource."
 
+  const val RESOURCE_GONE = "The requested resource has been removed or is no longer available."
+
   const val RESOURCE_NOT_FOUND = "The requested resource could not be found."
   const val USER_NOT_FOUND = "The requested user does not exist."
 

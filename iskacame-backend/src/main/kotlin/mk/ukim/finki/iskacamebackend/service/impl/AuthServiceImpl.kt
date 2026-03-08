@@ -2,20 +2,25 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
-import mk.ukim.finki.iskacamebackend.dto.UserDto
-import mk.ukim.finki.iskacamebackend.dto.request.SignInRequest
-import mk.ukim.finki.iskacamebackend.dto.request.SignUpRequest
-import mk.ukim.finki.iskacamebackend.dto.response.AuthResponse
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
+import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
-import mk.ukim.finki.iskacamebackend.model.User
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import mk.ukim.finki.iskacamebackend.security.JwtService
 import mk.ukim.finki.iskacamebackend.security.UserPrincipal
-import mk.ukim.finki.iskacamebackend.service.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -32,6 +37,8 @@ class AuthServiceImpl(
   private val userMapper: UserMapper,
   private val authenticationManager: AuthenticationManager,
   private val jwtService: JwtService,
+  private val verificationTokenService: VerificationTokenService,
+  private val eventPublisher: ApplicationEventPublisher,
 ) : AuthService {
 
   override fun signUp(request: SignUpRequest): UserDto {
@@ -40,7 +47,7 @@ class AuthServiceImpl(
       throw ConflictException(AuthExceptionMessages.EMAIL_TAKEN)
     }
 
-    if (userRepository.existsByUsername(request.email)) {
+    if (userRepository.existsByUsername(request.username)) {
       throw ConflictException(AuthExceptionMessages.USERNAME_TAKEN)
     }
 
@@ -55,11 +62,16 @@ class AuthServiceImpl(
       email = request.email,
       password = encodedPassword,
       roles = roles,
-      emailVerified = true,
+      emailVerified = false,
     )
 
-    return userRepository.save(user)
-      .let(userMapper::toUserDto)
+    val savedUser = userRepository.save(user)
+
+    val verificationToken = verificationTokenService.createVerificationToken(savedUser)
+
+    eventPublisher.publishEvent(UserRegisteredEvent(savedUser, verificationToken))
+
+    return userMapper.toUserDto(savedUser)
   }
 
   override fun signIn(request: SignInRequest): AuthResponse {
@@ -84,6 +96,34 @@ class AuthServiceImpl(
       token = token,
       user = userDto
     )
+  }
+
+  override fun resendVerificationToken(request: ResendTokenRequest) {
+
+    val user = userRepository.findByEmail(request.email)
+      ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    if (user.emailVerified) {
+      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
+    }
+
+    val verificationToken = verificationTokenService.createVerificationToken(user)
+
+    eventPublisher.publishEvent(
+      UserRegisteredEvent(user, verificationToken)
+    )
+  }
+
+  override fun verifyEmail(request: VerifyTokenRequest) {
+
+    val user = userRepository.findByEmail(request.email)
+    ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    if (user.emailVerified) {
+      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
+    }
+
+    verificationTokenService.verifyToken(user, request.token)
   }
 
   override fun getCurrentUser(): User {

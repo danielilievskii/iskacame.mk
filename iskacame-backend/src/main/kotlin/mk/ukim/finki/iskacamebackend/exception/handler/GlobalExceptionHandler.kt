@@ -4,9 +4,11 @@ import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.StorageException
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
+import mk.ukim.finki.iskacamebackend.exception.ResourceGoneException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -36,6 +38,19 @@ class GlobalExceptionHandler {
 
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
+      .body(message)
+  }
+
+  /**
+   * Handles resource gone exceptions.
+   */
+  @ExceptionHandler(ResourceGoneException::class)
+  fun handleResourceGone(exception: ResourceGoneException): ResponseEntity<String> {
+
+    val message = exception.message ?: GlobalExceptionMessages.RESOURCE_GONE
+
+    return ResponseEntity
+      .status(HttpStatus.GONE)
       .body(message)
   }
 
@@ -98,5 +113,19 @@ class GlobalExceptionHandler {
     return ResponseEntity
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .body(GlobalExceptionMessages.INTERNAL_SERVER_ERROR)
+  }
+
+  /**
+   * Handles validation errors from @Valid annotated DTOs.
+   */
+  @ExceptionHandler(MethodArgumentNotValidException::class)
+  fun handleValidationErrors(exception: MethodArgumentNotValidException): ResponseEntity<Map<String, String>> {
+    val errors = exception.bindingResult.fieldErrors
+      .groupBy { it.field }
+      .mapValues { (_, errs) ->
+        errs.mapNotNull { it.defaultMessage }.joinToString("; ").ifBlank { "Invalid value" }
+      }
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors)
   }
 }

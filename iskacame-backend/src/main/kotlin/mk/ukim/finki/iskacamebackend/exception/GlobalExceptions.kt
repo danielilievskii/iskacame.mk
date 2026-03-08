@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.ResponseStatus
 @ResponseStatus(HttpStatus.NOT_FOUND)
 class ResourceNotFoundException(message: String) : RuntimeException(message)
 
+@ResponseStatus(HttpStatus.GONE)
+class ResourceGoneException(message: String) : RuntimeException(message)
+
 @ResponseStatus(HttpStatus.CONFLICT)
 class ConflictException(message: String) : RuntimeException(message)
 

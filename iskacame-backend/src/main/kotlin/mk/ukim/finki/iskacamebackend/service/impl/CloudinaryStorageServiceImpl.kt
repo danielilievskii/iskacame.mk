@@ -5,7 +5,7 @@ import com.cloudinary.utils.ObjectUtils
 import mk.ukim.finki.iskacamebackend.common.StorageExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.response.CloudinaryUploadResponse
 import mk.ukim.finki.iskacamebackend.exception.StorageException
-import mk.ukim.finki.iskacamebackend.service.CloudinaryStorageService
+import mk.ukim.finki.iskacamebackend.service.intf.CloudinaryStorageService
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 

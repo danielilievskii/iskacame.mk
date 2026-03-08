@@ -20,4 +20,10 @@ object AuthExceptionMessages {
 
   const val EMAIL_TAKEN = "This email is already associated with an account."
   const val USERNAME_TAKEN = "This username is already associated with an account."
+
+  const val VERIFICATION_TOKEN_NOT_FOUND = "Verification token not found."
+  const val VERIFICATION_TOKEN_EXPIRED = "Verification token has expired."
+  const val VERIFICATION_TOKEN_USED = "Verification token has already been used."
+
+  const val EMAIL_ALREADY_VERIFIED = "Email is already verified."
 }

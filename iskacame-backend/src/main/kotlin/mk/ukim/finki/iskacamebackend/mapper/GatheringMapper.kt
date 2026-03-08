@@ -1,8 +1,8 @@
 package mk.ukim.finki.iskacamebackend.mapper
 
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringSummaryDto
-import mk.ukim.finki.iskacamebackend.model.Gathering
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringSummaryDto
+import mk.ukim.finki.iskacamebackend.model.domain.Gathering
 
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

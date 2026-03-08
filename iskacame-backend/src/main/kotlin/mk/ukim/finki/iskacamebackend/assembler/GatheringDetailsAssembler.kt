@@ -1,10 +1,10 @@
 package mk.ukim.finki.iskacamebackend.assembler
 
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
 import mk.ukim.finki.iskacamebackend.mapper.GatheringParticipationMapper
 import mk.ukim.finki.iskacamebackend.mapper.GatheringMapper
 import mk.ukim.finki.iskacamebackend.mapper.PlaceMapper
-import mk.ukim.finki.iskacamebackend.model.Gathering
+import mk.ukim.finki.iskacamebackend.model.domain.Gathering
 import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringPlaceRepository
 import org.springframework.stereotype.Component

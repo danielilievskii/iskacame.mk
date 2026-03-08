@@ -1,7 +1,7 @@
 package mk.ukim.finki.iskacamebackend.mapper
 
-import mk.ukim.finki.iskacamebackend.dto.response.PlaceDto
-import mk.ukim.finki.iskacamebackend.model.Place
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.PlaceDto
+import mk.ukim.finki.iskacamebackend.model.domain.Place
 
 import org.mapstruct.Mapper
 

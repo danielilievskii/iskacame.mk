@@ -2,9 +2,9 @@ package mk.ukim.finki.iskacamebackend.web
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringInvitationDto
-import mk.ukim.finki.iskacamebackend.service.GatheringParticipationService
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringInvitationDto
+import mk.ukim.finki.iskacamebackend.service.intf.GatheringParticipationService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 

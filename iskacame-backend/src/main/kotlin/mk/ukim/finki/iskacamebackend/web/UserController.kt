@@ -1,8 +1,8 @@
 package mk.ukim.finki.iskacamebackend.web
 
-import mk.ukim.finki.iskacamebackend.dto.UserDto
-import mk.ukim.finki.iskacamebackend.service.AuthService
-import mk.ukim.finki.iskacamebackend.service.UserService
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.UserService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping

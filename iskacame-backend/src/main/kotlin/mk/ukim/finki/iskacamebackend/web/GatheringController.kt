@@ -2,11 +2,11 @@ package mk.ukim.finki.iskacamebackend.web
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
-import mk.ukim.finki.iskacamebackend.dto.request.CreateGatheringRequest
-import mk.ukim.finki.iskacamebackend.dto.request.UpdateGatheringRequest
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringSummaryDto
-import mk.ukim.finki.iskacamebackend.service.GatheringService
+import mk.ukim.finki.iskacamebackend.dto.request.gathering.CreateGatheringRequest
+import mk.ukim.finki.iskacamebackend.dto.request.gathering.UpdateGatheringRequest
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringSummaryDto
+import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
