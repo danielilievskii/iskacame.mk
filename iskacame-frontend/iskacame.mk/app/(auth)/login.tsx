@@ -14,6 +14,8 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { StatusBar } from 'expo-status-bar';
+import { Logo } from "@/components/ui/logo";
+import { primaryColor } from "@/constants/theme";
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -30,7 +32,6 @@ export default function LoginScreen() {
         setLoading(true);
         try {
             await signIn(email.trim(), password);
-            // navigation handled by root layout
         } catch (err: any) {
             Alert.alert('Login failed', err.message ?? 'Invalid credentials.');
         } finally {
@@ -42,15 +43,14 @@ export default function LoginScreen() {
         <KeyboardAvoidingView
             style={styles.flex}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <StatusBar style="light" />
+            <StatusBar style="light"/>
             <ScrollView
                 contentContainerStyle={styles.container}
                 keyboardShouldPersistTaps="handled">
 
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.logo}>iskacame</Text>
-                    <Text style={styles.logoSub}>.mk</Text>
+                    <Logo/>
                 </View>
 
                 <Text style={styles.tagline}>Let's meet up.</Text>
@@ -91,7 +91,7 @@ export default function LoginScreen() {
                         disabled={loading}
                         activeOpacity={0.85}>
                         {loading
-                            ? <ActivityIndicator color="#0B0B0F" />
+                            ? <ActivityIndicator color="#0B0B0F"/>
                             : <Text style={styles.buttonText}>Sign in</Text>
                         }
                     </TouchableOpacity>
@@ -121,18 +121,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-end',
         marginBottom: 4,
-    },
-    logo: {
-        fontSize: 38,
-        fontWeight: '800',
-        color: '#F0EBE1',
-        letterSpacing: -1.5,
-    },
-    logoSub: {
-        fontSize: 38,
-        fontWeight: '800',
-        color: '#C8F55A',
-        letterSpacing: -1.5,
     },
     tagline: {
         fontSize: 16,
@@ -175,7 +163,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     button: {
-        backgroundColor: '#C8F55A',
+        backgroundColor: primaryColor,
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: 'center',
@@ -200,7 +188,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     link: {
-        color: '#C8F55A',
+        color: primaryColor,
         fontSize: 14,
         fontWeight: '600',
     },

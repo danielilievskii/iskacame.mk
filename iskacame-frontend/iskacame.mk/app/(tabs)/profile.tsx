@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { StatusBar } from 'expo-status-bar';
+import { primaryColor } from "@/constants/theme";
 
 export default function ProfileScreen() {
     const { user, signOut } = useAuth();
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
         width: 88,
         height: 88,
         borderRadius: 44,
-        backgroundColor: '#C8F55A',
+        backgroundColor: primaryColor,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 14,

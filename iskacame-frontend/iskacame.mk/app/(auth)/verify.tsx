@@ -13,6 +13,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { authService } from '@/lib/auth-service';
 import { StatusBar } from 'expo-status-bar';
+import { Logo } from "@/components/ui/logo";
+import { primaryColor } from "@/constants/theme";
 
 export default function VerifyScreen() {
     const { email } = useLocalSearchParams<{ email: string }>();
@@ -23,12 +25,50 @@ export default function VerifyScreen() {
     const router = useRouter();
 
     const handleChange = (val: string, idx: number) => {
-        const digit = val.replace(/[^0-9]/g, '').slice(-1);
+        const digits = val.replace(/[^0-9]/g, '');
+
+        if (digits.length > 1) {
+            const split = digits.slice(0, 6).split('');
+            const next = [...code];
+
+            split.forEach((d, i) => {
+                if (idx + i < 6) {
+                    next[idx + i] = d;
+                }
+            });
+
+            setCode(next);
+
+            const token = next.join('');
+            if (token.length === 6) {
+                handleVerifyWithToken(token);
+            }
+
+            return;
+        }
+
         const next = [...code];
-        next[idx] = digit;
+        next[idx] = digits;
         setCode(next);
-        if (digit && idx < 5) {
+
+        if (digits && idx < 5) {
             inputs.current[idx + 1]?.focus();
+        }
+    };
+
+    const handleVerifyWithToken = async (token: string) => {
+        setLoading(true);
+
+        try {
+            await authService.verifyEmail({ email, token });
+
+            Alert.alert('Email verified!', 'You can now sign in.', [
+                { text: 'Sign in', onPress: () => router.replace('/(auth)/login') },
+            ]);
+        } catch (err: any) {
+            Alert.alert('Verification failed', err.message ?? 'Invalid or expired code.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -40,21 +80,13 @@ export default function VerifyScreen() {
 
     const handleVerify = async () => {
         const token = code.join('');
+
         if (token.length < 6) {
             Alert.alert('Incomplete code', 'Please enter all 6 digits.');
             return;
         }
-        setLoading(true);
-        try {
-            await authService.verifyEmail({ email, token });
-            Alert.alert('Email verified!', 'You can now sign in.', [
-                { text: 'Sign in', onPress: () => router.replace('/(auth)/login') },
-            ]);
-        } catch (err: any) {
-            Alert.alert('Verification failed', err.message ?? 'Invalid or expired code.');
-        } finally {
-            setLoading(false);
-        }
+
+        await handleVerifyWithToken(token);
     };
 
     const handleResend = async () => {
@@ -73,12 +105,11 @@ export default function VerifyScreen() {
         <KeyboardAvoidingView
             style={styles.flex}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <StatusBar style="light" />
+            <StatusBar style="light"/>
             <View style={styles.container}>
 
                 <View style={styles.header}>
-                    <Text style={styles.logo}>iskacame</Text>
-                    <Text style={styles.logoSub}>.mk</Text>
+                    <Logo/>
                 </View>
 
                 <View style={styles.card}>
@@ -95,7 +126,9 @@ export default function VerifyScreen() {
                         {code.map((digit, idx) => (
                             <TextInput
                                 key={idx}
-                                ref={(el) => { if (el) inputs.current[idx] = el; }}
+                                ref={(el) => {
+                                    if (el) inputs.current[idx] = el;
+                                }}
                                 style={[styles.codeBox, digit ? styles.codeBoxFilled : null]}
                                 value={digit}
                                 onChangeText={(v) => handleChange(v, idx)}
@@ -113,7 +146,7 @@ export default function VerifyScreen() {
                         disabled={loading}
                         activeOpacity={0.85}>
                         {loading
-                            ? <ActivityIndicator color="#0B0B0F" />
+                            ? <ActivityIndicator color={primaryColor}/>
                             : <Text style={styles.buttonText}>Verify email</Text>
                         }
                     </TouchableOpacity>
@@ -123,8 +156,9 @@ export default function VerifyScreen() {
                         onPress={handleResend}
                         disabled={resending}>
                         {resending
-                            ? <ActivityIndicator size="small" color="#C8F55A" />
-                            : <Text style={styles.resendText}>Didn't receive it? <Text style={styles.resendLink}>Resend code</Text></Text>
+                            ? <ActivityIndicator size="small" color="#C8F55A"/>
+                            : <Text style={styles.resendText}>Didn't receive it? <Text style={styles.resendLink}>Resend
+                                code</Text></Text>
                         }
                     </TouchableOpacity>
                 </View>
@@ -137,8 +171,6 @@ const styles = StyleSheet.create({
     flex: { flex: 1, backgroundColor: '#0B0B0F' },
     container: { flex: 1, justifyContent: 'center', padding: 24 },
     header: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 32 },
-    logo: { fontSize: 28, fontWeight: '800', color: '#F0EBE1', letterSpacing: -1 },
-    logoSub: { fontSize: 28, fontWeight: '800', color: '#C8F55A', letterSpacing: -1 },
     card: {
         backgroundColor: '#16161D',
         borderRadius: 20,
@@ -171,7 +203,7 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         marginBottom: 28,
     },
-    emailHighlight: { color: '#C8F55A', fontWeight: '600' },
+    emailHighlight: { color: primaryColor, fontWeight: '600' },
     codeRow: {
         flexDirection: 'row',
         gap: 10,
@@ -190,10 +222,10 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     codeBoxFilled: {
-        borderColor: '#C8F55A',
+        borderColor: primaryColor,
     },
     button: {
-        backgroundColor: '#C8F55A',
+        backgroundColor: primaryColor,
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: 'center',
@@ -203,5 +235,5 @@ const styles = StyleSheet.create({
     buttonText: { color: '#0B0B0F', fontWeight: '800', fontSize: 16, letterSpacing: 0.3 },
     resendBtn: { marginTop: 20, padding: 8 },
     resendText: { color: '#6B7280', fontSize: 14 },
-    resendLink: { color: '#C8F55A', fontWeight: '600' },
+    resendLink: { color: primaryColor, fontWeight: '600' },
 });

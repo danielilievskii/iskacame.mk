@@ -27,6 +27,8 @@ export const Colors = {
   },
 };
 
+export const primaryColor = "#B8AEDE"
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

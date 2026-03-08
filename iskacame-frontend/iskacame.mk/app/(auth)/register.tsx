@@ -14,6 +14,8 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { authService } from '@/lib/auth-service';
 import { StatusBar } from 'expo-status-bar';
+import { Logo } from "@/components/ui/logo";
+import { primaryColor } from "@/constants/theme";
 
 export default function RegisterScreen() {
     const [name, setName] = useState('');
@@ -47,14 +49,13 @@ export default function RegisterScreen() {
         <KeyboardAvoidingView
             style={styles.flex}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <StatusBar style="light" />
+            <StatusBar style="light"/>
             <ScrollView
                 contentContainerStyle={styles.container}
                 keyboardShouldPersistTaps="handled">
 
                 <View style={styles.header}>
-                    <Text style={styles.logo}>iskacame</Text>
-                    <Text style={styles.logoSub}>.mk</Text>
+                    <Logo/>
                 </View>
                 <Text style={styles.tagline}>Join the gathering.</Text>
 
@@ -63,9 +64,27 @@ export default function RegisterScreen() {
 
                     {[
                         { label: 'FULL NAME', value: name, setter: setName, placeholder: 'Your name', opts: {} },
-                        { label: 'USERNAME', value: username, setter: setUsername, placeholder: 'e.g. johndoe_mk', opts: { autoCapitalize: 'none' as const } },
-                        { label: 'EMAIL', value: email, setter: setEmail, placeholder: 'you@example.com', opts: { keyboardType: 'email-address' as const, autoCapitalize: 'none' as const } },
-                        { label: 'PASSWORD', value: password, setter: setPassword, placeholder: '••••••••', opts: { secureTextEntry: true } },
+                        {
+                            label: 'USERNAME',
+                            value: username,
+                            setter: setUsername,
+                            placeholder: 'e.g. johndoe_mk',
+                            opts: { autoCapitalize: 'none' as const }
+                        },
+                        {
+                            label: 'EMAIL',
+                            value: email,
+                            setter: setEmail,
+                            placeholder: 'you@example.com',
+                            opts: { keyboardType: 'email-address' as const, autoCapitalize: 'none' as const }
+                        },
+                        {
+                            label: 'PASSWORD',
+                            value: password,
+                            setter: setPassword,
+                            placeholder: '••••••••',
+                            opts: { secureTextEntry: true }
+                        },
                     ].map(({ label, value, setter, placeholder, opts }) => (
                         <View key={label} style={styles.field}>
                             <Text style={styles.label}>{label}</Text>
@@ -87,7 +106,7 @@ export default function RegisterScreen() {
                         disabled={loading}
                         activeOpacity={0.85}>
                         {loading
-                            ? <ActivityIndicator color="#0B0B0F" />
+                            ? <ActivityIndicator color="#0B0B0F"/>
                             : <Text style={styles.buttonText}>Create account</Text>
                         }
                     </TouchableOpacity>
@@ -110,8 +129,6 @@ const styles = StyleSheet.create({
     flex: { flex: 1, backgroundColor: '#0B0B0F' },
     container: { flexGrow: 1, justifyContent: 'center', padding: 24 },
     header: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 4 },
-    logo: { fontSize: 38, fontWeight: '800', color: '#F0EBE1', letterSpacing: -1.5 },
-    logoSub: { fontSize: 38, fontWeight: '800', color: '#C8F55A', letterSpacing: -1.5 },
     tagline: { fontSize: 16, color: '#6B7280', marginBottom: 40, letterSpacing: 0.3 },
     card: {
         backgroundColor: '#16161D',
@@ -133,10 +150,10 @@ const styles = StyleSheet.create({
         color: '#F0EBE1',
         fontSize: 16,
     },
-    button: { backgroundColor: '#C8F55A', borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+    button: { backgroundColor: primaryColor, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
     buttonDisabled: { opacity: 0.6 },
     buttonText: { color: '#0B0B0F', fontWeight: '800', fontSize: 16, letterSpacing: 0.3 },
     footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
     footerText: { color: '#6B7280', fontSize: 14 },
-    link: { color: '#C8F55A', fontSize: 14, fontWeight: '600' },
+    link: { color: primaryColor, fontSize: 14, fontWeight: '600' },
 });
