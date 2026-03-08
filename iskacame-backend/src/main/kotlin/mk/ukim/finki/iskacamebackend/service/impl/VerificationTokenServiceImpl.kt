@@ -47,9 +47,13 @@ class VerificationTokenServiceImpl(
   }
 
   @Transactional
-  override fun verifyToken(token: String) {
+  override fun verifyToken(user: User, token: String) {
     val verificationToken = verificationTokenRepository.findByToken(token)
       ?: throw ResourceNotFoundException(AuthExceptionMessages.VERIFICATION_TOKEN_NOT_FOUND)
+
+    if (verificationToken.user.id != user.id) {
+      throw ResourceNotFoundException(AuthExceptionMessages.VERIFICATION_TOKEN_NOT_FOUND)
+    }
 
     if (verificationToken.used) throw ConflictException(AuthExceptionMessages.VERIFICATION_TOKEN_USED)
 

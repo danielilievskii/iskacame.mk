@@ -4,6 +4,7 @@ import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
@@ -47,6 +48,16 @@ interface AuthService {
    * @throws ConflictException if the user's email is already verified
    */
   fun resendVerificationToken(request: ResendTokenRequest)
+
+  /**
+   * Verifies a user's email address using the provided verification token.
+   *
+   * @param request the verification request containing the user's email and token
+   *
+   * @throws ResourceNotFoundException if no user exists with the provided email
+   * @throws ConflictException if the user's email is already verified
+   */
+  fun verifyEmail(request: VerifyTokenRequest)
 
   /**
    * Returns the currently authenticated [User] from the current JWT

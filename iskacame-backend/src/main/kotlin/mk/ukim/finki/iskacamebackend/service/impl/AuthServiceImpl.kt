@@ -5,6 +5,7 @@ import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
@@ -111,6 +112,18 @@ class AuthServiceImpl(
     eventPublisher.publishEvent(
       UserRegisteredEvent(user, verificationToken)
     )
+  }
+
+  override fun verifyEmail(request: VerifyTokenRequest) {
+
+    val user = userRepository.findByEmail(request.email)
+    ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    if (user.emailVerified) {
+      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
+    }
+
+    verificationTokenService.verifyToken(user, request.token)
   }
 
   override fun getCurrentUser(): User {

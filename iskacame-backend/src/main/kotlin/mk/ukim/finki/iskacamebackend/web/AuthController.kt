@@ -5,6 +5,7 @@ import jakarta.validation.Valid
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import org.springframework.http.HttpStatus
@@ -42,5 +43,13 @@ class AuthController(
 
     authService.resendVerificationToken(resendTokenRequest)
     return ResponseEntity.status(HttpStatus.ACCEPTED).build()
+  }
+
+  @PostMapping("/verify-email")
+  @Operation(summary = "Verifies user's email")
+  fun verifyEmail(@Valid @RequestBody verifyTokenRequest: VerifyTokenRequest): ResponseEntity<Void> {
+
+    authService.verifyEmail(verifyTokenRequest)
+    return ResponseEntity.ok().build()
   }
 }
