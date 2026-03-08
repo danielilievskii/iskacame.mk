@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.DisabledException
+import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -108,6 +109,17 @@ class AuthExceptionHandler {
     return ResponseEntity
       .status(HttpStatus.UNAUTHORIZED)
       .body(AuthExceptionMessages.AUTHENTICATION_ERROR)
+  }
+
+  /**
+   * Handles generic Spring Security authorization failures.
+   */
+  @ExceptionHandler(AuthorizationDeniedException::class)
+  fun handleAuthorizationDenied(): ResponseEntity<String> {
+
+    return ResponseEntity
+      .status(HttpStatus.FORBIDDEN)
+      .body(AuthExceptionMessages.ACCESS_DENIED)
   }
 
   /**

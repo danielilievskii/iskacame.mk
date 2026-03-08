@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface GatheringRepository : JpaRepository<Gathering, Long>
+interface GatheringRepository : JpaRepository<Gathering, Long> {
+    fun existsByIdAndCreatorId(id: Long, creatorId: Long): Boolean
+}
