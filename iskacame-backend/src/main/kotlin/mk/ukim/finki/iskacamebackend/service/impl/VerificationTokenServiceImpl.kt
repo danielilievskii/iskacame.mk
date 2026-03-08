@@ -55,9 +55,13 @@ class VerificationTokenServiceImpl(
       throw ResourceNotFoundException(AuthExceptionMessages.VERIFICATION_TOKEN_NOT_FOUND)
     }
 
-    if (verificationToken.used) throw ConflictException(AuthExceptionMessages.VERIFICATION_TOKEN_USED)
+    if (verificationToken.used) {
+      throw ConflictException(AuthExceptionMessages.VERIFICATION_TOKEN_USED)
+    }
 
-    if (verificationToken.expiryDate.isBefore(Instant.now())) throw ResourceGoneException(AuthExceptionMessages.VERIFICATION_TOKEN_EXPIRED)
+    if (verificationToken.expiryDate.isBefore(Instant.now())) {
+      throw ResourceGoneException(AuthExceptionMessages.VERIFICATION_TOKEN_EXPIRED)
+    }
 
     verificationToken.used = true
     verificationToken.user.emailVerified = true

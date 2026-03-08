@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.service
+package mk.ukim.finki.iskacamebackend.service.intf
 
 /**
  * Security service responsible for evaluating a user's permissions within a gathering.

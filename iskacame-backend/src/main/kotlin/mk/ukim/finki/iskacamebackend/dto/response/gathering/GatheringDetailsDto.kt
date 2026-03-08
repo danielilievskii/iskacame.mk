@@ -1,6 +1,6 @@
-package mk.ukim.finki.iskacamebackend.dto.response
+package mk.ukim.finki.iskacamebackend.dto.response.gathering
 
-import mk.ukim.finki.iskacamebackend.dto.UserDto
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import java.time.LocalDateTime
 

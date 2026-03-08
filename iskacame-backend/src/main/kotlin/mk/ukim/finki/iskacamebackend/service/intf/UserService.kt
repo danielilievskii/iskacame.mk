@@ -1,6 +1,6 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
-import mk.ukim.finki.iskacamebackend.model.User
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import org.springframework.web.multipart.MultipartFile
 
 interface UserService {

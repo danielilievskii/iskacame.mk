@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.dto.request
+package mk.ukim.finki.iskacamebackend.dto.request.gathering
 
 import jakarta.validation.constraints.Size
 import mk.ukim.finki.iskacamebackend.common.GatheringExceptionMessages

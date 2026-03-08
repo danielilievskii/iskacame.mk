@@ -1,7 +1,7 @@
-package mk.ukim.finki.iskacamebackend.service
+package mk.ukim.finki.iskacamebackend.service.intf
 
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringInvitationDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringInvitationDto
 
 
 interface GatheringParticipationService {

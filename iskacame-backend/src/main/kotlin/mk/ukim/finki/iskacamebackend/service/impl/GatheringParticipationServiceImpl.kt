@@ -2,19 +2,19 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.assembler.GatheringDetailsAssembler
 import mk.ukim.finki.iskacamebackend.common.GatheringExceptionMessages
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringInvitationDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringInvitationDto
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.GatheringParticipationMapper
-import mk.ukim.finki.iskacamebackend.model.GatheringParticipation
+import mk.ukim.finki.iskacamebackend.model.domain.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.repository.*
-import mk.ukim.finki.iskacamebackend.service.AuthService
-import mk.ukim.finki.iskacamebackend.service.GatheringParticipationService
-import mk.ukim.finki.iskacamebackend.service.GatheringService
-import mk.ukim.finki.iskacamebackend.service.UserService
+import mk.ukim.finki.iskacamebackend.service.intf.GatheringParticipationService
+import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.UserService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

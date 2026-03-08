@@ -3,7 +3,7 @@ package mk.ukim.finki.iskacamebackend.service.impl
 import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringRepository
-import mk.ukim.finki.iskacamebackend.service.PermissionService
+import mk.ukim.finki.iskacamebackend.service.intf.PermissionService
 import org.springframework.stereotype.Service
 
 @Service("permissionService")

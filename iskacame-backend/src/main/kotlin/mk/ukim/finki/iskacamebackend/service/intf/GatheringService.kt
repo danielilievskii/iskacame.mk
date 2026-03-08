@@ -1,13 +1,13 @@
-package mk.ukim.finki.iskacamebackend.service
+package mk.ukim.finki.iskacamebackend.service.intf
 
-import mk.ukim.finki.iskacamebackend.dto.request.CreateGatheringRequest
-import mk.ukim.finki.iskacamebackend.dto.request.UpdateGatheringRequest
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.dto.response.GatheringSummaryDto
+import mk.ukim.finki.iskacamebackend.dto.request.gathering.CreateGatheringRequest
+import mk.ukim.finki.iskacamebackend.dto.request.gathering.UpdateGatheringRequest
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringSummaryDto
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.CustomAccessDeniedException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
-import mk.ukim.finki.iskacamebackend.model.Gathering
+import mk.ukim.finki.iskacamebackend.model.domain.Gathering
 
 interface GatheringService {
 

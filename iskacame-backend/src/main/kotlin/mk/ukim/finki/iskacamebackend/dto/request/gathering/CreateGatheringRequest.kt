@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.dto.request
+package mk.ukim.finki.iskacamebackend.dto.request.gathering
 
 import java.time.LocalDateTime
 import jakarta.validation.constraints.NotBlank
