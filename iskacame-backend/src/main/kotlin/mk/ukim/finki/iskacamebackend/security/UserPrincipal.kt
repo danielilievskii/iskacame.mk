@@ -8,7 +8,7 @@ data class UserPrincipal(
   private val name: String,
   val email: String,
   private val password: String,
-  private val emailVerified: Boolean,
+  val emailVerified: Boolean,
   private val authorities: Collection<GrantedAuthority>
 ) : UserDetails {
 
@@ -24,5 +24,5 @@ data class UserPrincipal(
 
   override fun isCredentialsNonExpired(): Boolean = true
 
-  override fun isEnabled(): Boolean = emailVerified
+  override fun isEnabled(): Boolean = true
 }

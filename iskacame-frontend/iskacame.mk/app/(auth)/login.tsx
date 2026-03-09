@@ -33,7 +33,21 @@ export default function LoginScreen() {
         try {
             await signIn(email.trim(), password);
         } catch (err: any) {
-            Alert.alert('Login failed', err.message ?? 'Invalid credentials.');
+            if (err.status === 403) {
+                Alert.alert(
+                    'Email not verified',
+                    'Please verify your email to continue.',
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                            text: 'Verify now',
+                            onPress: () => router.push({ pathname: '/(auth)/verify', params: { email: email.trim() } })
+                        },
+                    ]
+                );
+            } else {
+                Alert.alert('Login failed', err.message ?? 'Invalid credentials.');
+            }
         } finally {
             setLoading(false);
         }

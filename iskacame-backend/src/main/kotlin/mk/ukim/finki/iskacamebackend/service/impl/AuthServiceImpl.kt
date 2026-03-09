@@ -22,6 +22,7 @@ import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.DisabledException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -82,9 +83,14 @@ class AuthServiceImpl(
     )
 
     val authentication = authenticationManager.authenticate(authToken)
+    val userPrincipal = authentication.principal as UserPrincipal
+
+    if (!userPrincipal.emailVerified) {
+      throw DisabledException(AuthExceptionMessages.EMAIL_NOT_VERIFIED)
+    }
+
     SecurityContextHolder.getContext().authentication = authentication
 
-    val userPrincipal = authentication.principal as UserPrincipal
     val token = jwtService.generateToken(userPrincipal)
 
     val user = userRepository.findByEmail(userPrincipal.email)

@@ -36,16 +36,11 @@ export async function apiRequest<T>(
     });
 
     if (!response.ok) {
-        let errorMessage = `Request failed: ${response.status}`;
-        try {
-            const errorBody = await response.text();
-            errorMessage = errorBody || errorMessage;
-        } catch {
-            // keep default message
-        }
-        throw new Error(errorMessage);
+        const text = await response.text();
+        const error = new Error(text || `Request failed: ${response.status}`);
+        (error as any).status = response.status;
+        throw error;
     }
-
     const text = await response.text();
     if (!text) return undefined as T;
 
