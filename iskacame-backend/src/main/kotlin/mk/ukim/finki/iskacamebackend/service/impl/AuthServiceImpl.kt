@@ -63,6 +63,7 @@ class AuthServiceImpl(
       password = encodedPassword,
       roles = roles,
       emailVerified = false,
+      phone = request.phone
     )
 
     val savedUser = userRepository.save(user)
