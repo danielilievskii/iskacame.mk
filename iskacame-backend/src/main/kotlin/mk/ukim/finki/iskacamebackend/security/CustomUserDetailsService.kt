@@ -22,8 +22,10 @@ class CustomUserDetailsService(
       userRepository.findByUsername(identifier)
     }
 
-    return userMapper.toUserPrincipal(
-      user ?: throw UsernameNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
-    )
+    if (user == null) {
+      throw UsernameNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+    }
+
+    return userMapper.toUserPrincipal(user)
   }
 }
