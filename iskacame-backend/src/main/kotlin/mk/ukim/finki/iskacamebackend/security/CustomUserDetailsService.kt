@@ -15,10 +15,16 @@ class CustomUserDetailsService(
   private val userMapper: UserMapper
 ) : UserDetailsService {
 
-  override fun loadUserByUsername(email: String): UserDetails {
+  override fun loadUserByUsername(identifier: String): UserDetails {
+    val user: User? = if (identifier.contains("@")) {
+      userRepository.findByEmail(identifier)
+    } else {
+      userRepository.findByUsername(identifier)
+    }
 
-    val user: User = userRepository.findByEmail(email)
-      ?: throw UsernameNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+    if (user == null) {
+      throw UsernameNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+    }
 
     return userMapper.toUserPrincipal(user)
   }
