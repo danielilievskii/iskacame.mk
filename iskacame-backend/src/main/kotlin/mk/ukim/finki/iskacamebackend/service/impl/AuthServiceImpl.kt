@@ -78,7 +78,7 @@ class AuthServiceImpl(
   override fun signIn(request: SignInRequest): AuthResponse {
 
     val authToken = UsernamePasswordAuthenticationToken(
-      request.email,
+      request.identifier,
       request.password
     )
 
