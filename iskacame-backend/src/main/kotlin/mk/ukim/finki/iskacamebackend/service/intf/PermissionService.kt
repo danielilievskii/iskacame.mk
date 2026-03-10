@@ -32,4 +32,14 @@ interface PermissionService {
      * @return `true` if the participation belongs to the user, `false` otherwise
      */
     fun isParticipationOwner(participationId: Long, userId: Long): Boolean
+
+    /**
+     * Checks whether the user is the uploader of the GatheringImage.
+     *
+     * @param gatheringId The ID of the gathering.
+     * @param imageId The ID of the gathering image.
+     * @param userId the ID of the user
+     * @return `true` if user is the uploader of the image, `false` otherwise
+     */
+    fun isGatheringImageOwner(gatheringId: Long, imageId: Long, userId: Long): Boolean
 }
