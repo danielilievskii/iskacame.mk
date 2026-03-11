@@ -33,4 +33,8 @@ object GatheringExceptionMessages {
     const val INVITATION_NO_LONGER_VALID = "The invitation is no longer valid"
 
     const val CANNOT_INVITE_TO_CANCELLED_GATHERING = "Cannot invite users to a cancelled gathering."
+
+    const val IMAGE_NOT_FOUND = "The requested image could not be found."
+
+
 }
