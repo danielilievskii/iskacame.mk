@@ -1,5 +1,7 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
+import mk.ukim.finki.iskacamebackend.dto.request.user.UpdateUserRequest
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import org.springframework.web.multipart.MultipartFile
 
@@ -27,4 +29,6 @@ interface UserService {
    * Deletes a user's avatar
    */
   fun deleteAvatar()
+
+  fun updateUser(request: UpdateUserRequest): UserDto
 }
