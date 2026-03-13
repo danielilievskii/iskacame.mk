@@ -26,4 +26,5 @@ object AuthExceptionMessages {
   const val VERIFICATION_TOKEN_USED = "Verification token has already been used."
 
   const val EMAIL_ALREADY_VERIFIED = "Email is already verified."
+  const val EMAIL_NOT_VERIFIED = "Email is not verified."
 }
