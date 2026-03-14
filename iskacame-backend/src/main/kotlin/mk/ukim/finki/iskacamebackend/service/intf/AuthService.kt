@@ -80,7 +80,7 @@ interface AuthService {
   fun getCurrentUserDto(): UserDto
 
   /**
-   * Returns the ID of the currently authenticated [User].   *
+   * Returns the ID of the currently authenticated [User].
    *
    * @throws IllegalStateException if the user ID has not been assigned
    */

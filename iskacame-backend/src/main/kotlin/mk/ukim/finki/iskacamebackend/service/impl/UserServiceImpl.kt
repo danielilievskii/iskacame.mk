@@ -6,10 +6,10 @@ import mk.ukim.finki.iskacamebackend.dto.request.user.UpdateUserRequest
 import mk.ukim.finki.iskacamebackend.dto.response.CloudinaryUploadResponse
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
-import mk.ukim.finki.iskacamebackend.model.domain.AvatarImage
-import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
+import mk.ukim.finki.iskacamebackend.model.domain.AvatarImage
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.CloudinaryStorageService
@@ -78,6 +78,15 @@ class UserServiceImpl(
 
     val updatedUser = userRepository.save(user)
     return userMapper.toUserDto(updatedUser)
+  }
+
+  @Transactional
+  override fun disableUser() {
+
+    val user: User = authService.getCurrentUser()
+
+    user.enabled = false
+    userRepository.save(user)
   }
 
   private fun generateAvatarPublicId(userId: Long): String =

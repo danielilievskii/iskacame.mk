@@ -19,6 +19,9 @@ class User(
     @Column(name = "password")
     var password: String,
 
+    @Column(name = "phone")
+    var phone: String? = null,
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
     @Enumerated(EnumType.STRING)
@@ -31,6 +34,6 @@ class User(
     @Column(name = "email_verified")
     var emailVerified: Boolean = false,
 
-    @Column(name = "phone")
-    var phone: String? = null
+    @Column(name = "enabled", nullable = false)
+    var enabled: Boolean = true
 ) : BaseEntity<Long>()

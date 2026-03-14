@@ -1,11 +1,13 @@
 package mk.ukim.finki.iskacamebackend.security
 
 import io.jsonwebtoken.JwtException
+import jakarta.security.auth.message.AuthException
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mk.ukim.finki.iskacamebackend.common.JWTConstants
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
@@ -40,11 +42,13 @@ class JwtAuthenticationFilter(
     try {
       val jwt = getJwtFromRequest(request)
 
-      if (jwt != null) {
+      if (jwt != null && SecurityContextHolder.getContext().authentication == null) {
         jwtService.validateToken(jwt)
 
         val email = jwtService.getEmailFromToken(jwt)
         val userDetails = customUserDetailsService.loadUserByUsername(email)
+
+        AccountStatusUserDetailsChecker().check(userDetails)
 
         val authentication = UsernamePasswordAuthenticationToken(
           userDetails,
@@ -64,6 +68,9 @@ class JwtAuthenticationFilter(
       resolver.resolveException(request, response, null, ex)
       return
     } catch (ex: IllegalArgumentException) {
+      resolver.resolveException(request, response, null, ex)
+      return
+    } catch (ex: AuthException) {
       resolver.resolveException(request, response, null, ex)
       return
     } catch (ex: Exception) {

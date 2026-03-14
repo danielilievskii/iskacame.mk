@@ -56,4 +56,12 @@ class UserController(
     val userDto: UserDto = userService.updateUser(updateUserRequest)
     return ResponseEntity.ok(userDto)
   }
+
+  @PatchMapping("/me/disable")
+  @Operation(summary = "Disable current user account")
+  fun disableAccount(): ResponseEntity<Void> {
+
+    userService.disableUser()
+    return ResponseEntity.noContent().build()
+  }
 }
