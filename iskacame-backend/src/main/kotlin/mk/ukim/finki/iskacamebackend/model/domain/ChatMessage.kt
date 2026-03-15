@@ -1,6 +1,7 @@
 package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.*
+import mk.ukim.finki.iskacamebackend.converter.ChatMessageEncryptConverter
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 import java.time.LocalDateTime
 
@@ -15,6 +16,7 @@ class ChatMessage(
     @JoinColumn(name = "sender_id", nullable = false)
     var sender: User,
 
+    @Convert(converter = ChatMessageEncryptConverter::class)
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     var content: String,
 
