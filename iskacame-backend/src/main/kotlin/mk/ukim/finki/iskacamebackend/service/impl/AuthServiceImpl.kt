@@ -8,6 +8,7 @@ import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
 import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
@@ -151,6 +152,12 @@ class AuthServiceImpl(
 
     val user = getCurrentUser()
     return userMapper.toUserDto(user)
+  }
+
+  override fun getUserDtoByIdentifier(identifier: String): List<UserSearchDto> {
+    val users = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCase(identifier, identifier, identifier)
+
+    return users.map { userMapper.toUserSearchDto(it) }
   }
 
   override fun getCurrentUserId(): Long {

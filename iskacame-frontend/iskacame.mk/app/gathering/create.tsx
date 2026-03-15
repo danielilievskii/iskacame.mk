@@ -18,7 +18,7 @@ import { DateTimePicker, toLocalDateTimeString } from '@/components/ui/date-time
 import { ParticipantSearch } from '@/components/ui/participant-search';
 import { primaryColor } from '@/constants/theme';
 
-export default function AddGatheringScreen() {
+export default function CreateGatheringScreen() {
     const router = useRouter();
 
     const defaultStart = (() => {
@@ -38,14 +38,6 @@ export default function AddGatheringScreen() {
     const [endDate, setEndDate] = useState<Date>(defaultEnd);
     const [selectedParticipants, setSelectedParticipants] = useState<UserSearchDto[]>([]);
     const [loading, setLoading] = useState(false);
-
-    const reset = () => {
-        setTitle('');
-        setDescription('');
-        setStartDate(defaultStart);
-        setEndDate(defaultEnd);
-        setSelectedParticipants([]);
-    };
 
     const handleAddParticipant = (user: UserSearchDto) => {
         setSelectedParticipants((prev) =>
@@ -80,8 +72,7 @@ export default function AddGatheringScreen() {
                 endDate: toLocalDateTimeString(endDate),
                 participantIds: selectedParticipants.map((u) => u.id),
             });
-            reset();
-            router.push({ pathname: '/gathering/[id]', params: { id: gathering.id } });
+            router.replace({ pathname: '/gathering/[id]', params: { id: gathering.id } });
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to create gathering.');
         } finally {
@@ -99,9 +90,21 @@ export default function AddGatheringScreen() {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
+                {/* Header */}
                 <View style={styles.header}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (router.canGoBack()) {
+                                router.back();
+                            } else {
+                                router.replace('/(tabs)');
+                            }
+                        }}
+                        style={styles.backBtn}
+                    >
+                        <Text style={styles.backText}>‹ Back</Text>
+                    </TouchableOpacity>
                     <Text style={styles.pageTitle}>New Gathering</Text>
-                    <Text style={styles.subtitle}>Fill in the details below</Text>
                 </View>
 
                 <View style={styles.card}>
@@ -157,6 +160,7 @@ export default function AddGatheringScreen() {
                         onRemove={handleRemoveParticipant}
                     />
 
+                    {/* Submit */}
                     <TouchableOpacity
                         style={[styles.button, loading && styles.buttonDisabled]}
                         onPress={handleCreate}
@@ -179,8 +183,9 @@ const styles = StyleSheet.create({
     flex: { flex: 1, backgroundColor: '#0B0B0F' },
     container: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
     header: { marginBottom: 28 },
+    backBtn: { marginBottom: 12 },
+    backText: { color: primaryColor, fontSize: 16, fontWeight: '600' },
     pageTitle: { fontSize: 26, fontWeight: '800', color: '#F0EBE1', letterSpacing: -0.5 },
-    subtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
     card: {
         backgroundColor: '#16161D',
         borderRadius: 20,

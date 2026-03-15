@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { authService } from '@/lib/auth-service';
+import { authService } from '@/service/auth-service';
 import { StatusBar } from 'expo-status-bar';
 import { Logo } from "@/components/ui/logo";
 import { primaryColor } from "@/constants/theme";

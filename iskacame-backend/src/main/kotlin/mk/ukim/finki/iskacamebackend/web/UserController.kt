@@ -1,12 +1,14 @@
 package mk.ukim.finki.iskacamebackend.web
 
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.UserService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -25,6 +27,13 @@ class UserController(
 
     val userDto: UserDto = authService.getCurrentUserDto()
     return ResponseEntity.ok(userDto)
+  }
+
+  @GetMapping("/{identifier}")
+  fun getUserByIdentifier(@PathVariable identifier: String): ResponseEntity<List<UserSearchDto>> {
+
+    val users: List<UserSearchDto> = authService.getUserDtoByIdentifier(identifier)
+    return ResponseEntity.ok(users)
   }
 
   @PostMapping("/me/avatar", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])

@@ -1,38 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiRequest, TOKEN_KEY } from '@/lib/api';
-
-export interface UserDto {
-    id: number;
-    name: string;
-    username: string;
-    avatarUrl: string | null;
-}
-
-export interface AuthResponse {
-    token: string;
-    user: UserDto;
-}
-
-export interface SignUpRequest {
-    name: string;
-    username: string;
-    email: string;
-    password: string;
-}
-
-export interface SignInRequest {
-    identifier: string;
-    password: string;
-}
-
-export interface VerifyTokenRequest {
-    email: string;
-    token: string;
-}
-
-export interface ResendTokenRequest {
-    email: string;
-}
+import { apiRequest, TOKEN_KEY } from '@/service/api';
+import {
+    AuthResponse,
+    ResendTokenRequest,
+    SignInRequest,
+    SignUpRequest, UserDto,
+    VerifyTokenRequest
+} from "@/service/dtos/auth-types";
 
 export const authService = {
     async signUp(data: SignUpRequest): Promise<void> {
