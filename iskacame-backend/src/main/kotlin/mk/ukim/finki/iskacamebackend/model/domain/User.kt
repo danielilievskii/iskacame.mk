@@ -30,4 +30,7 @@ class User(
 
     @Column(name = "email_verified")
     var emailVerified: Boolean = false,
+
+    @Column(name = "phone")
+    var phone: String? = null
 ) : BaseEntity<Long>()
