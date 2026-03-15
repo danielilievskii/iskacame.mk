@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface GatheringParticipationRepository : JpaRepository<GatheringParticipation, Long> {
     fun findAllByGatheringId(gatheringId: Long): List<GatheringParticipation>
     fun findAllByUserIdAndStatus(userId: Long, status: ParticipationStatus): List<GatheringParticipation>
+    fun findAllByGatheringIdAndStatus(gatheringId: Long, status: ParticipationStatus): List<GatheringParticipation>
 
     fun findByGatheringIdAndUserId(gatheringId:Long, userId: Long): GatheringParticipation?
     fun findByGatheringIdAndUserIdAndStatus(gatheringId:Long, userId: Long, status: ParticipationStatus): GatheringParticipation?

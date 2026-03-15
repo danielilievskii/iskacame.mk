@@ -9,5 +9,7 @@ data class GatheringSummaryDto(
     val creator: UserDto,
     val title: String,
     val status: GatheringStatus,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val chatRoomId: Long,
+    val unseenMessagesCount: Long?
 )
