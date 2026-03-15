@@ -129,7 +129,9 @@ class AuthServiceImpl(
 
   override fun getCurrentUser(): User {
 
-    val authentication = SecurityContextHolder.getContext().authentication
+    val context = SecurityContextHolder.getContext()
+
+    val authentication = context.authentication
       ?: throw CustomAuthenticationException(AuthExceptionMessages.AUTHENTICATION_ERROR)
 
     val userPrincipal = authentication.principal as? UserPrincipal

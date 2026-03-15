@@ -36,7 +36,8 @@ class SecurityConfig(
             "/h2/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/favicon.ico")
+            "/favicon.ico",
+            "/ws/**")
           .permitAll()
           .anyRequest().authenticated()
       }
