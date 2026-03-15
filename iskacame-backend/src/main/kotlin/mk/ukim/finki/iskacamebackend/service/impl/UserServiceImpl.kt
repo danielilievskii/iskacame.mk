@@ -18,6 +18,8 @@ import mk.ukim.finki.iskacamebackend.utils.ImageValidator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @Service
 class UserServiceImpl(
@@ -30,7 +32,7 @@ class UserServiceImpl(
   override fun getUserById(id: Long): User {
 
     return userRepository.findById(id)
-      .orElseThrow{ ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND) }
+      .orElseThrow { ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND) }
   }
 
   override fun uploadAvatar(file: MultipartFile): String {
@@ -86,7 +88,24 @@ class UserServiceImpl(
     val user: User = authService.getCurrentUser()
 
     user.enabled = false
+    user.disabledAt = Instant.now()
     userRepository.save(user)
+  }
+
+  @Transactional
+  override fun enableUser() {
+
+    val user: User = authService.getCurrentUser()
+
+    user.enabled = true
+    user.disabledAt = null
+    userRepository.save(user)
+  }
+
+  @Transactional
+  override fun cleanUpDisabledUsers(): Int {
+    val cutoff = Instant.now().minus(30, ChronoUnit.DAYS)
+    return userRepository.deleteAllByDisabledAtBeforeAndEnabledFalse(cutoff)
   }
 
   private fun generateAvatarPublicId(userId: Long): String =

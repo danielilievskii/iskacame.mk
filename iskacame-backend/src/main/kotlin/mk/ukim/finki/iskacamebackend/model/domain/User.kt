@@ -3,6 +3,7 @@ package mk.ukim.finki.iskacamebackend.model.domain
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
+import java.time.Instant
 
 @Entity
 @Table(name = "users")
@@ -35,5 +36,8 @@ class User(
     var emailVerified: Boolean = false,
 
     @Column(name = "enabled", nullable = false)
-    var enabled: Boolean = true
-) : BaseEntity<Long>()
+    var enabled: Boolean = true,
+
+    @Column(name = "disabled_at")
+    var disabledAt: Instant? = null
+    ) : BaseEntity<Long>()

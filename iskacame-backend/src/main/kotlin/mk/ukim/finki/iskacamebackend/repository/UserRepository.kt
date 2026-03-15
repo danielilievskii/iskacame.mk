@@ -3,6 +3,7 @@ package mk.ukim.finki.iskacamebackend.repository
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import java.time.Instant
 
 @Repository
 interface UserRepository : JpaRepository<User, Long> {
@@ -11,4 +12,5 @@ interface UserRepository : JpaRepository<User, Long> {
     fun existsByUsername(username: String): Boolean
     fun existsByEmail(email: String): Boolean
     fun existsByUsernameAndIdNot(username: String, id: Long): Boolean
+    fun deleteAllByDisabledAtBeforeAndEnabledFalse(cutoff: Instant): Int
 }
