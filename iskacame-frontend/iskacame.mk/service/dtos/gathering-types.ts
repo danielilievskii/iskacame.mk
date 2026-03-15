@@ -26,7 +26,7 @@ export interface GatheringSummaryDto {
     creator: UserDto;
     title: string;
     status: GatheringStatus;
-    createdAt: string; // ISO Instant
+    createdAt: string;
 }
 
 export interface GatheringDetailsDto {
@@ -34,7 +34,7 @@ export interface GatheringDetailsDto {
     creatorId: number;
     title: string;
     description: string | null;
-    startDate: string; // ISO LocalDateTime
+    startDate: string;
     endDate: string;
     status: GatheringStatus;
     finalizedTime: string | null;
