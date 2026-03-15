@@ -22,6 +22,13 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: 'Gatherings',
+                    tabBarIcon: ({ color }) => <IconSymbol size={26} name="rectangle.3.group" color={color} />,
+                }}
+            />
+            <Tabs.Screen
+                name="add-gathering"
+                options={{
+                    title: 'New Gathering',
                     tabBarIcon: ({ color }) => <IconSymbol size={26} name="house.fill" color={color} />,
                 }}
             />
@@ -29,7 +36,7 @@ export default function TabLayout() {
                 name="profile"
                 options={{
                     title: 'Profile',
-                    tabBarIcon: ({ color }) => <IconSymbol size={26} name="paperplane.fill" color={color} />,
+                    tabBarIcon: ({ color }) => <IconSymbol size={26} name="rectangle.3.group" color={color} />,
                 }}
             />
         </Tabs>
