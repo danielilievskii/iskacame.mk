@@ -40,11 +40,11 @@ interface AuthService {
   fun signIn(request: SignInRequest): AuthResponse
 
   /**
-   * Resends a verification token to the user associated with the provided email address.
+   * Resends a verification token to the user's email address using the provided email/username.
    *
-   * @param request the resend request containing the user's email
+   * @param request the resend request containing the user's email/username
    *
-   * @throws ResourceNotFoundException if no user exists with the provided email
+   * @throws ResourceNotFoundException if no user exists with the provided email/username
    * @throws ConflictException if the user's email is already verified
    */
   fun resendVerificationToken(request: ResendTokenRequest)
@@ -52,9 +52,9 @@ interface AuthService {
   /**
    * Verifies a user's email address using the provided verification token.
    *
-   * @param request the verification request containing the user's email and token
+   * @param request the verification request containing the user's email/username and token
    *
-   * @throws ResourceNotFoundException if no user exists with the provided email
+   * @throws ResourceNotFoundException if no user exists with the provided email/username
    * @throws ConflictException if the user's email is already verified
    */
   fun verifyEmail(request: VerifyTokenRequest)

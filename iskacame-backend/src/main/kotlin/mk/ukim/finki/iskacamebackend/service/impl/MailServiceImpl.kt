@@ -8,6 +8,9 @@ import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
 
+/**
+ * Implementation of MailService
+ */
 @Service
 class MailServiceImpl(
   private val mailSender: JavaMailSender,

@@ -21,6 +21,9 @@ import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+/**
+ * Implementation of UserService
+ */
 @Service
 class UserServiceImpl(
   private val userRepository: UserRepository,

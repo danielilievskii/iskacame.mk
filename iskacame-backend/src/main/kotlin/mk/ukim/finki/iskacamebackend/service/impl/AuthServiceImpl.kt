@@ -107,12 +107,7 @@ class AuthServiceImpl(
 
   override fun resendVerificationToken(request: ResendTokenRequest) {
 
-    val user = userRepository.findByEmail(request.email)
-      ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
-
-    if (user.emailVerified) {
-      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
-    }
+    val user = getUnverifiedUserByIdentifier(request.identifier)
 
     val verificationToken = verificationTokenService.createVerificationToken(user)
 
@@ -123,12 +118,7 @@ class AuthServiceImpl(
 
   override fun verifyEmail(request: VerifyTokenRequest) {
 
-    val user = userRepository.findByEmail(request.email)
-    ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
-
-    if (user.emailVerified) {
-      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
-    }
+    val user = getUnverifiedUserByIdentifier(request.identifier)
 
     verificationTokenService.verifyToken(user, request.token)
   }
@@ -157,5 +147,20 @@ class AuthServiceImpl(
 
     val user = getCurrentUser()
     return user.id ?: throw IllegalStateException("User ID not assigned")
+  }
+
+  private fun getUnverifiedUserByIdentifier(identifier: String): User {
+
+    val user = if (identifier.contains("@")) {
+      userRepository.findByEmail(identifier)
+    } else {
+      userRepository.findByUsername(identifier)
+    } ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    if (user.emailVerified) {
+      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
+    }
+
+    return user
   }
 }
