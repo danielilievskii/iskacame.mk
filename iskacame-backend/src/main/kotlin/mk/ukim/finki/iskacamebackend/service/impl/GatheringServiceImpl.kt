@@ -21,6 +21,9 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+/**
+ * Implementation of GatheringService
+ */
 @Service
 class GatheringServiceImpl(
     private val gatheringRepository: GatheringRepository,

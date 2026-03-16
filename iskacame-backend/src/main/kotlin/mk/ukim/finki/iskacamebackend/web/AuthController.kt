@@ -10,6 +10,7 @@ import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -51,5 +52,13 @@ class AuthController(
 
     authService.verifyEmail(verifyTokenRequest)
     return ResponseEntity.ok().build()
+  }
+
+  @PatchMapping("/re-enable")
+  @Operation(summary = "Re-enable user's account")
+  fun enableAccount(@Valid @RequestBody signInRequest: SignInRequest): ResponseEntity<Void> {
+
+    authService.reactivateAccount(signInRequest)
+    return ResponseEntity.noContent().build()
   }
 }

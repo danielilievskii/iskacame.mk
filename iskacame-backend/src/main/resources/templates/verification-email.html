@@ -4,49 +4,81 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Verify your email</title>
+    <style>
+        .verification-code {
+            display: inline-block;
+            padding: 16px 28px;
+            border-radius: 10px;
+            background: #f3e9ff;
+            border: 2px solid #551fd1;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: #551fd1;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+    </style>
 </head>
-<body style="margin:0;padding:0;background:#f4f6f8;font-family: Arial, Helvetica, sans-serif;color:#333;">
-<table role="presentation"
-       style="overflow:hidden;">
+
+<body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#333;">
+
+<table role="presentation" style="padding:40px 0; width: 100%; border-collapse: collapse;">
     <tr>
-        <td style="padding:24px 32px 16px 32px;">
-            <h2 style="margin:0 0 8px 0;font-size:20px;color:#222;">Email verification</h2>
-            <p style="margin:0 0 18px 0;font-size:14px;color:#555;">
-                Hello <span th:text="${name}"></span> — thanks for registering on <span
-                    style="font-style: italic; font-weight: bold; color: #551fd1">Iskacame.mk</span>.
-            </p>
+        <td>
 
-            <p style="margin:0 0 8px 0;font-size:14px;color:#555;">
-                Use the code below to verify your email address:
-            </p>
+            <table role="presentation"
+                   style="background:#ffffff; border-radius:12px; border-collapse:collapse; overflow:hidden; border:1px solid #e6e8eb; width: 520px; margin: auto">
 
-            <div style="margin-top:14px;margin-bottom:18px;">
-                <div style="display:inline-block;padding:14px 22px;border-radius:8px;background: rgba(178,66,255,0.5);border:1px solid rgba(85,31,209,0.8);font-weight:700;font-size:22px;color: #551fd1;letter-spacing:4px;">
-                    <!--/*@thymesVar id="verificationCode" type="java.lang.String"*/-->
-                    <span th:text="${verificationCode}">123456</span>
-                </div>
-            </div>
+                <tr>
+                    <td style="padding:32px">
+                        <h1 style="margin:0 0 20px 0;font-size:22px;font-weight:700;color:#551fd1; font-style: italic">
+                            Iskacame.mk
+                        </h1>
+                        <h2 style="margin:0 0 12px 0;font-size:20px;color:#222;">
+                            Verify your email
+                        </h2>
 
-            <p style="margin:12px 0 0 0;font-size:13px;color:#777;">
-                If the code doesn't work, request a new one from the app. This code is valid for a limited
-                time.
-            </p>
+                        <p style="margin:0 0 20px 0;font-size:14px;color:#555;line-height:1.6;">
+                            Hello <strong th:text="${name}">User</strong>,
+                            thanks for registering on <strong style="color: #551fd1">Iskacame.mk</strong>.
+                        </p>
 
-            <hr style="border:none;border-top:1px solid #eef1f4;margin:18px 0;">
+                        <p style="margin:0 0 28px 0;font-size:14px;color:#555;">
+                            Use the verification code below to confirm your email address:
+                        </p>
 
-            <p style="margin:0;font-size:12px;color:#999;">
-                If you did not request this, you can safely ignore this email.
-            </p>
+                        <div class="verification-code">
+                            <!--/*@thymesVar id="verificationCode" type="java.lang.String"*/-->
+                            <span th:text="${verificationCode}">XXXXXX</span>
+                        </div>
+
+                        <p style="margin:0 0 16px 0;font-size:13px;color:#777;line-height:1.6;">
+                            This code is valid for a limited time. If it expires, you can request a new one from the
+                            app.
+                        </p>
+
+                        <hr style="border:none;border-top:1px solid #eef1f4;margin:24px 0;">
+
+                        <p style="margin:0;font-size:12px;color:#999;">
+                            If you didn't create an account, you can safely ignore this email.
+                        </p>
+
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="background:#fafbfc;padding:16px;text-align:center;font-size:12px;color:#9aa3ae;">
+                        © <span th:text="${#dates.format(#dates.createNow(),'yyyy')}">2026</span> Iskacame.mk — All
+                        rights reserved
+                    </td>
+                </tr>
+
+            </table>
+
         </td>
     </tr>
-
-    <tr>
-        <td style="padding:12px 32px;text-align:center;font-size:12px;color:#9aa3ae;">
-            © <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2026</span> Iskacame.mk — All
-            rights reserved
-        </td>
-    </tr>
-
 </table>
+
 </body>
 </html>

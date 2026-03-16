@@ -126,11 +126,12 @@ class AuthExceptionHandler {
    * Handles attempts to access resources with disabled accounts.
    */
   @ExceptionHandler(DisabledException::class)
-  fun handleDisabled(): ResponseEntity<String> {
+  fun handleDisabled(exception: DisabledException): ResponseEntity<String> {
+    val message = exception.message ?: AuthExceptionMessages.ACCOUNT_DISABLED
 
     return ResponseEntity
       .status(HttpStatus.FORBIDDEN)
-      .body(AuthExceptionMessages.ACCOUNT_DISABLED)
+      .body(message)
   }
 
   /**

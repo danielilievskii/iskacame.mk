@@ -8,6 +8,7 @@ import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.events.UserEnabledEvent
 import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
@@ -22,6 +23,8 @@ import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.authentication.DisabledException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -70,7 +73,8 @@ class AuthServiceImpl(
 
     val verificationToken = verificationTokenService.createVerificationToken(savedUser)
 
-    eventPublisher.publishEvent(UserRegisteredEvent(savedUser, verificationToken))
+    val event = UserRegisteredEvent(savedUser, verificationToken)
+    eventPublisher.publishEvent(event)
 
     return userMapper.toUserDto(savedUser)
   }
@@ -83,9 +87,15 @@ class AuthServiceImpl(
     )
 
     val authentication = authenticationManager.authenticate(authToken)
-    SecurityContextHolder.getContext().authentication = authentication
-
     val userPrincipal = authentication.principal as UserPrincipal
+
+    if (!userPrincipal.emailVerified) {
+      throw DisabledException(AuthExceptionMessages.EMAIL_NOT_VERIFIED)
+    }
+
+    val context = SecurityContextHolder.getContext()
+    context.authentication = authentication
+
     val token = jwtService.generateToken(userPrincipal)
 
     val user = userRepository.findByEmail(userPrincipal.email)
@@ -101,8 +111,7 @@ class AuthServiceImpl(
 
   override fun resendVerificationToken(request: ResendTokenRequest) {
 
-    val user = userRepository.findByEmail(request.email)
-      ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+    val user = getUserByIdentifier(request.identifier)
 
     if (user.emailVerified) {
       throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
@@ -110,15 +119,13 @@ class AuthServiceImpl(
 
     val verificationToken = verificationTokenService.createVerificationToken(user)
 
-    eventPublisher.publishEvent(
-      UserRegisteredEvent(user, verificationToken)
-    )
+    val event = UserRegisteredEvent(user, verificationToken)
+    eventPublisher.publishEvent(event)
   }
 
   override fun verifyEmail(request: VerifyTokenRequest) {
 
-    val user = userRepository.findByEmail(request.email)
-    ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+    val user = getUserByIdentifier(request.identifier)
 
     if (user.emailVerified) {
       throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
@@ -127,9 +134,34 @@ class AuthServiceImpl(
     verificationTokenService.verifyToken(user, request.token)
   }
 
+  override fun reactivateAccount(request: SignInRequest) {
+
+    val user = getUserByIdentifier(request.identifier)
+
+    val isPasswordCorrect = passwordEncoder.matches(request.password, user.password)
+
+    if (!isPasswordCorrect) {
+      throw BadCredentialsException(AuthExceptionMessages.INVALID_CREDENTIALS)
+    }
+
+    if (user.enabled) {
+      throw ConflictException(AuthExceptionMessages.ACCOUNT_ALREADY_ENABLED)
+    }
+
+    user.enabled = true
+    user.disabledAt = null
+
+    userRepository.save(user)
+
+    val event = UserEnabledEvent(user)
+    eventPublisher.publishEvent(event)
+  }
+
   override fun getCurrentUser(): User {
 
-    val authentication = SecurityContextHolder.getContext().authentication
+    val context = SecurityContextHolder.getContext()
+
+    val authentication = context.authentication
       ?: throw CustomAuthenticationException(AuthExceptionMessages.AUTHENTICATION_ERROR)
 
     val userPrincipal = authentication.principal as? UserPrincipal
@@ -151,5 +183,16 @@ class AuthServiceImpl(
 
     val user = getCurrentUser()
     return user.id ?: throw IllegalStateException("User ID not assigned")
+  }
+
+  private fun getUserByIdentifier(identifier: String): User {
+
+    val user = if (identifier.contains("@")) {
+      userRepository.findByEmail(identifier)
+    } else {
+      userRepository.findByUsername(identifier)
+    } ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    return user
   }
 }
