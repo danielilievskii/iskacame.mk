@@ -18,6 +18,7 @@ import mk.ukim.finki.iskacamebackend.repository.*
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.ChatService
 import mk.ukim.finki.iskacamebackend.service.intf.UserService
+import mk.ukim.finki.iskacamebackend.websocket.WebSocketSessionRegistry
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -35,7 +36,8 @@ class ChatServiceImpl(
     private val authService: AuthService,
     private val chatMessageMapper: ChatMessageMapper,
     private val userService: UserService,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val webSocketSessionRegistry: WebSocketSessionRegistry
 ) : ChatService {
 
     override fun createChatRoom(gathering: Gathering): ChatRoom {
@@ -89,9 +91,14 @@ class ChatServiceImpl(
 
         val chatMessageDto = chatMessageMapper.toChatMessageDto(savedMessage)
 
+        val offlineRecipientIds = recipients
+            .filter { !webSocketSessionRegistry.isConnected(it.id!!) }
+            .map { it.id!! }
+
         val event = ChatMessageSentEvent(
             chatRoomId = chatRoomId,
-            message = chatMessageDto
+            message = chatMessageDto,
+            offlineRecipientIds = offlineRecipientIds
         )
         eventPublisher.publishEvent(event)
     }

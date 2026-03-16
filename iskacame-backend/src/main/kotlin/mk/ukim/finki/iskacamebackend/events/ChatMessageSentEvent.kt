@@ -4,5 +4,6 @@ import mk.ukim.finki.iskacamebackend.dto.response.chat.ChatMessageDto
 
 data class ChatMessageSentEvent(
     val chatRoomId: Long,
-    val message: ChatMessageDto
+    val message: ChatMessageDto,
+    val offlineRecipientIds: List<Long>
 )
