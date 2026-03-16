@@ -1,11 +1,13 @@
 package mk.ukim.finki.iskacamebackend.security
 
 import io.jsonwebtoken.JwtException
+import jakarta.security.auth.message.AuthException
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mk.ukim.finki.iskacamebackend.common.JWTConstants
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
@@ -39,12 +41,16 @@ class JwtAuthenticationFilter(
   ) {
     try {
       val jwt = getJwtFromRequest(request)
+      val context = SecurityContextHolder.getContext()
 
-      if (jwt != null) {
+      if (jwt != null && context.authentication == null) {
         jwtService.validateToken(jwt)
 
         val email = jwtService.getEmailFromToken(jwt)
         val userDetails = customUserDetailsService.loadUserByUsername(email)
+
+        val accountStatusChecker = AccountStatusUserDetailsChecker()
+        accountStatusChecker.check(userDetails)
 
         val authentication = UsernamePasswordAuthenticationToken(
           userDetails,
@@ -52,8 +58,8 @@ class JwtAuthenticationFilter(
           userDetails.authorities
         )
 
-        authentication.details = WebAuthenticationDetailsSource()
-          .buildDetails(request)
+        val detailsSource = WebAuthenticationDetailsSource()
+        authentication.details = detailsSource.buildDetails(request)
 
         SecurityContextHolder.getContext().authentication = authentication
       }
@@ -64,6 +70,9 @@ class JwtAuthenticationFilter(
       resolver.resolveException(request, response, null, ex)
       return
     } catch (ex: IllegalArgumentException) {
+      resolver.resolveException(request, response, null, ex)
+      return
+    } catch (ex: AuthException) {
       resolver.resolveException(request, response, null, ex)
       return
     } catch (ex: Exception) {

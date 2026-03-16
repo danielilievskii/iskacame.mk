@@ -8,6 +8,9 @@ import mk.ukim.finki.iskacamebackend.repository.GatheringRepository
 import mk.ukim.finki.iskacamebackend.service.intf.PermissionService
 import org.springframework.stereotype.Service
 
+/**
+ * Implementation of PermissionService
+ */
 @Service("permissionService")
 class PermissionServiceImpl(
     private val gatheringParticipationRepository: GatheringParticipationRepository,

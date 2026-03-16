@@ -1,7 +1,10 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
+import mk.ukim.finki.iskacamebackend.dto.request.user.UpdateUserRequest
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import org.springframework.web.multipart.MultipartFile
+import mk.ukim.finki.iskacamebackend.exception.ConflictException
 
 interface UserService {
 
@@ -27,4 +30,27 @@ interface UserService {
    * Deletes a user's avatar
    */
   fun deleteAvatar()
+
+  /**
+   * Updates the current user's profile information.
+   * Validates that the new username is not already taken by another user.
+   *
+   * @param request The update request containing a new name, username, and phone
+   * @return The updated user details as a UserDto
+   * @throws ConflictException if the username is already in use by another account
+   */
+  fun updateUser(request: UpdateUserRequest): UserDto
+
+  /**
+   * Disables the current user's account.
+   * Marks the account as disabled and records the timestamp of deactivation.
+   */
+  fun disableUser()
+
+  /**
+   * Permanently deletes accounts that have been disabled for more than 30 days.
+   *
+   * @return The number of accounts deleted
+   */
+  fun cleanUpDisabledUsers(): Int
 }
