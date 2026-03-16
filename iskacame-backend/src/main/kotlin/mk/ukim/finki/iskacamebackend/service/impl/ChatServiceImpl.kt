@@ -1,10 +1,14 @@
 package mk.ukim.finki.iskacamebackend.service.impl
 
+import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.ChatExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.request.chat.SendMessageRequest
 import mk.ukim.finki.iskacamebackend.dto.response.chat.ChatMessageDto
+import mk.ukim.finki.iskacamebackend.events.ChatMessageDeletedEvent
 import mk.ukim.finki.iskacamebackend.events.ChatMessageSentEvent
 import mk.ukim.finki.iskacamebackend.events.ChatMessagesSeenEvent
+import mk.ukim.finki.iskacamebackend.exception.ConflictException
+import mk.ukim.finki.iskacamebackend.exception.CustomAccessDeniedException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.ChatMessageMapper
 import mk.ukim.finki.iskacamebackend.model.domain.*
@@ -20,6 +24,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class ChatServiceImpl(
@@ -87,6 +92,30 @@ class ChatServiceImpl(
         val event = ChatMessageSentEvent(
             chatRoomId = chatRoomId,
             message = chatMessageDto
+        )
+        eventPublisher.publishEvent(event)
+    }
+
+    @Transactional
+    override fun deleteMessage(messageId: Long) {
+
+        val message = findChatMessageById(messageId)
+        val currentUserId = authService.getCurrentUserId()
+
+        if (message.sender.id != currentUserId) {
+            throw CustomAccessDeniedException(AuthExceptionMessages.ACCESS_DENIED)
+        }
+
+        if (message.deletedAt != null) {
+            throw ConflictException(ChatExceptionMessages.CHAT_MESSAGE_ALREADY_DELETED)
+        }
+
+        message.deletedAt = LocalDateTime.now()
+        chatMessageRepository.save(message)
+
+        val event = ChatMessageDeletedEvent(
+            chatRoomId = message.chatRoom.id!!,
+            messageId = messageId
         )
         eventPublisher.publishEvent(event)
     }

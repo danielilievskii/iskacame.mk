@@ -46,11 +46,21 @@ interface ChatService {
     fun sendMessage(chatRoomId: Long, request: SendMessageRequest, senderId: Long)
 
     /**
+     * Soft-deletes a message.
+     *
+     * Publishes a [ChatMessageDeletedEvent] after commit to notify room subscribers.
+     *
+     * @param messageId the ID of the message to delete
+     * @throws CustomAccessDeniedException if the current user is not the message sender
+     * @throws ConflictException if the message is already deleted
+     */
+    fun deleteMessage(messageId: Long)
+
+    /**
      * Marks all messages in the chat room as DELIVERED for the given user.
      * Typically called when the client connects or receives messages.
      *
      * @param chatRoomId id of the chat room
-     * @param recipientId user receiving the messages
      */
     fun markChatRoomMessagesDelivered(chatRoomId: Long)
 

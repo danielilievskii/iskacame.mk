@@ -28,6 +28,14 @@ class ChatController(
         return ResponseEntity.ok(page)
     }
 
+    @DeleteMapping("/messages/{messageId}")
+    @Operation(summary = "Delete chat room message")
+    fun deleteChatRoomMessage(@PathVariable messageId: Long): ResponseEntity<Void> {
+
+        chatService.deleteMessage(messageId)
+        return ResponseEntity.noContent().build()
+    }
+
     @GetMapping("/room/{chatRoomId}/delivered")
     @Operation(summary = "Mark chat room messages as delivered")
     fun markChatRoomMessagesDelivered(@PathVariable chatRoomId: Long): ResponseEntity<Void> {
