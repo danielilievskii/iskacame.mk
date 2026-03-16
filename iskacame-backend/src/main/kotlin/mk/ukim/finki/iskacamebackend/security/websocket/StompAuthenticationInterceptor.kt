@@ -2,8 +2,8 @@ package mk.ukim.finki.iskacamebackend.security.websocket
 
 import mk.ukim.finki.iskacamebackend.common.JWTConstants
 import mk.ukim.finki.iskacamebackend.common.WebSocketExceptionMessages
-import mk.ukim.finki.iskacamebackend.security.CustomUserDetailsService
-import mk.ukim.finki.iskacamebackend.security.JwtService
+import mk.ukim.finki.iskacamebackend.security.principal.CustomUserDetailsService
+import mk.ukim.finki.iskacamebackend.security.jwt.JwtService
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.MessageDeliveryException

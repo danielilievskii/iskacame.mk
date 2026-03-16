@@ -1,7 +1,7 @@
 package mk.ukim.finki.iskacamebackend.web.ws
 
 import mk.ukim.finki.iskacamebackend.dto.request.chat.SendMessageRequest
-import mk.ukim.finki.iskacamebackend.security.UserPrincipal
+import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
 import mk.ukim.finki.iskacamebackend.service.intf.ChatService
 import org.springframework.messaging.handler.annotation.*
 import org.springframework.security.core.Authentication

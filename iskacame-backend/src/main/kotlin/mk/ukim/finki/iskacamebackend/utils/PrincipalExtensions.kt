@@ -1,6 +1,6 @@
 package mk.ukim.finki.iskacamebackend.utils
 
-import mk.ukim.finki.iskacamebackend.security.UserPrincipal
+import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import java.security.Principal
 

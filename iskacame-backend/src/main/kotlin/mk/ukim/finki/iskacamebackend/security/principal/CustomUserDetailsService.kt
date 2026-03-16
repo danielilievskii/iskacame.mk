@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.security
+package mk.ukim.finki.iskacamebackend.security.principal
 
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper

@@ -1,6 +1,6 @@
 package mk.ukim.finki.iskacamebackend.config
 
-import mk.ukim.finki.iskacamebackend.security.JwtAuthenticationFilter
+import mk.ukim.finki.iskacamebackend.security.jwt.JwtAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
