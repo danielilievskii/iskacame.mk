@@ -73,7 +73,8 @@ class AuthServiceImpl(
 
     val verificationToken = verificationTokenService.createVerificationToken(savedUser)
 
-    eventPublisher.publishEvent(UserRegisteredEvent(savedUser, verificationToken))
+    val event = UserRegisteredEvent(savedUser, verificationToken)
+    eventPublisher.publishEvent(event)
 
     return userMapper.toUserDto(savedUser)
   }
@@ -92,7 +93,8 @@ class AuthServiceImpl(
       throw DisabledException(AuthExceptionMessages.EMAIL_NOT_VERIFIED)
     }
 
-    SecurityContextHolder.getContext().authentication = authentication
+    val context = SecurityContextHolder.getContext()
+    context.authentication = authentication
 
     val token = jwtService.generateToken(userPrincipal)
 
@@ -117,7 +119,8 @@ class AuthServiceImpl(
 
     val verificationToken = verificationTokenService.createVerificationToken(user)
 
-    eventPublisher.publishEvent(UserRegisteredEvent(user, verificationToken))
+    val event = UserRegisteredEvent(user, verificationToken)
+    eventPublisher.publishEvent(event)
   }
 
   override fun verifyEmail(request: VerifyTokenRequest) {
@@ -135,7 +138,9 @@ class AuthServiceImpl(
 
     val user = getUserByIdentifier(request.identifier)
 
-    if (!passwordEncoder.matches(request.password, user.password)) {
+    val isPasswordCorrect = passwordEncoder.matches(request.password, user.password)
+
+    if (!isPasswordCorrect) {
       throw BadCredentialsException(AuthExceptionMessages.INVALID_CREDENTIALS)
     }
 
@@ -148,12 +153,15 @@ class AuthServiceImpl(
 
     userRepository.save(user)
 
-    eventPublisher.publishEvent(UserEnabledEvent(user))
+    val event = UserEnabledEvent(user)
+    eventPublisher.publishEvent(event)
   }
 
   override fun getCurrentUser(): User {
 
-    val authentication = SecurityContextHolder.getContext().authentication
+    val context = SecurityContextHolder.getContext()
+
+    val authentication = context.authentication
       ?: throw CustomAuthenticationException(AuthExceptionMessages.AUTHENTICATION_ERROR)
 
     val userPrincipal = authentication.principal as? UserPrincipal

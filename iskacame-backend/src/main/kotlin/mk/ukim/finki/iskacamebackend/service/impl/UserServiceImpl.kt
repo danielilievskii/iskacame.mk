@@ -72,8 +72,9 @@ class UserServiceImpl(
   override fun updateUser(request: UpdateUserRequest): UserDto {
 
     val user: User = authService.getCurrentUser()
+    val isUsernameTaken = userRepository.existsByUsernameAndIdNot(request.username, user.id!!)
 
-    if (userRepository.existsByUsernameAndIdNot(request.username, user.id!!)) {
+    if (isUsernameTaken) {
       throw ConflictException(AuthExceptionMessages.USERNAME_TAKEN)
     }
 
