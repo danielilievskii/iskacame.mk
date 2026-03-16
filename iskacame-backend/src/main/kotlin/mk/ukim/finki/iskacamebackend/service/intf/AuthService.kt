@@ -60,6 +60,13 @@ interface AuthService {
   fun verifyEmail(request: VerifyTokenRequest)
 
   /**
+   * Enables the user's account.
+   * Marks the account as enabled and clearing any previous deactivation timestamp.
+   * @param request the sign-in request containing username and password
+   */
+  fun reactivateAccount(request: SignInRequest)
+
+  /**
    * Returns the currently authenticated [User] from the current JWT
    * by extracting the "email" claim and looking it up.
    *

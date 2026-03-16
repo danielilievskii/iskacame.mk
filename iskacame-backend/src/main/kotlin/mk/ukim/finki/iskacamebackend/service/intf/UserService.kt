@@ -48,12 +48,6 @@ interface UserService {
   fun disableUser()
 
   /**
-   * Enables the current user's account.
-   * Marks the account as enabled and clearing any previous deactivation timestamp.
-   */
-  fun enableUser()
-
-  /**
    * Permanently deletes accounts that have been disabled for more than 30 days.
    *
    * @return The number of accounts deleted

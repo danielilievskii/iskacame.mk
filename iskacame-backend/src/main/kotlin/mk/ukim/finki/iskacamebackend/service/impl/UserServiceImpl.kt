@@ -96,16 +96,6 @@ class UserServiceImpl(
   }
 
   @Transactional
-  override fun enableUser() {
-
-    val user: User = authService.getCurrentUser()
-
-    user.enabled = true
-    user.disabledAt = null
-    userRepository.save(user)
-  }
-
-  @Transactional
   override fun cleanUpDisabledUsers(): Int {
     val cutoff = Instant.now().minus(30, ChronoUnit.DAYS)
     return userRepository.deleteAllByDisabledAtBeforeAndEnabledFalse(cutoff)

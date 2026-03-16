@@ -8,6 +8,7 @@ import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.events.UserEnabledEvent
 import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
@@ -22,6 +23,7 @@ import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.DisabledException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -107,20 +109,46 @@ class AuthServiceImpl(
 
   override fun resendVerificationToken(request: ResendTokenRequest) {
 
-    val user = getUnverifiedUserByIdentifier(request.identifier)
+    val user = getUserByIdentifier(request.identifier)
+
+    if (user.emailVerified) {
+      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
+    }
 
     val verificationToken = verificationTokenService.createVerificationToken(user)
 
-    eventPublisher.publishEvent(
-      UserRegisteredEvent(user, verificationToken)
-    )
+    eventPublisher.publishEvent(UserRegisteredEvent(user, verificationToken))
   }
 
   override fun verifyEmail(request: VerifyTokenRequest) {
 
-    val user = getUnverifiedUserByIdentifier(request.identifier)
+    val user = getUserByIdentifier(request.identifier)
+
+    if (user.emailVerified) {
+      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
+    }
 
     verificationTokenService.verifyToken(user, request.token)
+  }
+
+  override fun reactivateAccount(request: SignInRequest) {
+
+    val user = getUserByIdentifier(request.identifier)
+
+    if (!passwordEncoder.matches(request.password, user.password)) {
+      throw BadCredentialsException(AuthExceptionMessages.INVALID_CREDENTIALS)
+    }
+
+    if (user.enabled) {
+      throw ConflictException(AuthExceptionMessages.ACCOUNT_ALREADY_ENABLED)
+    }
+
+    user.enabled = true
+    user.disabledAt = null
+
+    userRepository.save(user)
+
+    eventPublisher.publishEvent(UserEnabledEvent(user))
   }
 
   override fun getCurrentUser(): User {
@@ -149,17 +177,13 @@ class AuthServiceImpl(
     return user.id ?: throw IllegalStateException("User ID not assigned")
   }
 
-  private fun getUnverifiedUserByIdentifier(identifier: String): User {
+  private fun getUserByIdentifier(identifier: String): User {
 
     val user = if (identifier.contains("@")) {
       userRepository.findByEmail(identifier)
     } else {
       userRepository.findByUsername(identifier)
     } ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
-
-    if (user.emailVerified) {
-      throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
-    }
 
     return user
   }
