@@ -1,0 +1,17 @@
+services:
+  iskacame_db:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: ${PG_DB_USER}
+      POSTGRES_PASSWORD: ${PG_DB_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    container_name: iskacame_db
+
+volumes:
+  db-data:
+

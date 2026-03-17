@@ -1,50 +1,48 @@
 package mk.ukim.finki.iskacamebackend.websocket
 
+import jakarta.annotation.PostConstruct
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
-import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Tracks active WebSocket sessions per user.
+ * Registry for tracking active WebSocket sessions per user.
  *
- * In-memory only. Should be replaced with Redis for distributed deployments.
+ * Note: On application startup, all existing session keys are cleared
+ * to avoid stale data from previous runs.
  */
 @Component
-class WebSocketSessionRegistry {
+class WebSocketSessionRegistry(
+    private val redis: StringRedisTemplate
+) {
 
-    private val sessions = ConcurrentHashMap<Long, MutableSet<String>>()
+    companion object {
+        private const val KEY_PREFIX = "ws:sessions:"
+    }
+
+    @PostConstruct
+    fun clearStaleSessions() {
+        redis.keys("$KEY_PREFIX*").forEach { redis.delete(it) }
+    }
+
+    private fun key(userId: Long) = "$KEY_PREFIX$userId"
 
     /**
-     * Registers a session for the user.
-     *
-     * @param userId the ID of the authenticated user
-     * @param sessionId the session ID assigned by Spring for this connection
+     * Register a new WebSocket session for the given user.
      */
     fun registerSession(userId: Long, sessionId: String) {
-        sessions.getOrPut(userId) { ConcurrentHashMap.newKeySet() }.add(sessionId)
+        redis.opsForSet().add(key(userId), sessionId)
     }
 
     /**
-     * Removes a specific session for user.
-     *
-     * @param userId the ID of the authenticated user
-     * @param sessionId the session ID to remove
+     * Unregister a WebSocket session for the given user.
      */
     fun unregisterSession(userId: Long, sessionId: String) {
-
-        val userSessions = sessions[userId] ?: return
-
-        userSessions.remove(sessionId)
-
-        if (userSessions.isEmpty()) {
-            sessions.remove(userId)
-        }
+        redis.opsForSet().remove(key(userId), sessionId)
     }
 
     /**
-     * Returns true if the user has at least one active session.
-     *
-     * @param userId the ID of the user to check
-     * @return true if connected, false if offline or app is closed
+     * Check if the user currently has any active WebSocket sessions.
      */
-    fun isConnected(userId: Long): Boolean = sessions[userId]?.isNotEmpty() == true
+    fun isConnected(userId: Long): Boolean =
+        (redis.opsForSet().size(key(userId)) ?: 0) > 0
 }
