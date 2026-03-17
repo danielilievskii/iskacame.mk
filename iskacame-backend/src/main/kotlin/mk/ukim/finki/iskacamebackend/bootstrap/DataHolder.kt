@@ -1,12 +1,14 @@
 package mk.ukim.finki.iskacamebackend.bootstrap
 
 import jakarta.annotation.PostConstruct
+import mk.ukim.finki.iskacamebackend.model.domain.ChatRoom
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
+import mk.ukim.finki.iskacamebackend.repository.ChatRoomRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringRepository
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
@@ -20,11 +22,13 @@ class DataHolder(
   private val userRepository: UserRepository,
   private val passwordEncoder: PasswordEncoder,
   private val gatheringRepository: GatheringRepository,
-  private val gatheringParticipationRepository: GatheringParticipationRepository
+  private val gatheringParticipationRepository: GatheringParticipationRepository,
+  private val chatRoomRepository: ChatRoomRepository
 ) {
   @PostConstruct
   fun init() {
 
+    val users = mutableListOf<User>()
     if (userRepository.count() == 0L) {
 
       val user1 = User(
@@ -38,6 +42,7 @@ class DataHolder(
         emailVerified = true,
         enabled = true
       )
+      users.add(user1)
 
       val user2 = User(
         name = "Ljubica Damjanovik",
@@ -50,6 +55,7 @@ class DataHolder(
         emailVerified = true,
         enabled = true
       )
+      users.add(user2)
 
       val user3 = User(
         name = "Nikola Jordanoski",
@@ -62,14 +68,15 @@ class DataHolder(
         emailVerified = true,
         enabled = true
       )
+      users.add(user3)
 
-      userRepository.saveAll(listOf(user1, user2, user3))
+      userRepository.saveAll(users)
     }
 
-    val users = userRepository.findAll()
-    if (users.isEmpty()) return
-
-    if (gatheringRepository.count() == 0L) {
+    val gatherings = mutableListOf<Gathering>()
+    val participations = mutableListOf<GatheringParticipation>()
+    val chatRooms = mutableListOf<ChatRoom>()
+    if (gatheringRepository.count() == 0L && gatheringParticipationRepository.count() == 0L) {
 
       val now = LocalDateTime.now()
 
@@ -83,6 +90,12 @@ class DataHolder(
         finalizedTime = null,
         finalizedPlace = null
       )
+      gatherings.add(gathering1)
+
+      val chatRoom1 = ChatRoom(
+        gathering = gathering1
+      )
+      chatRooms.add(chatRoom1)
 
       val gathering2 = Gathering(
         creator = users[1],
@@ -94,6 +107,12 @@ class DataHolder(
         finalizedTime = null,
         finalizedPlace = null
       )
+      gatherings.add(gathering2)
+
+      val chatRoom2 = ChatRoom(
+        gathering = gathering2
+      )
+      chatRooms.add(chatRoom2)
 
       val gathering3 = Gathering(
         creator = users[2],
@@ -105,26 +124,31 @@ class DataHolder(
         finalizedTime = null,
         finalizedPlace = null
       )
+      gatherings.add(gathering3)
 
-      val gatherings = gatheringRepository.saveAll(listOf(gathering1, gathering2, gathering3))
+      val chatRoom3 = ChatRoom(
+        gathering = gathering3
+      )
+      chatRooms.add(chatRoom3)
 
-      val participations = mutableListOf<GatheringParticipation>()
+      gatheringRepository.saveAll(gatherings)
+      chatRoomRepository.saveAll(chatRooms)
 
-      gatherings.forEach { g ->
+      gatherings.forEach { gathering ->
         participations.add(
           GatheringParticipation(
-            user = g.creator,
-            gathering = g,
+            user = gathering.creator,
+            gathering = gathering,
             status = ParticipationStatus.JOINED
           )
         )
 
-        val otherUsers = users.filter { it.id != g.creator.id }
+        val otherUsers = users.filter { it.id != gathering.creator.id }
 
         participations.add(
           GatheringParticipation(
             user = otherUsers[0],
-            gathering = g,
+            gathering = gathering,
             status = ParticipationStatus.JOINED
           )
         )
@@ -132,7 +156,7 @@ class DataHolder(
         participations.add(
           GatheringParticipation(
             user = otherUsers[1],
-            gathering = g,
+            gathering = gathering,
             status = ParticipationStatus.INVITED
           )
         )

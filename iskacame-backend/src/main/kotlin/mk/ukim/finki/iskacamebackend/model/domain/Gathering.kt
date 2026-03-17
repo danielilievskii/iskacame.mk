@@ -34,4 +34,7 @@ class Gathering(
     @ManyToOne
     @JoinColumn(name = "finalized_place_id")
     var finalizedPlace: Place?,
+
+    @OneToOne(mappedBy = "gathering")
+    var chatRoom: ChatRoom? = null
 ) : BaseEntity<Long>()

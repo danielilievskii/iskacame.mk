@@ -17,8 +17,8 @@ import mk.ukim.finki.iskacamebackend.mapper.UserMapper
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
-import mk.ukim.finki.iskacamebackend.security.JwtService
-import mk.ukim.finki.iskacamebackend.security.UserPrincipal
+import mk.ukim.finki.iskacamebackend.security.jwt.JwtService
+import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import org.springframework.context.ApplicationEventPublisher

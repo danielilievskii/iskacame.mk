@@ -15,7 +15,8 @@ data class GatheringDetailsDto(
     val finalizedTime: LocalDateTime?,
     val finalizedPlace: PlaceDto?,
     val participants: List<ParticipantDto>?,
-    val suggestedPlaces: List<PlaceDto>?
+    val suggestedPlaces: List<PlaceDto>?,
+    val chatRoomId: Long,
 )
 
 data class ParticipantDto(

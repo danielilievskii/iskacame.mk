@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.security
+package mk.ukim.finki.iskacamebackend.security.jwt
 
 import io.jsonwebtoken.JwtException
 import jakarta.security.auth.message.AuthException
@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mk.ukim.finki.iskacamebackend.common.JWTConstants
+import mk.ukim.finki.iskacamebackend.security.principal.CustomUserDetailsService
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken

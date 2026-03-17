@@ -19,6 +19,8 @@ interface GatheringMapper {
    * @param gathering the Gathering entity object
    * @return the mapped GatheringSummaryDto object
    */
+  @Mapping(target = "unseenMessagesCount", ignore = true)
+  @Mapping(target = "chatRoomId", source = "chatRoom.id")
   fun toGatheringSummaryDto(gathering: Gathering): GatheringSummaryDto
 
   /**
@@ -28,6 +30,7 @@ interface GatheringMapper {
    * @return the mapped GatheringDetailsDto object
    */
   @Mapping(target = "creatorId", source = "creator.id")
+  @Mapping(target = "chatRoomId", source = "chatRoom.id")
   @Mapping(target = "participants", ignore = true)
   @Mapping(target = "suggestedPlaces", ignore = true)
   fun toGatheringDetailsDto(gathering: Gathering): GatheringDetailsDto

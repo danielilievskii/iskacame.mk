@@ -16,6 +16,17 @@ interface PermissionService {
     fun isGatheringParticipant(gatheringId: Long, userId: Long): Boolean
 
     /**
+     * Checks whether a user is a participant of the gathering associated with the given chat room.
+     *
+     * @param chatRoomId The ID of the chat room.
+     * @param userId The ID of the user.
+     *
+     * @return `true` if the user is a participant of the gathering linked to the chat room,
+     * `false` if the chat room does not exist or the user is not a participant.
+     */
+    fun isGatheringParticipantByChatRoom(chatRoomId: Long, userId: Long): Boolean
+
+    /**
      * Checks whether a user is creator of the specified gathering.
      *
      * @param gatheringId The ID of the gathering.
