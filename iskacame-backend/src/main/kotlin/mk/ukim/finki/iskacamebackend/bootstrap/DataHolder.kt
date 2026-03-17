@@ -2,9 +2,12 @@ package mk.ukim.finki.iskacamebackend.bootstrap
 
 import jakarta.annotation.PostConstruct
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
+import mk.ukim.finki.iskacamebackend.model.domain.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
+import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
+import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringRepository
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -16,7 +19,8 @@ import java.time.temporal.ChronoUnit
 class DataHolder(
   private val userRepository: UserRepository,
   private val passwordEncoder: PasswordEncoder,
-  private val gatheringRepository: GatheringRepository
+  private val gatheringRepository: GatheringRepository,
+  private val gatheringParticipationRepository: GatheringParticipationRepository
 ) {
   @PostConstruct
   fun init() {
@@ -102,7 +106,39 @@ class DataHolder(
         finalizedPlace = null
       )
 
-      gatheringRepository.saveAll(listOf(gathering1, gathering2, gathering3))
+      val gatherings = gatheringRepository.saveAll(listOf(gathering1, gathering2, gathering3))
+
+      val participations = mutableListOf<GatheringParticipation>()
+
+      gatherings.forEach { g ->
+        participations.add(
+          GatheringParticipation(
+            user = g.creator,
+            gathering = g,
+            status = ParticipationStatus.JOINED
+          )
+        )
+
+        val otherUsers = users.filter { it.id != g.creator.id }
+
+        participations.add(
+          GatheringParticipation(
+            user = otherUsers[0],
+            gathering = g,
+            status = ParticipationStatus.JOINED
+          )
+        )
+
+        participations.add(
+          GatheringParticipation(
+            user = otherUsers[1],
+            gathering = g,
+            status = ParticipationStatus.INVITED
+          )
+        )
+      }
+
+      gatheringParticipationRepository.saveAll(participations)
     }
   }
 }
