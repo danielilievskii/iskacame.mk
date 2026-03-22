@@ -2,6 +2,9 @@ package mk.ukim.finki.iskacamebackend.dto.response.gathering
 
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
+import mk.ukim.finki.iskacamebackend.model.enums.GatheringType
+import mk.ukim.finki.iskacamebackend.model.enums.TimeSlot
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class GatheringDetailsDto(
@@ -17,11 +20,25 @@ data class GatheringDetailsDto(
     val participants: List<ParticipantDto>?,
     val suggestedPlaces: List<PlaceDto>?,
     val chatRoomId: Long,
+    val timeSlotPreferences: List<GatheringTimeSlotPreferenceDto>?,
+    val typePreferences: List<GatheringTypePreferenceDto>?
 )
 
 data class ParticipantDto(
     val user: UserDto,
     val participationStatus: String
+)
+
+data class GatheringTimeSlotPreferenceDto(
+    val id: Long,
+    val date: LocalDate,
+    val slot: TimeSlot,
+    val preferredByParticipants: List<Long>
+)
+
+data class GatheringTypePreferenceDto(
+    val type: GatheringType,
+    val preferredByParticipants: List<Long>
 )
 
 data class PlaceDto(

@@ -11,16 +11,20 @@ import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
+import mk.ukim.finki.iskacamebackend.model.domain.GatheringTimeSlot
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
+import mk.ukim.finki.iskacamebackend.model.enums.TimeSlot
 import mk.ukim.finki.iskacamebackend.repository.*
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.ChatService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
+import mk.ukim.finki.iskacamebackend.utils.TimeSlotGenerator
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 /**
  * Implementation of GatheringService
@@ -29,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional
 class GatheringServiceImpl(
     private val gatheringRepository: GatheringRepository,
     private val gatheringParticipationRepository: GatheringParticipationRepository,
+    private val gatheringTimeSlotRepository: GatheringTimeSlotRepository,
     private val userRepository: UserRepository,
     private val authService: AuthService,
     private val chatService: ChatService,
@@ -79,6 +84,18 @@ class GatheringServiceImpl(
                 )
             }
         gatheringParticipationRepository.saveAll(invitedParticipations)
+
+        val timeSlots: List<Pair<LocalDate, TimeSlot>> = TimeSlotGenerator.generate(request.startDate, request.endDate)
+
+        val gatheringTimeSlots = timeSlots
+            .map { (date, slot) ->
+                GatheringTimeSlot(
+                    gathering = savedGathering,
+                    date = date,
+                    slot = slot
+                )
+            }
+        gatheringTimeSlotRepository.saveAll(gatheringTimeSlots)
 
         return gatheringDetailsAssembler.assemble(savedGathering)
     }
