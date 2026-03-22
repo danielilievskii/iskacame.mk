@@ -20,11 +20,11 @@ import mk.ukim.finki.iskacamebackend.repository.*
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.ChatService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
+import mk.ukim.finki.iskacamebackend.utils.TimeSlotGenerator
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 /**
  * Implementation of GatheringService
@@ -85,7 +85,7 @@ class GatheringServiceImpl(
             }
         gatheringParticipationRepository.saveAll(invitedParticipations)
 
-        val timeSlots: List<Pair<LocalDate, TimeSlot>> = generateTimeSlots(request.startDate, request.endDate)
+        val timeSlots: List<Pair<LocalDate, TimeSlot>> = TimeSlotGenerator.generate(request.startDate, request.endDate)
 
         val gatheringTimeSlots = timeSlots
             .map { (date, slot) ->
@@ -205,45 +205,5 @@ class GatheringServiceImpl(
                 throw BadRequestException(GatheringExceptionMessages.INVALID_DATE_RANGE)
             }
         }
-    }
-
-    /**
-     * Generates a list of time slots between the given start and end date-times.
-     *
-     * Iterates over each day in the range [startDateTime, endDateTime] and includes
-     * only the [TimeSlot]s that overlap with the gathering's time window.
-     *
-     * @param startDateTime The start of the gathering (inclusive).
-     * @param endDateTime The end of the gathering (exclusive at slot boundary).
-     * @return A list of [LocalDate] to [TimeSlot] pairs representing all overlapping slots,
-     * ordered chronologically.
-     */
-    private fun generateTimeSlots(
-        startDateTime: LocalDateTime,
-        endDateTime: LocalDateTime
-    ): List<Pair<LocalDate, TimeSlot>> {
-
-        val timeSlots = mutableListOf<Pair<LocalDate, TimeSlot>>()
-
-        var currentDate = startDateTime.toLocalDate()
-        val endDate = endDateTime.toLocalDate()
-
-        while (!currentDate.isAfter(endDate)) {
-
-            for (slot in TimeSlot.entries) {
-                val slotStartDateTime = currentDate.atTime(slot.startHour, 0)
-                val slotEndDateTime = currentDate.atTime(slot.endHour, 0)
-
-                val slotStartsBeforeGatheringEnds = slotStartDateTime.isBefore(endDateTime)
-                val slotEndsAfterGatheringStarts = slotEndDateTime.isAfter(startDateTime)
-
-                if (slotStartsBeforeGatheringEnds && slotEndsAfterGatheringStarts) {
-                    timeSlots.add(Pair(currentDate, slot))
-                }
-            }
-            currentDate = currentDate.plusDays(1)
-        }
-
-        return timeSlots
     }
 }
