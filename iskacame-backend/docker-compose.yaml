@@ -1,16 +1,26 @@
 services:
-  iskacame_db:
-    image: postgres:17
-    restart: always
-    environment:
-      POSTGRES_USER: ${PG_DB_USER}
-      POSTGRES_PASSWORD: ${PG_DB_PASSWORD}
-      POSTGRES_DB: ${PG_DB}
-    volumes:
-      - db-data:/var/lib/postgresql/data
+  rabbitmq:
+    image: rabbitmq:3-management
     ports:
-      - "5433:5432"
-    container_name: iskacame_db
+      - "61613:61613" # stomp
+      - "15672:15672" # ui
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes  # enables persistence
+
 volumes:
-  db-data:
+  rabbitmq_data:
+  redis_data:
 

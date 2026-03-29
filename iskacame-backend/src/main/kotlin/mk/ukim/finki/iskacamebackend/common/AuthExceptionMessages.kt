@@ -27,4 +27,6 @@ object AuthExceptionMessages {
 
   const val EMAIL_ALREADY_VERIFIED = "Email is already verified."
   const val EMAIL_NOT_VERIFIED = "Email is not verified."
+
+  const val ACCOUNT_ALREADY_ENABLED = "User is already enabled."
 }

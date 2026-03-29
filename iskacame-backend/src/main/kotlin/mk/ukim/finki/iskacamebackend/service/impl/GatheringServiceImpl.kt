@@ -1,6 +1,7 @@
 package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.assembler.GatheringDetailsAssembler
+import mk.ukim.finki.iskacamebackend.assembler.GatheringSummaryAssembler
 import mk.ukim.finki.iskacamebackend.common.GatheringExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.request.gathering.CreateGatheringRequest
 import mk.ukim.finki.iskacamebackend.dto.request.gathering.UpdateGatheringRequest
@@ -8,26 +9,35 @@ import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringSummaryDto
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
-import mk.ukim.finki.iskacamebackend.mapper.GatheringMapper
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
+import mk.ukim.finki.iskacamebackend.model.domain.GatheringTimeSlot
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
+import mk.ukim.finki.iskacamebackend.model.enums.TimeSlot
 import mk.ukim.finki.iskacamebackend.repository.*
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.ChatService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
+import mk.ukim.finki.iskacamebackend.utils.TimeSlotGenerator
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
+/**
+ * Implementation of GatheringService
+ */
 @Service
 class GatheringServiceImpl(
     private val gatheringRepository: GatheringRepository,
     private val gatheringParticipationRepository: GatheringParticipationRepository,
+    private val gatheringTimeSlotRepository: GatheringTimeSlotRepository,
     private val userRepository: UserRepository,
     private val authService: AuthService,
-    private val gatheringMapper: GatheringMapper,
+    private val chatService: ChatService,
+    private val gatheringSummaryAssembler: GatheringSummaryAssembler,
     private val gatheringDetailsAssembler: GatheringDetailsAssembler
 ) : GatheringService {
 
@@ -55,6 +65,7 @@ class GatheringServiceImpl(
             finalizedPlace = null
         )
         val savedGathering = gatheringRepository.save(gathering)
+        chatService.createChatRoom(savedGathering)
 
         val creatorParticipation = GatheringParticipation(
             user = currentUser,
@@ -74,7 +85,19 @@ class GatheringServiceImpl(
             }
         gatheringParticipationRepository.saveAll(invitedParticipations)
 
-        return gatheringDetailsAssembler.assemble(gathering)
+        val timeSlots: List<Pair<LocalDate, TimeSlot>> = TimeSlotGenerator.generate(request.startDate, request.endDate)
+
+        val gatheringTimeSlots = timeSlots
+            .map { (date, slot) ->
+                GatheringTimeSlot(
+                    gathering = savedGathering,
+                    date = date,
+                    slot = slot
+                )
+            }
+        gatheringTimeSlotRepository.saveAll(gatheringTimeSlots)
+
+        return gatheringDetailsAssembler.assemble(savedGathering)
     }
 
     @Transactional
@@ -126,9 +149,9 @@ class GatheringServiceImpl(
         val participations = gatheringParticipationRepository
             .findAllByUserIdAndStatus(currentUserId, ParticipationStatus.JOINED)
 
-        return participations.map { participation ->
-            gatheringMapper.toGatheringSummaryDto(participation.gathering)
-        }
+        val gatherings = participations.map { it.gathering }
+
+        return gatheringSummaryAssembler.assembleAll(gatherings, currentUserId)
     }
 
     /**

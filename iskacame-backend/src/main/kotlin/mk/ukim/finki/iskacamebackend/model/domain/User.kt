@@ -3,6 +3,7 @@ package mk.ukim.finki.iskacamebackend.model.domain
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
+import java.time.Instant
 
 @Entity
 @Table(name = "users")
@@ -19,6 +20,9 @@ class User(
     @Column(name = "password")
     var password: String,
 
+    @Column(name = "phone")
+    var phone: String? = null,
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
     @Enumerated(EnumType.STRING)
@@ -31,6 +35,9 @@ class User(
     @Column(name = "email_verified")
     var emailVerified: Boolean = false,
 
-    @Column(name = "phone")
-    var phone: String? = null
-) : BaseEntity<Long>()
+    @Column(name = "enabled", nullable = false)
+    var enabled: Boolean = true,
+
+    @Column(name = "disabled_at")
+    var disabledAt: Instant? = null
+    ) : BaseEntity<Long>()

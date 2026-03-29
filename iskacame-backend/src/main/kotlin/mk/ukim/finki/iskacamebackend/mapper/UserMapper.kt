@@ -4,7 +4,7 @@ import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
-import mk.ukim.finki.iskacamebackend.security.UserPrincipal
+import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.Named

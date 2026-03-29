@@ -1,4 +1,4 @@
-package mk.ukim.finki.iskacamebackend.security
+package mk.ukim.finki.iskacamebackend.security.principal
 
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -9,6 +9,7 @@ data class UserPrincipal(
   val email: String,
   private val password: String,
   val emailVerified: Boolean,
+  private val enabled: Boolean,
   private val authorities: Collection<GrantedAuthority>
 ) : UserDetails {
 
@@ -24,5 +25,5 @@ data class UserPrincipal(
 
   override fun isCredentialsNonExpired(): Boolean = true
 
-  override fun isEnabled(): Boolean = true
+  override fun isEnabled(): Boolean = enabled
 }

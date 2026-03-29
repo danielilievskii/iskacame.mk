@@ -1,13 +1,15 @@
-package mk.ukim.finki.iskacamebackend.security
+package mk.ukim.finki.iskacamebackend.security.jwt
 
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
+import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.security.Key
 import java.util.Date
+import javax.crypto.SecretKey
 
 /**
  * Provides utilities for generating, parsing, and validating JWT tokens.
@@ -67,7 +69,7 @@ class JwtService {
   fun getEmailFromToken(token: String): String {
 
     val claims = Jwts.parser()
-      .verifyWith(getSigningKey() as javax.crypto.SecretKey)
+      .verifyWith(getSigningKey() as SecretKey)
       .build()
       .parseSignedClaims(token)
       .payload
@@ -86,7 +88,7 @@ class JwtService {
   fun validateToken(token: String) {
 
     Jwts.parser()
-      .verifyWith(getSigningKey() as javax.crypto.SecretKey)
+      .verifyWith(getSigningKey() as SecretKey)
       .build()
       .parseSignedClaims(token)
   }
