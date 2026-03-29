@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { authService } from '@/lib/auth-service';
+import { authService } from '@/service/auth-service';
 import { StatusBar } from 'expo-status-bar';
 import { Logo } from "@/components/ui/logo";
 import { primaryColor } from "@/constants/theme";
@@ -29,12 +29,10 @@ export default function VerifyScreen() {
 
         if (digits.length > 1) {
             const split = digits.slice(0, 6).split('');
-            const next = [...code];
+            const next = ['', '', '', '', '', ''];
 
             split.forEach((d, i) => {
-                if (idx + i < 6) {
-                    next[idx + i] = d;
-                }
+                next[i] = d;
             });
 
             setCode(next);
@@ -134,7 +132,7 @@ export default function VerifyScreen() {
                                 onChangeText={(v) => handleChange(v, idx)}
                                 onKeyPress={(e) => handleKeyPress(e, idx)}
                                 keyboardType="number-pad"
-                                maxLength={1}
+                                maxLength={6}
                                 selectTextOnFocus
                             />
                         ))}

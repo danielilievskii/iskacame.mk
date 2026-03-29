@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { authService, UserDto } from '@/lib/auth-service';
+import { authService } from '@/service/auth-service';
+import { UserDto } from "@/service/dtos/auth-types";
 
 interface AuthState {
     user: UserDto | null;
@@ -8,7 +9,7 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-    signIn: (email: string, password: string) => Promise<void>;
+    signIn: (identifier: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -40,8 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser();
     }, [refreshUser]);
 
-    const signIn = useCallback(async (email: string, password: string) => {
-        const response = await authService.signIn({ email, password });
+    const signIn = useCallback(async (identifier: string, password: string) => {
+        const response = await authService.signIn({ identifier, password });
         setState({ user: response.user, isLoading: false, isAuthenticated: true });
     }, []);
 
