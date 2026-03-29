@@ -38,6 +38,13 @@ class UserServiceImpl(
       .orElseThrow { ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND) }
   }
 
+  override fun getUsersByIds(ids: List<Long>): List<User> {
+
+    return userRepository.findAllById(ids)
+      .takeIf { it.size == ids.size }
+      ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+  }
+
   override fun uploadAvatar(file: MultipartFile): String {
 
     ImageValidator.validate(file)
