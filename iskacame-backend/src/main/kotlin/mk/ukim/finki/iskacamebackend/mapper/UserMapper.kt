@@ -1,6 +1,7 @@
 package mk.ukim.finki.iskacamebackend.mapper
 
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
@@ -24,6 +25,15 @@ interface UserMapper {
    */
   @Mapping(target = "avatarUrl", source = "avatar.url")
   fun toUserDto(user: User): UserDto
+
+  /**
+   * Maps a [User] object to a [UserSearchDto] object.
+   *
+   * @param user the User entity object
+   * @return the mapped UserSearchDto object
+   */
+  @Mapping(target = "avatarUrl", source = "avatar.url")
+  fun toUserSearchDto(user: User): UserSearchDto
 
   /**
    * Maps a [User] object to a [UserPrincipal] object.
