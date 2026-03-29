@@ -57,8 +57,6 @@ class ExpenseServiceImpl(
             gathering = gathering
         )
 
-        expenseRepository.save(expense)
-
         val userIds = request.splits.map { it.userId }
         val usersById = userService.getUsersByIds(userIds).associateBy { it.id!! }
 
@@ -79,7 +77,22 @@ class ExpenseServiceImpl(
             )
         }
 
+        expenseRepository.save(expense)
         splitRepository.saveAll(splits)
+    }
+
+    @Transactional
+    @PreAuthorize("@permissionService.isGatheringParticipant(#gatheringId, authentication.principal.id)")
+    override fun deleteExpense(gatheringId: Long, expenseId: Long) {
+
+        val expense = expenseRepository.findById(expenseId)
+            .orElseThrow { ResourceNotFoundException(ExpenseExceptionMessages.EXPENSE_NOT_FOUND) }
+
+        if (expense.gathering.id != gatheringId) {
+            throw ResourceNotFoundException(ExpenseExceptionMessages.EXPENSE_NOT_FOUND)
+        }
+
+        expenseRepository.delete(expense)
     }
 
     @Transactional

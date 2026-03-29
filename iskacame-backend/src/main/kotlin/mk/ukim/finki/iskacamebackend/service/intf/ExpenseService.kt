@@ -20,6 +20,8 @@ interface ExpenseService {
      */
     fun createExpense(gatheringId: Long, request: CreateExpenseRequest)
 
+    fun deleteExpense(gatheringId: Long, expenseId: Long)
+
     /**
      * Creates a direct payment from the currently authenticated user to another participant
      * in the gathering.

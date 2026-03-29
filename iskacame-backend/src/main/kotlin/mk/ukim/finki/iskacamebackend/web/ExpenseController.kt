@@ -38,6 +38,20 @@ class ExpenseController(
         return ResponseEntity.status(HttpStatus.CREATED).build()
     }
 
+    @DeleteMapping("/expenses/{expenseId}")
+    @Operation(
+        summary = "Delete an expense",
+        description = "Deletes an expense and all its associated splits from the gathering. Once removed, the expense is no longer factored into debt calculations."
+    )
+    fun deleteExpense(
+        @PathVariable gatheringId: Long,
+        @PathVariable expenseId: Long
+    ): ResponseEntity<Void> {
+
+        expenseService.deleteExpense(gatheringId, expenseId)
+        return ResponseEntity.noContent().build()
+    }
+
     @PostMapping("/payments")
     @Operation(
         summary = "Create a payment",
