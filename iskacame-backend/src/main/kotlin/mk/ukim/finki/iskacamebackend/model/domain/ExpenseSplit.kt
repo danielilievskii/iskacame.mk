@@ -10,22 +10,21 @@ import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 import java.math.BigDecimal
 
 @Entity
-@Table(name = "payments")
-class Payment(
+@Table(name = "expense_splits")
+class ExpenseSplit(
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "from_user_id", nullable = false)
-    var fromUser: User,
+    @JoinColumn(name = "expense_id", nullable = false)
+    var expense: Expense,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "to_user_id", nullable = false)
-    var toUser: User,
+    @JoinColumn(name = "user_id", nullable = false)
+    var user: User,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gathering_id", nullable = false)
-    var gathering: Gathering,
+    @Column(name = "amount_owed", nullable = false)
+    var amountOwed: BigDecimal,
 
-    @Column(name = "amount", nullable = false)
-    var amount: BigDecimal
+    @Column(name = "is_own_share", nullable = false)
+    var isOwnShare: Boolean = false
 
 ) : BaseEntity<Long>()
