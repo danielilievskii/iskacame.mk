@@ -6,7 +6,9 @@ import mk.ukim.finki.iskacamebackend.dto.request.gathering.CreateGatheringReques
 import mk.ukim.finki.iskacamebackend.dto.request.gathering.UpdateGatheringRequest
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringSummaryDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.PlaceDto
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
+import mk.ukim.finki.iskacamebackend.service.intf.PlaceSuggestionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -14,7 +16,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/gatherings")
 class GatheringController(
-    private val gatheringService: GatheringService
+    private val gatheringService: GatheringService,
+    private val placeSuggestionService: PlaceSuggestionService
 ) {
 
     @PostMapping
@@ -59,5 +62,12 @@ class GatheringController(
     fun getMyGatherings(): ResponseEntity<List<GatheringSummaryDto>> {
         val gatherings = gatheringService.getMyGatherings()
         return ResponseEntity.ok(gatherings)
+    }
+
+    @GetMapping("/{gatheringId}/generate-place-suggestions")
+    fun generatePlaceSuggestions(@PathVariable gatheringId: Long): ResponseEntity<List<PlaceDto>> {
+
+        placeSuggestionService.generateAndSaveSuggestions(gatheringId)
+        return ResponseEntity.ok().build()
     }
 }

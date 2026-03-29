@@ -2,8 +2,7 @@ package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
-import mk.ukim.finki.iskacamebackend.model.enums.PlaceLevel
-import mk.ukim.finki.iskacamebackend.model.enums.PlaceType
+import mk.ukim.finki.iskacamebackend.model.enums.PriceLevel
 
 @Entity
 @Table(name = "places")
@@ -21,12 +20,11 @@ class Place(
     var latitude: Double?,
 
     @Column(name = "type")
-    @Enumerated(EnumType.STRING)
-    var type: PlaceType,
+    var type: String,
 
     @Column(name = "price_level")
     @Enumerated(EnumType.STRING)
-    var priceLevel: PlaceLevel,
+    var priceLevel: PriceLevel,
 
     @Column(name = "link")
     var link: String?,
