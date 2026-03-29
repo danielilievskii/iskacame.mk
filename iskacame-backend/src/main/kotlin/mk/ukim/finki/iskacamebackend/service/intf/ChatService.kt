@@ -57,14 +57,6 @@ interface ChatService {
     fun deleteMessage(messageId: Long)
 
     /**
-     * Marks all messages in the chat room as DELIVERED for the given user.
-     * Typically called when the client connects or receives messages.
-     *
-     * @param chatRoomId id of the chat room
-     */
-    fun markChatRoomMessagesDelivered(chatRoomId: Long)
-
-    /**
      * Marks all unseen messages in the chat room as [MessageReceiptStatus.SEEN] for the current user.
      * Typically called when the user opens the chat view.
      *

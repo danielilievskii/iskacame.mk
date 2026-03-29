@@ -26,7 +26,7 @@ class ChatMessage(
     @Column(name = "deleted_at")
     var deletedAt: LocalDateTime? = null,
 
-    @OneToMany(mappedBy = "message", cascade = [CascadeType.ALL], orphanRemoval = true)
-    var receipts: MutableList<MessageReceipt> = mutableListOf()
+    @OneToMany(mappedBy = "lastSeenMessage", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var receipts: MutableList<ChatRoomReceipt> = mutableListOf()
 
 ) : BaseEntity<Long>()

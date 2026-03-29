@@ -26,12 +26,7 @@ class GatheringSummaryAssembler(
 
         val chatRoomIds = gatherings.map { it.chatRoom!!.id!! }
 
-        val unseenMessagesCountByChatRoom = chatMessageRepository
-            .countUnseenForUserGrouped(chatRoomIds, currentUserId)
-            .associateBy(
-                { it.chatRoomId },
-                { it.unseenMessagesCount }
-            )
+        val unseenMessagesCountByChatRoom = mutableMapOf<Long, Long>()
 
         return gatherings.map { gathering ->
             val unseenMessagesCount = unseenMessagesCountByChatRoom[gathering.chatRoom!!.id] ?: 0

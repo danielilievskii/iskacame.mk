@@ -20,15 +20,25 @@ interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
     """)
     fun findByChatRoomId(chatRoomId: Long, pageable: Pageable): Page<ChatMessage>
 
+//    @Query(
+//        """
+//        SELECT m.chatRoom.id as chatRoomId, COUNT(m) as unseenMessagesCount
+//        FROM ChatMessage m
+//        JOIN ChatRoomReceipt r ON r.lastSeenMessage = m
+//        WHERE m.chatRoom.id IN :chatRoomIds
+//          AND r.user.id = :userId
+//          AND r.status <> mk.ukim.finki.iskacamebackend.model.enums.MessageReceiptStatus.SEEN
+//          AND m.deletedAt IS NULL
+//        GROUP BY m.chatRoom.id
+//    """
+//    )
+//    fun countUnseenForUserGrouped(chatRoomIds: List<Long>, userId: Long): List<ChatRoomUnseenMessagesCount>
+
     @Query("""
-        SELECT m.chatRoom.id as chatRoomId, COUNT(m) as unseenMessagesCount
-        FROM ChatMessage m
-        JOIN MessageReceipt r ON r.message = m
-        WHERE m.chatRoom.id IN :chatRoomIds
-          AND r.recipient.id = :userId
-          AND r.status <> mk.ukim.finki.iskacamebackend.model.enums.MessageReceiptStatus.SEEN
-          AND m.deletedAt IS NULL
-        GROUP BY m.chatRoom.id
+        SELECT m FROM ChatMessage m
+        WHERE m.chatRoom.id = :chatRoomId AND m.deletedAt IS NULL
+        ORDER BY m.sentAt DESC
     """)
-    fun countUnseenForUserGrouped(chatRoomIds: List<Long>, userId: Long): List<ChatRoomUnseenMessagesCount>
+    fun findFirstByChatRoomIdOrderBySentAtDesc(chatRoomId: Long): ChatMessage?
+
 }
