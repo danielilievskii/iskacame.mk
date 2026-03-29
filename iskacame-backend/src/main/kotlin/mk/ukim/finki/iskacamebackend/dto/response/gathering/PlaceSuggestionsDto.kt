@@ -7,6 +7,6 @@ data class PlaceSuggestionDto(
     val address: String?,
     val latitude: Double?,
     val longitude: Double?,
-    val type: PlaceType,
+    val placeType: String,
     val priceLevel: PriceLevel
 )

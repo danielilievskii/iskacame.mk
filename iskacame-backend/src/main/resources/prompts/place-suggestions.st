@@ -8,8 +8,8 @@ Title: {title}
 Description: {description}
 
 Participant preferences summary:
-- Most preferred gathering types: {mostPreferredTypes}
-- Most preferred time slots: {mostPreferredTimeSlots}
+- Most preferred gathering types: {topTypePreferences}
+- Most preferred time slots: {topTimeSlotPreferences}
 
 Use the gathering types and time slots to infer the vibe and energy level of the group.
 For example: SPORT + Morning slots → active outdoor venues. FOOD + Evening slots → restaurants or cafes.
@@ -22,5 +22,5 @@ Each object must have exactly these fields:
 - address (string)
 - latitude (number)
 - longitude (number)
-- placeType (string)
+- type (string)
 - priceLevel (one of: {priceLevels})

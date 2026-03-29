@@ -67,7 +67,7 @@ class GatheringController(
     @GetMapping("/{gatheringId}/generate-place-suggestions")
     fun generatePlaceSuggestions(@PathVariable gatheringId: Long): ResponseEntity<List<PlaceDto>> {
 
-        placeSuggestionService.generateAndSaveSuggestions(gatheringId)
-        return ResponseEntity.ok().build()
+        val placeSuggestions = placeSuggestionService.generateSuggestions(gatheringId)
+        return ResponseEntity.ok(placeSuggestions)
     }
 }

@@ -5,8 +5,12 @@ import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 import mk.ukim.finki.iskacamebackend.model.enums.PriceLevel
 
 @Entity
-@Table(name = "places")
+@Table(name = "gathering_places")
 class Place(
+    @ManyToOne
+    @JoinColumn(name = "gathering_id")
+    var gathering: Gathering,
+
     @Column(name = "name")
     var name: String,
 
@@ -24,12 +28,6 @@ class Place(
 
     @Column(name = "price_level")
     @Enumerated(EnumType.STRING)
-    var priceLevel: PriceLevel,
-
-    @Column(name = "link")
-    var link: String?,
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    var owner: User?
+    var priceLevel: PriceLevel
+    
 ) : BaseEntity<Long>()
