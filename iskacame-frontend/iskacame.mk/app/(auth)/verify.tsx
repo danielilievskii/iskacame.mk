@@ -17,7 +17,7 @@ import { Logo } from "@/components/ui/logo";
 import { primaryColor } from "@/constants/theme";
 
 export default function VerifyScreen() {
-    const { email } = useLocalSearchParams<{ email: string }>();
+    const { identifier } = useLocalSearchParams<{ identifier: string }>();
     const [code, setCode] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
@@ -58,7 +58,7 @@ export default function VerifyScreen() {
         setLoading(true);
 
         try {
-            await authService.verifyEmail({ email, token });
+            await authService.verifyEmail({ identifier, token });
 
             Alert.alert('Email verified!', 'You can now sign in.', [
                 { text: 'Sign in', onPress: () => router.replace('/(auth)/login') },
@@ -90,7 +90,7 @@ export default function VerifyScreen() {
     const handleResend = async () => {
         setResending(true);
         try {
-            await authService.resendCode({ email });
+            await authService.resendCode({ identifier });
             Alert.alert('Code sent', 'A new verification code has been sent to your email.');
         } catch (err: any) {
             Alert.alert('Error', err.message ?? 'Failed to resend code.');
@@ -117,7 +117,7 @@ export default function VerifyScreen() {
                     <Text style={styles.cardTitle}>Verify your email</Text>
                     <Text style={styles.subtitle}>
                         We sent a 6-digit code to{'\n'}
-                        <Text style={styles.emailHighlight}>{email}</Text>
+                        <Text style={styles.emailHighlight}>{identifier}</Text>
                     </Text>
 
                     <View style={styles.codeRow}>

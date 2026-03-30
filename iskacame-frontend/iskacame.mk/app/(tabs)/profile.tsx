@@ -9,6 +9,9 @@ import {
     ScrollView,
     Image,
     Platform,
+    Modal,
+    TextInput,
+    KeyboardAvoidingView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/context/auth-context';
@@ -21,6 +24,43 @@ export default function ProfileScreen() {
     const [signingOut, setSigningOut] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [deletingAvatar, setDeletingAvatar] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editUsername, setEditUsername] = useState('');
+    const [editPhone, setEditPhone] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    const openEditModal = () => {
+        setEditName(user?.name ?? '');
+        setEditUsername(user?.username ?? '');
+        setEditPhone(user?.phone ?? '');
+        setEditModalVisible(true);
+    };
+
+    const handleSaveProfile = async () => {
+        if (!editName.trim()) {
+            Alert.alert('Validation', 'Name is required.');
+            return;
+        }
+        if (!editUsername.trim() || editUsername.trim().length < 3) {
+            Alert.alert('Validation', 'Username must be at least 3 characters.');
+            return;
+        }
+        setSaving(true);
+        try {
+            await userService.updateProfile({
+                name: editName.trim(),
+                username: editUsername.trim(),
+                phone: editPhone.trim() || null,
+            });
+            await refreshUser();
+            setEditModalVisible(false);
+        } catch (e: any) {
+            Alert.alert('Error', e.message ?? 'Failed to update profile.');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleSignOut = () => {
         Alert.alert('Sign out', 'Are you sure you want to sign out?', [
@@ -38,7 +78,6 @@ export default function ProfileScreen() {
     };
 
     const handlePickAvatar = async () => {
-        // Request permission
         if (Platform.OS !== 'web') {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
@@ -112,7 +151,6 @@ export default function ProfileScreen() {
                         </View>
                     )}
 
-                    {/* Upload overlay */}
                     <TouchableOpacity
                         style={styles.avatarOverlay}
                         onPress={handlePickAvatar}
@@ -130,7 +168,6 @@ export default function ProfileScreen() {
                 <Text style={styles.name}>{user?.name}</Text>
                 <Text style={styles.handle}>@{user?.username}</Text>
 
-                {/* Avatar action buttons */}
                 <View style={styles.avatarActions}>
                     <TouchableOpacity
                         style={styles.avatarBtn}
@@ -168,19 +205,24 @@ export default function ProfileScreen() {
 
             {/* Account info card */}
             <View style={styles.infoCard}>
-                <Text style={styles.sectionLabel}>ACCOUNT INFO</Text>
+                <View style={styles.sectionRow}>
+                    <Text style={styles.sectionLabel}>ACCOUNT INFO</Text>
+                    <TouchableOpacity onPress={openEditModal} activeOpacity={0.7}>
+                        <Text style={styles.editLink}>Edit</Text>
+                    </TouchableOpacity>
+                </View>
 
                 <InfoRow label="Name" value={user?.name ?? '—'} />
                 <View style={styles.divider} />
                 <InfoRow label="Username" value={`@${user?.username}`} />
                 <View style={styles.divider} />
                 <InfoRow label="User ID" value={`#${user?.id}`} />
-                {user?.phone && (
+                {user?.phone ? (
                     <>
                         <View style={styles.divider} />
                         <InfoRow label="Phone" value={user.phone} />
                     </>
-                )}
+                ) : null}
             </View>
 
             {/* Sign out */}
@@ -196,6 +238,83 @@ export default function ProfileScreen() {
                     <Text style={styles.signOutText}>Sign out</Text>
                 )}
             </TouchableOpacity>
+
+            {/* Edit Profile Modal */}
+            <Modal
+                visible={editModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setEditModalVisible(false)}
+            >
+                <KeyboardAvoidingView
+                    style={styles.overlay}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                >
+                    <View style={styles.dialog}>
+                        <Text style={styles.dialogTitle}>Edit Profile</Text>
+
+                        <View style={styles.field}>
+                            <Text style={styles.fieldLabel}>NAME</Text>
+                            <TextInput
+                                style={styles.fieldInput}
+                                value={editName}
+                                onChangeText={setEditName}
+                                placeholder="Your name"
+                                placeholderTextColor="#6B7280"
+                                maxLength={50}
+                            />
+                        </View>
+
+                        <View style={styles.field}>
+                            <Text style={styles.fieldLabel}>USERNAME</Text>
+                            <TextInput
+                                style={styles.fieldInput}
+                                value={editUsername}
+                                onChangeText={setEditUsername}
+                                placeholder="Username"
+                                placeholderTextColor="#6B7280"
+                                autoCapitalize="none"
+                                maxLength={30}
+                            />
+                        </View>
+
+                        <View style={styles.field}>
+                            <Text style={styles.fieldLabel}>PHONE (optional)</Text>
+                            <TextInput
+                                style={styles.fieldInput}
+                                value={editPhone}
+                                onChangeText={setEditPhone}
+                                placeholder="+38970123456"
+                                placeholderTextColor="#6B7280"
+                                keyboardType="phone-pad"
+                                maxLength={16}
+                            />
+                        </View>
+
+                        <View style={styles.dialogActions}>
+                            <TouchableOpacity
+                                style={styles.dialogCancel}
+                                onPress={() => setEditModalVisible(false)}
+                                disabled={saving}
+                            >
+                                <Text style={styles.dialogCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.dialogConfirm, saving && { opacity: 0.6 }]}
+                                onPress={handleSaveProfile}
+                                disabled={saving}
+                                activeOpacity={0.85}
+                            >
+                                {saving ? (
+                                    <ActivityIndicator color="#0B0B0F" size="small" />
+                                ) : (
+                                    <Text style={styles.dialogConfirmText}>Save</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </ScrollView>
     );
 }
@@ -265,12 +384,22 @@ const styles = StyleSheet.create({
         padding: 20,
         marginBottom: 20,
     },
+    sectionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
     sectionLabel: {
         fontSize: 10,
         fontWeight: '700',
         color: '#4B5563',
         letterSpacing: 1.5,
-        marginBottom: 16,
+    },
+    editLink: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: primaryColor,
     },
     infoRow: {
         flexDirection: 'row',
@@ -292,4 +421,64 @@ const styles = StyleSheet.create({
     },
     btnDisabled: { opacity: 0.5 },
     signOutText: { color: '#EF4444', fontWeight: '700', fontSize: 15 },
+
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 32,
+    },
+    dialog: {
+        backgroundColor: '#16161D',
+        borderRadius: 20,
+        padding: 28,
+        width: '100%',
+        borderWidth: 1,
+        borderColor: '#1F1F2E',
+    },
+    dialogTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#F0EBE1',
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    field: { marginBottom: 16 },
+    fieldLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#4B5563',
+        letterSpacing: 1.5,
+        marginBottom: 6,
+    },
+    fieldInput: {
+        backgroundColor: '#0B0B0F',
+        borderWidth: 1,
+        borderColor: '#252530',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        color: '#F0EBE1',
+        fontSize: 16,
+    },
+    dialogActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+    dialogCancel: {
+        flex: 1,
+        backgroundColor: '#0B0B0F',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#252530',
+    },
+    dialogCancelText: { color: '#6B7280', fontWeight: '600', fontSize: 15 },
+    dialogConfirm: {
+        flex: 1,
+        backgroundColor: primaryColor,
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+    dialogConfirmText: { color: '#0B0B0F', fontWeight: '800', fontSize: 15 },
 });

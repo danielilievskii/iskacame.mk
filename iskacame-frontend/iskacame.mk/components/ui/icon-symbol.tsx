@@ -19,6 +19,7 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'rectangle.3.group': 'group',
+  'bell.fill': 'notifications',
 } as IconMapping;
 
 /**

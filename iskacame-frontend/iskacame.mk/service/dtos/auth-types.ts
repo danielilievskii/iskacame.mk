@@ -3,6 +3,13 @@ export interface UserDto {
     name: string;
     username: string;
     avatarUrl: string | null;
+    phone: string | null;
+}
+
+export interface UpdateUserRequest {
+    name: string;
+    username: string;
+    phone?: string | null;
 }
 
 export interface UserSearchDto {
@@ -30,10 +37,10 @@ export interface SignInRequest {
 }
 
 export interface VerifyTokenRequest {
-    email: string;
+    identifier: string;
     token: string;
 }
 
 export interface ResendTokenRequest {
-    email: string;
+    identifier: string;
 }

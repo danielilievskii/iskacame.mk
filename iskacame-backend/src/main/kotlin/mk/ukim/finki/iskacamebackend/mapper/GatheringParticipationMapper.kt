@@ -19,6 +19,7 @@ interface GatheringParticipationMapper {
    * @param participation the GatheringParticipation entity object
    * @return the mapped GatheringInviteDto object
    */
+  @Mapping(target = "gatheringId", source = "gathering.id")
   @Mapping(target = "gatheringCreator", source = "gathering.creator")
   @Mapping(target = "gatheringTitle", source = "gathering.title")
   fun toGatheringInvitationDto(participation: GatheringParticipation): GatheringInvitationDto

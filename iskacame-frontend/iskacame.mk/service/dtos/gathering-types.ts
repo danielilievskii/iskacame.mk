@@ -4,6 +4,9 @@ export type GatheringStatus = 'DRAFT' | 'OPEN' | 'FINALIZED' | 'CANCELLED';
 export type ParticipationStatus = 'INVITED' | 'JOINED' | 'DECLINED' | 'LEFT' | 'REMOVED';
 export type PlaceType = 'CAFE' | 'RESTAURANT' | 'PARK' | 'OTHER';
 export type PlaceLevel = 'FREE' | 'CHEAP' | 'MODERATE' | 'EXPENSIVE' | 'LUXURY';
+export type GatheringType = 'CASUAL' | 'SPORT' | 'ELEGANT' | 'PARTY' | 'CULTURAL' | 'OUTDOOR' | 'TRAVEL' | 'FOOD' | 'GAME' | 'MOVIE';
+export type TimeSlot = 'MORNING' | 'NOON' | 'AFTERNOON' | 'EVENING';
+export type ActivityType = 'EXPENSE' | 'PAYMENT';
 
 export interface PlaceDto {
     id: number;
@@ -41,10 +44,13 @@ export interface GatheringDetailsDto {
     finalizedPlace: PlaceDto | null;
     participants: ParticipantDto[] | null;
     suggestedPlaces: PlaceDto[] | null;
+    chatRoomId: number;
+    hasSubmittedResponse: boolean;
 }
 
 export interface GatheringInvitationDto {
     id: number;
+    gatheringId: number;
     gatheringCreator: UserDto;
     gatheringTitle: string;
     createdAt: string;
@@ -63,4 +69,70 @@ export interface UpdateGatheringRequest {
     description?: string;
     startDate?: string;
     endDate?: string;
+}
+
+export interface GatheringTimeSlotOptionDto {
+    id: number;
+    date: string;
+    slot: TimeSlot;
+}
+
+export interface GatheringResponseOptionsDto {
+    types: GatheringType[];
+    timeSlots: GatheringTimeSlotOptionDto[];
+}
+
+export interface SubmitGatheringResponseRequest {
+    types: GatheringType[];
+    timeSlotIds: number[];
+}
+
+export interface ExpenseSplitDto {
+    userId: number;
+    amountOwed: number;
+    isOwnShare: boolean;
+}
+
+export interface ExpenseActivityDto {
+    id: number;
+    type: 'EXPENSE';
+    description: string | null;
+    totalAmount: number;
+    paidByUserId: number;
+    splits: ExpenseSplitDto[];
+    createdAt: string;
+}
+
+export interface PaymentActivityDto {
+    id: number;
+    type: 'PAYMENT';
+    fromUserId: number;
+    toUserId: number;
+    amount: number;
+    createdAt: string;
+}
+
+export type ActivityDto = ExpenseActivityDto | PaymentActivityDto;
+
+export interface DebtDto {
+    fromUserId: number;
+    toUserId: number;
+    amount: number;
+}
+
+export interface CreatePaymentRequest {
+    toUserId: number;
+    amount: number;
+}
+
+export interface CreateSplitRequest {
+    userId: number;
+    amountOwed: number;
+}
+
+export interface CreateExpenseRequest {
+    paidByUserId: number;
+    totalAmount: number;
+    description: string;
+    splits: CreateSplitRequest[];
 }

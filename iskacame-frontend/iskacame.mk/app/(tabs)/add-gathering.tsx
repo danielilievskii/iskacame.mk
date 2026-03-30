@@ -81,7 +81,10 @@ export default function AddGatheringScreen() {
                 participantIds: selectedParticipants.map((u) => u.id),
             });
             reset();
-            router.push({ pathname: '/gathering/[id]', params: { id: gathering.id } });
+            router.push({
+                pathname: '/gathering/pick-preferences',
+                params: { gatheringId: gathering.id },
+            });
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to create gathering.');
         } finally {

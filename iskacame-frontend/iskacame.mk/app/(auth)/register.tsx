@@ -37,7 +37,7 @@ export default function RegisterScreen() {
         setLoading(true);
         try {
             await authService.signUp({ name: name.trim(), username: username.trim(), email: email.trim(), password });
-            router.push({ pathname: '/(auth)/verify', params: { email: email.trim() } });
+            router.push({ pathname: '/(auth)/verify', params: { identifier: email.trim() } });
         } catch (err: any) {
             Alert.alert('Registration failed', err.message ?? 'Something went wrong.');
         } finally {

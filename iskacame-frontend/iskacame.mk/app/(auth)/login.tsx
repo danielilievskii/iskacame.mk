@@ -41,7 +41,7 @@ export default function LoginScreen() {
                         { text: 'Cancel', style: 'cancel' },
                         {
                             text: 'Verify now',
-                            onPress: () => router.push({ pathname: '/(auth)/verify', params: { email: identifier.trim() } })
+                            onPress: () => router.push({ pathname: '/(auth)/verify', params: { identifier: identifier.trim() } })
                         },
                     ]
                 );

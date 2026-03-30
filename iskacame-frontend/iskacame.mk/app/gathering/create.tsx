@@ -72,7 +72,10 @@ export default function CreateGatheringScreen() {
                 endDate: toLocalDateTimeString(endDate),
                 participantIds: selectedParticipants.map((u) => u.id),
             });
-            router.replace({ pathname: '/gathering/[id]', params: { id: gathering.id } });
+            router.replace({
+                pathname: '/gathering/pick-preferences',
+                params: { gatheringId: gathering.id },
+            });
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to create gathering.');
         } finally {

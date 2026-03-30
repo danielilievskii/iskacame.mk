@@ -33,5 +33,6 @@ interface GatheringMapper {
   @Mapping(target = "chatRoomId", source = "chatRoom.id")
   @Mapping(target = "participants", ignore = true)
   @Mapping(target = "suggestedPlaces", ignore = true)
+  @Mapping(target = "hasSubmittedResponse", ignore = true)
   fun toGatheringDetailsDto(gathering: Gathering): GatheringDetailsDto
 }

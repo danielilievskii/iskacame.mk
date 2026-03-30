@@ -11,6 +11,7 @@ import mk.ukim.finki.iskacamebackend.model.domain.GatheringResponse
 import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringPlaceRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringResponseRepository
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import org.springframework.stereotype.Component
 
 /**
@@ -23,7 +24,8 @@ class GatheringDetailsAssembler(
     private val gatheringResponseRepository: GatheringResponseRepository,
     private val gatheringMapper: GatheringMapper,
     private val gatheringParticipationMapper: GatheringParticipationMapper,
-    private val placeMapper: PlaceMapper
+    private val placeMapper: PlaceMapper,
+    private val authService: AuthService
 ) {
 
     /**
@@ -49,13 +51,18 @@ class GatheringDetailsAssembler(
         val timeSlotPreferenceDtos = assembleTimeSlotPreferences(responses)
         val typePreferenceDtos = assembleTypePreferences(responses)
 
+        val currentUserId = authService.getCurrentUserId()
+        val hasSubmittedResponse = gatheringResponseRepository
+            .existsByGatheringIdAndUserId(gathering.id!!, currentUserId)
+
         return gatheringMapper
             .toGatheringDetailsDto(gathering)
             .copy(
                 participants = participantDtos,
                 suggestedPlaces = suggestedPlaceDtos,
                 timeSlotPreferences = timeSlotPreferenceDtos,
-                typePreferences = typePreferenceDtos
+                typePreferences = typePreferenceDtos,
+                hasSubmittedResponse = hasSubmittedResponse
             )
     }
 
