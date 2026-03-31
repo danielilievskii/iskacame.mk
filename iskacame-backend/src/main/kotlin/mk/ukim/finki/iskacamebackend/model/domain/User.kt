@@ -14,7 +14,7 @@ class User(
     @Column(name = "username", unique = true, nullable = false, length = 30)
     var username: String,
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true, nullable = false)
     var email: String,
 
     @Column(name = "password")
