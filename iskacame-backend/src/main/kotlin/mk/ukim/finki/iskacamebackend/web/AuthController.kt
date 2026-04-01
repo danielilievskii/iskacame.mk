@@ -2,7 +2,9 @@ package mk.ukim.finki.iskacamebackend.web
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
@@ -59,6 +61,20 @@ class AuthController(
   fun enableAccount(@Valid @RequestBody signInRequest: SignInRequest): ResponseEntity<Void> {
 
     authService.reactivateAccount(signInRequest)
+    return ResponseEntity.noContent().build()
+  }
+
+  @PostMapping("/forgot-password")
+  @Operation(summary = "Requests a password reset code")
+  fun forgotPassword(@Valid @RequestBody request: ForgotPasswordRequest): ResponseEntity<Void> {
+    authService.forgotPassword(request)
+    return ResponseEntity.accepted().build()
+  }
+
+  @PatchMapping("/reset-password")
+  @Operation(summary = "Resets user's password with provided token")
+  fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Void> {
+    authService.resetPassword(request)
     return ResponseEntity.noContent().build()
   }
 }
