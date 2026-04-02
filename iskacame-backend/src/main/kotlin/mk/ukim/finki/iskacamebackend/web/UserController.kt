@@ -72,28 +72,28 @@ class UserController(
   @PostMapping("/change-password")
   @Operation(summary = "Requests a password change code")
   fun requestPasswordChange(@Valid @RequestBody request: ChangePasswordRequest): ResponseEntity<Void> {
-    authService.requestPasswordChange(request)
+    userService.requestPasswordChange(request)
     return ResponseEntity.accepted().build()
   }
 
   @PatchMapping("/confirm-password")
   @Operation(summary = "Confirms user's new password with provided token")
   fun confirmPasswordChange(@Valid @RequestBody request: ConfirmPasswordRequest): ResponseEntity<Void> {
-    authService.confirmPasswordChange(request)
+    userService.confirmPasswordChange(request)
     return ResponseEntity.noContent().build()
   }
 
-  @PatchMapping("/change-email")
+  @PostMapping("/change-email")
   @Operation(summary = "Requests an email change code")
   fun requestEmailChange(@Valid @RequestBody request: ChangeEmailRequest): ResponseEntity<Void> {
-    authService.requestEmailChange(request)
+    userService.requestEmailChange(request)
     return ResponseEntity.accepted().build()
   }
 
   @PatchMapping("/confirm-email")
   @Operation(summary = "Confirms user's new email with provided token")
   fun confirmEmailChange(@Valid @RequestBody request: ConfirmEmailRequest): ResponseEntity<Void> {
-    authService.confirmEmailChange(request)
+    userService.confirmEmailChange(request)
     return ResponseEntity.noContent().build()
   }
 }

@@ -45,7 +45,7 @@ class AuthServiceImpl(
   private val authenticationManager: AuthenticationManager,
   private val jwtService: JwtService,
   private val verificationTokenService: VerificationTokenService,
-  private val eventPublisher: ApplicationEventPublisher,
+  private val eventPublisher: ApplicationEventPublisher
 ) : AuthService {
 
   override fun signUp(request: SignUpRequest): UserDto {
