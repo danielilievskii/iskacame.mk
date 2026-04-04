@@ -2,9 +2,13 @@ package mk.ukim.finki.iskacamebackend.service.intf
 
 import mk.ukim.finki.iskacamebackend.dto.request.gathering.SubmitGatheringResponseRequest
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringResponseOptionsDto
+import mk.ukim.finki.iskacamebackend.model.domain.GatheringResponse
+import mk.ukim.finki.iskacamebackend.model.domain.Place
 
 
 interface GatheringResponseService {
+
+    fun findAllByGatheringId(gatheringId: Long): List<GatheringResponse>
 
     /**
      * Retrieves the available response options for a gathering.

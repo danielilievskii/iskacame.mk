@@ -28,6 +28,10 @@ class GatheringResponseServiceImpl(
     private val gatheringTimeSlotMapper: GatheringTimeSlotMapper
     ) : GatheringResponseService {
 
+    override fun findAllByGatheringId(gatheringId: Long): List<GatheringResponse> {
+        return gatheringResponseRepository.findAllByGatheringId(gatheringId)
+    }
+
     @Transactional(readOnly = true)
     @PreAuthorize("@permissionService.isGatheringParticipant(#gatheringId, authentication.principal.id)")
     override fun getGatheringResponseOptions(gatheringId: Long): GatheringResponseOptionsDto {
