@@ -13,4 +13,5 @@ interface UserRepository : JpaRepository<User, Long> {
     fun existsByEmail(email: String): Boolean
     fun existsByUsernameAndIdNot(username: String, id: Long): Boolean
     fun deleteAllByDisabledAtBeforeAndEnabledFalse(cutoff: Instant): Int
+    fun findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCase(username: String, email: String, name: String): List<User>
 }

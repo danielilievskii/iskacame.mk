@@ -21,6 +21,14 @@ interface UserService {
   fun getUserById(id: Long): User
 
   /**
+   * Retrieves a list of users by their IDs
+   *
+   * @param ids the list of user IDs to retrieve
+   * @return the list of User entities
+   */
+  fun getUsersByIds(ids: List<Long>): List<User>
+
+  /**
    * Uploads or updates a user's avatar.
    * This method handles both initial upload and updates (replaces existing picture).
    *

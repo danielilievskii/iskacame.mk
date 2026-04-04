@@ -1,6 +1,6 @@
 package mk.ukim.finki.iskacamebackend.model.enums
 
-enum class PlaceLevel {
+enum class PriceLevel {
     FREE,
     CHEAP,
     MODERATE,

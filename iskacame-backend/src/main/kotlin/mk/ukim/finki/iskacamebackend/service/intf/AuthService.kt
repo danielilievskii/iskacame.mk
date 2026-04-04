@@ -8,6 +8,7 @@ import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
+import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
@@ -91,6 +92,17 @@ interface AuthService {
    * @return the authenticated user as [UserDto]
    */
   fun getCurrentUserDto(): UserDto
+
+  /**
+   * Retrieves the user found by an identifier and maps it
+   * to a list of [UserSearchDto] representation.
+   *
+   * This method internally calls [getUserDtoByIdentifier] and converts
+   * the returned entity into a DTO suitable for API responses.
+   *
+   * @return the found users as list of [UserSearchDto]
+   */
+  fun getUserDtoByIdentifier(identifier: String): List<UserSearchDto>
 
   /**
    * Returns the ID of the currently authenticated [User].

@@ -18,20 +18,20 @@ import { Logo } from "@/components/ui/logo";
 import { primaryColor } from "@/constants/theme";
 
 export default function LoginScreen() {
-    const [email, setEmail] = useState('');
+    const [identifier, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const { signIn } = useAuth();
     const router = useRouter();
 
     const handleLogin = async () => {
-        if (!email.trim() || !password.trim()) {
-            Alert.alert('Missing fields', 'Please enter your email and password.');
+        if (!identifier.trim() || !password.trim()) {
+            Alert.alert('Missing fields', 'Please enter your email or username and password.');
             return;
         }
         setLoading(true);
         try {
-            await signIn(email.trim(), password);
+            await signIn(identifier.trim(), password);
         } catch (err: any) {
             if (err.status === 403) {
                 Alert.alert(
@@ -41,7 +41,7 @@ export default function LoginScreen() {
                         { text: 'Cancel', style: 'cancel' },
                         {
                             text: 'Verify now',
-                            onPress: () => router.push({ pathname: '/(auth)/verify', params: { email: email.trim() } })
+                            onPress: () => router.push({ pathname: '/(auth)/verify', params: { email: identifier.trim() } })
                         },
                     ]
                 );
@@ -77,7 +77,7 @@ export default function LoginScreen() {
                         <Text style={styles.label}>EMAIL</Text>
                         <TextInput
                             style={styles.input}
-                            value={email}
+                            value={identifier}
                             onChangeText={setEmail}
                             placeholder="you@example.com"
                             placeholderTextColor="#6B7280"
