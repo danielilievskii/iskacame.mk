@@ -2,12 +2,15 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.VerifyTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.response.auth.AuthResponse
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
+import mk.ukim.finki.iskacamebackend.events.PasswordResetEvent
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
 import mk.ukim.finki.iskacamebackend.events.UserEnabledEvent
 import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
@@ -17,6 +20,7 @@ import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
+import mk.ukim.finki.iskacamebackend.model.enums.VerificationTokenPurpose
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import mk.ukim.finki.iskacamebackend.security.jwt.JwtService
 import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
@@ -42,7 +46,7 @@ class AuthServiceImpl(
   private val authenticationManager: AuthenticationManager,
   private val jwtService: JwtService,
   private val verificationTokenService: VerificationTokenService,
-  private val eventPublisher: ApplicationEventPublisher,
+  private val eventPublisher: ApplicationEventPublisher
 ) : AuthService {
 
   override fun signUp(request: SignUpRequest): UserDto {
@@ -72,7 +76,7 @@ class AuthServiceImpl(
 
     val savedUser = userRepository.save(user)
 
-    val verificationToken = verificationTokenService.createVerificationToken(savedUser)
+    val verificationToken = verificationTokenService.createVerificationToken(savedUser, VerificationTokenPurpose.EMAIL_VERIFICATION)
 
     val event = UserRegisteredEvent(savedUser, verificationToken)
     eventPublisher.publishEvent(event)
@@ -118,7 +122,7 @@ class AuthServiceImpl(
       throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
     }
 
-    val verificationToken = verificationTokenService.createVerificationToken(user)
+    val verificationToken = verificationTokenService.createVerificationToken(user, VerificationTokenPurpose.EMAIL_VERIFICATION)
 
     val event = UserRegisteredEvent(user, verificationToken)
     eventPublisher.publishEvent(event)
@@ -132,7 +136,10 @@ class AuthServiceImpl(
       throw ConflictException(AuthExceptionMessages.EMAIL_ALREADY_VERIFIED)
     }
 
-    verificationTokenService.verifyToken(user, request.token)
+    verificationTokenService.consumeToken(user, request.token, VerificationTokenPurpose.EMAIL_VERIFICATION)
+
+    user.emailVerified = true
+    userRepository.save(user)
   }
 
   override fun reactivateAccount(request: SignInRequest) {
@@ -156,6 +163,27 @@ class AuthServiceImpl(
 
     val event = UserEnabledEvent(user)
     eventPublisher.publishEvent(event)
+  }
+
+  override fun forgotPassword(request: ForgotPasswordRequest) {
+    val user = getUserByIdentifier(request.identifier)
+
+    val verificationToken = verificationTokenService.createVerificationToken(user, VerificationTokenPurpose.PASSWORD_RESET)
+
+    val event = PasswordResetEvent(user, verificationToken)
+    eventPublisher.publishEvent(event)
+  }
+
+  override fun resetPassword(request: ResetPasswordRequest) {
+    val user = getUserByIdentifier(request.identifier)
+
+    verificationTokenService.consumeToken(user, request.token, VerificationTokenPurpose.PASSWORD_RESET)
+
+    val encodedPassword = passwordEncoder.encode(request.newPassword)
+      ?: throw CustomAuthenticationException(AuthExceptionMessages.AUTHENTICATION_ERROR)
+
+    user.password = encodedPassword
+    userRepository.save(user)
   }
 
   override fun getCurrentUser(): User {

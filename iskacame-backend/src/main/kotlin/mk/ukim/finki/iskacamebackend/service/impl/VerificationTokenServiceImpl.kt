@@ -7,7 +7,7 @@ import mk.ukim.finki.iskacamebackend.exception.ResourceGoneException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.domain.VerificationToken
-import mk.ukim.finki.iskacamebackend.repository.UserRepository
+import mk.ukim.finki.iskacamebackend.model.enums.VerificationTokenPurpose
 import mk.ukim.finki.iskacamebackend.repository.VerificationTokenRepository
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import mk.ukim.finki.iskacamebackend.utils.TokenGenerator
@@ -21,17 +21,16 @@ import java.time.Instant
 @Service
 class VerificationTokenServiceImpl(
   private val verificationTokenRepository: VerificationTokenRepository,
-  private val userRepository: UserRepository,
   private val verificationTokenConfig: VerificationTokenConfig
 ) : VerificationTokenService {
 
-  override fun createVerificationToken(user: User): VerificationToken {
+  override fun createVerificationToken(user: User, purpose: VerificationTokenPurpose): VerificationToken {
     var token: String
     var exists: Boolean
 
     do {
       token = TokenGenerator.generateVerificationToken()
-      exists = verificationTokenRepository.findByToken(token) != null
+      exists = verificationTokenRepository.findByTokenAndPurpose(token, purpose) != null
     } while (exists)
 
     val expiry = Instant.now().plusMillis(verificationTokenConfig.expirationTime)
@@ -40,15 +39,16 @@ class VerificationTokenServiceImpl(
       token = token,
       user = user,
       expiryDate = expiry,
-      used = false
+      used = false,
+      purpose = purpose
     )
 
     return verificationTokenRepository.save(verificationToken)
   }
 
   @Transactional
-  override fun verifyToken(user: User, token: String) {
-    val verificationToken = verificationTokenRepository.findByToken(token)
+  override fun consumeToken(user: User, token: String, purpose: VerificationTokenPurpose) {
+    val verificationToken = verificationTokenRepository.findByTokenAndPurpose(token, purpose)
       ?: throw ResourceNotFoundException(AuthExceptionMessages.VERIFICATION_TOKEN_NOT_FOUND)
 
     if (verificationToken.user.id != user.id) {
@@ -64,10 +64,8 @@ class VerificationTokenServiceImpl(
     }
 
     verificationToken.used = true
-    verificationToken.user.emailVerified = true
 
     verificationTokenRepository.save(verificationToken)
-    userRepository.save(verificationToken.user)
   }
 
   override fun cleanExpiredOrUsedTokens(): Int {

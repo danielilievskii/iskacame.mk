@@ -1,5 +1,9 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
+import mk.ukim.finki.iskacamebackend.dto.request.user.ChangeEmailRequest
+import mk.ukim.finki.iskacamebackend.dto.request.user.ChangePasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.user.ConfirmEmailRequest
+import mk.ukim.finki.iskacamebackend.dto.request.user.ConfirmPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.user.UpdateUserRequest
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.model.domain.User
@@ -61,4 +65,12 @@ interface UserService {
    * @return The number of accounts deleted
    */
   fun cleanUpDisabledUsers(): Int
+
+  fun requestPasswordChange(request: ChangePasswordRequest)
+
+  fun confirmPasswordChange(request: ConfirmPasswordRequest)
+
+  fun requestEmailChange(request: ChangeEmailRequest)
+
+  fun confirmEmailChange(request: ConfirmEmailRequest)
 }
