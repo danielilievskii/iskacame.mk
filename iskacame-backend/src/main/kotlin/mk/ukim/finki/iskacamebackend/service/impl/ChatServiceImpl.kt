@@ -52,10 +52,34 @@ class ChatServiceImpl(
     @PreAuthorize("@permissionService.isGatheringParticipantByChatRoom(#chatRoomId, authentication.principal.id)")
     override fun getChatRoomMessages(chatRoomId: Long, page: Int, size: Int): Page<ChatMessageDto> {
 
+        val currentUser = authService.getCurrentUser()
+
         val pageable = PageRequest.of(page, size)
         val messagesPage = chatMessageRepository.findByChatRoomId(chatRoomId, pageable)
 
-        return messagesPage.map { chatMessageMapper.toChatMessageDto(it) }
+        return messagesPage.map { chatMessageMapper.toChatMessageDto(it, currentUser) }
+    }
+
+    override fun createReceiptForUser(chatRoom: ChatRoom, user: User): ChatRoomReceipt {
+
+        val unseenMessagesCount = chatMessageRepository.countByChatRoomIdAndDeletedAtIsNull(chatRoom.id!!)
+
+        val receipt = ChatRoomReceipt(
+            chatRoom = chatRoom,
+            user = user,
+            lastSeenMessage = null,
+            unseenMessagesCounter = unseenMessagesCount
+        )
+
+        return chatRoomReceiptRepository.save(receipt)
+    }
+
+    override fun deleteReceiptForUser(chatRoom: ChatRoom, user: User) {
+
+        val receipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoom.id!!, user.id!!)
+            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
+
+        chatRoomReceiptRepository.delete(receipt)
     }
 
     @Transactional
@@ -74,21 +98,30 @@ class ChatServiceImpl(
         val savedMessage = chatMessageRepository.save(message)
 
         val receipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoomId, currentUser.id!!)
-            ?: throw ResourceNotFoundException("Chat room receipt not found")
+            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
 
-        receipt.lastSeenMessage = savedMessage
+        receipt.lastSeenMessage = null
         receipt.unseenMessagesCounter = 0
 
-        val chatMessageDto = chatMessageMapper.toChatMessageDto(savedMessage)
+        chatRoomReceiptRepository.save(receipt)
 
-        val recipients = gatheringParticipationRepository
+        val chatMessageDto = chatMessageMapper.toChatMessageDto(savedMessage, currentUser)
+
+        val recipientIds = gatheringParticipationRepository
             .findAllByGatheringIdAndStatus(chatRoom.gathering.id!!, ParticipationStatus.JOINED)
-            .map { it.user }
-            .filter { it.id != currentUser.id }
+            .map { it.user.id!! }
+            .filter { it != currentUser.id }
 
-        val offlineRecipientIds = recipients
-            .filter { !webSocketSessionRegistry.isConnected(it.id!!) }
-            .map { it.id!! }
+        val receipts = chatRoomReceiptRepository.findByChatRoomIdAndUserIdIn(chatRoomId, recipientIds)
+
+        receipts.forEach { receipt ->
+            receipt.unseenMessagesCounter = receipt.unseenMessagesCounter + 1
+        }
+
+        chatRoomReceiptRepository.saveAll(receipts)
+
+        val offlineRecipientIds = recipientIds
+            .filter { !webSocketSessionRegistry.isConnected(it) }
 
         val event = ChatMessageSentEvent(
             chatRoomId = chatRoomId,
@@ -130,39 +163,29 @@ class ChatServiceImpl(
         val chatRoom = findChatRoomById(chatRoomId)
 
         val receipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoomId, currentUser.id!!)
-            ?: createReceipt(chatRoom, currentUser)
+            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
 
         val lastMessage = chatMessageRepository.findFirstByChatRoomIdOrderBySentAtDesc(chatRoomId)
 
         lastMessage?.let {
             if (receipt.lastSeenMessage != it) {
-                receipt.lastSeenMessage = lastMessage
                 receipt.unseenMessagesCounter = 0
 
-                chatRoomReceiptRepository.save(receipt)
-
-                val event = ChatMessagesSeenEvent(
-                    chatRoomId = chatRoomId,
-                    recipientId = currentUser.id!!,
-                )
-
-                eventPublisher.publishEvent(event)
+                if (lastMessage.sender != currentUser) {
+                    receipt.lastSeenMessage = lastMessage
+                }
             }
         }
-    }
 
-    private fun createReceipt(chatRoom: ChatRoom, user: User): ChatRoomReceipt {
+        chatRoomReceiptRepository.save(receipt)
 
-        val receipt = ChatRoomReceipt(
-            chatRoom = chatRoom,
-            user = user,
-            lastSeenMessage = null,
-            unseenMessagesCounter = 0
+        val event = ChatMessagesSeenEvent(
+            chatRoomId = chatRoomId,
+            recipientId = currentUser.id!!,
         )
 
-        return chatRoomReceiptRepository.save(receipt)
+        eventPublisher.publishEvent(event)
     }
-
 
     private fun findChatRoomById(id: Long): ChatRoom {
         return chatRoomRepository.findById(id)

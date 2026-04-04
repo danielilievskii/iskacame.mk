@@ -10,7 +10,7 @@ import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
 
 @Entity
 @Table(
-    name = "message_receipts",
+    name = "chat_room_receipts",
     uniqueConstraints = [UniqueConstraint(columnNames = ["chatroom_id", "user_id"])]
 )
 class ChatRoomReceipt(

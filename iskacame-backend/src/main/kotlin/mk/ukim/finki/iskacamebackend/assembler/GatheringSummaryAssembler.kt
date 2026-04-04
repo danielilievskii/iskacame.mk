@@ -4,6 +4,7 @@ import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringSummaryDto
 import mk.ukim.finki.iskacamebackend.mapper.GatheringMapper
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
 import mk.ukim.finki.iskacamebackend.repository.ChatMessageRepository
+import mk.ukim.finki.iskacamebackend.repository.ChatRoomReceiptRepository
 import org.springframework.stereotype.Component
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component
 class GatheringSummaryAssembler(
     private val gatheringMapper: GatheringMapper,
     private val chatMessageRepository: ChatMessageRepository,
+    private val chatRoomReceiptRepository: ChatRoomReceiptRepository,
 ) {
 
     /**
@@ -23,10 +25,14 @@ class GatheringSummaryAssembler(
      * @return fully populated [GatheringSummaryDto]
      */
     fun assembleAll(gatherings: List<Gathering>, currentUserId: Long): List<GatheringSummaryDto> {
-
         val chatRoomIds = gatherings.map { it.chatRoom!!.id!! }
 
-        val unseenMessagesCountByChatRoom = mutableMapOf<Long, Long>()
+        val receipts = chatRoomReceiptRepository.findByChatRoomIdsAndUserId(chatRoomIds, currentUserId)
+
+        val unseenMessagesCountByChatRoom = receipts.associateBy(
+            { it.chatRoom.id!! },
+            { it.unseenMessagesCounter }
+        )
 
         return gatherings.map { gathering ->
             val unseenMessagesCount = unseenMessagesCountByChatRoom[gathering.chatRoom!!.id] ?: 0
@@ -36,4 +42,5 @@ class GatheringSummaryAssembler(
                 .copy(unseenMessagesCount = unseenMessagesCount)
         }
     }
+
 }

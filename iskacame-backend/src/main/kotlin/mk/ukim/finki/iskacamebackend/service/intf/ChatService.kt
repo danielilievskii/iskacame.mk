@@ -3,7 +3,9 @@ package mk.ukim.finki.iskacamebackend.service.intf
 import mk.ukim.finki.iskacamebackend.dto.request.chat.SendMessageRequest
 import mk.ukim.finki.iskacamebackend.dto.response.chat.ChatMessageDto
 import mk.ukim.finki.iskacamebackend.model.domain.ChatRoom
+import mk.ukim.finki.iskacamebackend.model.domain.ChatRoomReceipt
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
+import mk.ukim.finki.iskacamebackend.model.domain.User
 import org.springframework.data.domain.Page
 
 /**
@@ -18,6 +20,10 @@ interface ChatService {
      * @return the newly created and persisted chat room
      */
     fun createChatRoom(gathering: Gathering): ChatRoom
+
+    fun createReceiptForUser(chatRoom: ChatRoom, user: User): ChatRoomReceipt
+
+    fun deleteReceiptForUser(chatRoom: ChatRoom, user: User)
 
     /**
      * Returns paginated messages for a chat room.
