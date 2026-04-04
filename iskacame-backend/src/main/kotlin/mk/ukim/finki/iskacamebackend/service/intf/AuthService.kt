@@ -1,6 +1,8 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignUpRequest
@@ -66,6 +68,10 @@ interface AuthService {
    * @param request the sign-in request containing username and password
    */
   fun reactivateAccount(request: SignInRequest)
+
+  fun forgotPassword(request: ForgotPasswordRequest)
+
+  fun resetPassword(request: ResetPasswordRequest)
 
   /**
    * Returns the currently authenticated [User] from the current JWT

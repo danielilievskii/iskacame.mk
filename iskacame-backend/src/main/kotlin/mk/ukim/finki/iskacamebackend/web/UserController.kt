@@ -2,6 +2,10 @@ package mk.ukim.finki.iskacamebackend.web
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
+import mk.ukim.finki.iskacamebackend.dto.request.user.ChangeEmailRequest
+import mk.ukim.finki.iskacamebackend.dto.request.user.ChangePasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.user.ConfirmEmailRequest
+import mk.ukim.finki.iskacamebackend.dto.request.user.ConfirmPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.user.UpdateUserRequest
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
@@ -71,6 +75,34 @@ class UserController(
   fun disableAccount(): ResponseEntity<Void> {
 
     userService.disableUser()
+    return ResponseEntity.noContent().build()
+  }
+
+  @PostMapping("/change-password")
+  @Operation(summary = "Requests a password change code")
+  fun requestPasswordChange(@Valid @RequestBody request: ChangePasswordRequest): ResponseEntity<Void> {
+    userService.requestPasswordChange(request)
+    return ResponseEntity.accepted().build()
+  }
+
+  @PatchMapping("/confirm-password")
+  @Operation(summary = "Confirms user's new password with provided token")
+  fun confirmPasswordChange(@Valid @RequestBody request: ConfirmPasswordRequest): ResponseEntity<Void> {
+    userService.confirmPasswordChange(request)
+    return ResponseEntity.noContent().build()
+  }
+
+  @PostMapping("/change-email")
+  @Operation(summary = "Requests an email change code")
+  fun requestEmailChange(@Valid @RequestBody request: ChangeEmailRequest): ResponseEntity<Void> {
+    userService.requestEmailChange(request)
+    return ResponseEntity.accepted().build()
+  }
+
+  @PatchMapping("/confirm-email")
+  @Operation(summary = "Confirms user's new email with provided token")
+  fun confirmEmailChange(@Valid @RequestBody request: ConfirmEmailRequest): ResponseEntity<Void> {
+    userService.confirmEmailChange(request)
     return ResponseEntity.noContent().build()
   }
 }
