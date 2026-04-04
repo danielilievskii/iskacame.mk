@@ -131,8 +131,7 @@ class UserServiceImpl(
   }
 
   override fun confirmPasswordChange(request: ConfirmPasswordRequest) {
-    val user = userRepository.findByEmail(request.email)
-      ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+    val user = authService.getCurrentUser()
 
     verificationTokenService.consumeToken(
       user = user,
@@ -172,11 +171,11 @@ class UserServiceImpl(
       purpose = VerificationTokenPurpose.EMAIL_CHANGE
     )
 
-    if (userRepository.existsByEmail(request.email)) {
+    if (userRepository.existsByEmail(request.newEmail)) {
       throw ConflictException(AuthExceptionMessages.EMAIL_TAKEN)
     }
 
-    user.email = request.email
+    user.email = request.newEmail
     userRepository.save(user)
   }
 

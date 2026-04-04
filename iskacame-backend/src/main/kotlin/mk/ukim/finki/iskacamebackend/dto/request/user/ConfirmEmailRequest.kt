@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Pattern
 data class ConfirmEmailRequest(
   @field:NotBlank(message = "Email is required")
   @field:Email(message = "Invalid email address")
-  val email: String,
+  val newEmail: String,
 
   @field:NotBlank(message = "Token is required")
   @field:Pattern(regexp = "\\d{6}", message = "Code must be 6 digits")
