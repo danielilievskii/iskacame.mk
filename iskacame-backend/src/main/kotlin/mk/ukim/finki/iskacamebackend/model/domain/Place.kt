@@ -2,12 +2,15 @@ package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
-import mk.ukim.finki.iskacamebackend.model.enums.PlaceLevel
-import mk.ukim.finki.iskacamebackend.model.enums.PlaceType
+import mk.ukim.finki.iskacamebackend.model.enums.PriceLevel
 
 @Entity
-@Table(name = "places")
+@Table(name = "gathering_places")
 class Place(
+    @ManyToOne
+    @JoinColumn(name = "gathering_id")
+    var gathering: Gathering,
+
     @Column(name = "name")
     var name: String,
 
@@ -21,17 +24,10 @@ class Place(
     var latitude: Double?,
 
     @Column(name = "type")
-    @Enumerated(EnumType.STRING)
-    var type: PlaceType,
+    var type: String,
 
     @Column(name = "price_level")
     @Enumerated(EnumType.STRING)
-    var priceLevel: PlaceLevel,
-
-    @Column(name = "link")
-    var link: String?,
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    var owner: User?
+    var priceLevel: PriceLevel
+    
 ) : BaseEntity<Long>()

@@ -31,6 +31,8 @@ repositories {
     mavenCentral()
 }
 
+extra["springAiVersion"] = "1.1.4"
+
 dependencies {
     // Spring Boot starters
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -74,11 +76,19 @@ dependencies {
     // Cloud Storage
     implementation("com.cloudinary:cloudinary-http5:2.0.0")
 
+    implementation("org.springframework.ai:spring-ai-starter-model-google-genai")
+
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
+    }
 }
 
 kotlin {
