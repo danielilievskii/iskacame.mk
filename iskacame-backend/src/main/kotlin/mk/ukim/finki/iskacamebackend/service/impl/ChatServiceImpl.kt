@@ -148,6 +148,16 @@ class ChatServiceImpl(
         message.deletedAt = LocalDateTime.now()
         chatMessageRepository.save(message)
 
+        val receipts =
+            chatRoomReceiptRepository.findByChatRoomIdAndUserIdNot(message.chatRoom.id!!, currentUserId)
+
+        receipts.forEach { receipt ->
+            if (receipt.unseenMessagesCounter > 0) {
+                receipt.unseenMessagesCounter = receipt.unseenMessagesCounter - 1
+            }
+        }
+        chatRoomReceiptRepository.saveAll(receipts)
+
         val event = ChatMessageDeletedEvent(
             chatRoomId = message.chatRoom.id!!,
             messageId = messageId

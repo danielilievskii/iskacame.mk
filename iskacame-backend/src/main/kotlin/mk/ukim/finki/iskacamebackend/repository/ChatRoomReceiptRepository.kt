@@ -18,4 +18,6 @@ interface ChatRoomReceiptRepository : JpaRepository<ChatRoomReceipt, Long> {
     """)
     fun findByChatRoomIdsAndUserId(chatRoomIds: List<Long>, userId: Long): List<ChatRoomReceipt>
 
+    fun findByChatRoomIdAndUserIdNot(chatRoomId: Long, userId: Long): List<ChatRoomReceipt>
+
 }
