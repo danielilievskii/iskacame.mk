@@ -3,6 +3,7 @@ package mk.ukim.finki.iskacamebackend.dto.response.gathering
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringType
+import mk.ukim.finki.iskacamebackend.model.enums.PriceLevel
 import mk.ukim.finki.iskacamebackend.model.enums.TimeSlot
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -42,12 +43,11 @@ data class GatheringTypePreferenceDto(
 )
 
 data class PlaceDto(
-    val id: Long,
+    val id: Long?,
     val name: String,
     val address: String?,
     val longitude: Double?,
     val latitude: Double?,
     val type: String,
-    val priceLevel: String,
-    val link: String?
+    val priceLevel: PriceLevel,
 )
