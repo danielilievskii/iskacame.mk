@@ -2,6 +2,7 @@ package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
+import mk.ukim.finki.iskacamebackend.model.enums.VerificationTokenPurpose
 import java.time.Instant
 
 @Entity
@@ -18,5 +19,9 @@ class VerificationToken(
   var expiryDate: Instant,
 
   @Column(name = "used", nullable = false)
-  var used: Boolean = false
+  var used: Boolean = false,
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "purpose", nullable = false)
+  var purpose: VerificationTokenPurpose
 ) : BaseEntity<Long>()
