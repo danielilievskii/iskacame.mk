@@ -1,13 +1,13 @@
 package mk.ukim.finki.iskacamebackend.repository
 
 import mk.ukim.finki.iskacamebackend.model.domain.ChatMessage
-import mk.ukim.finki.iskacamebackend.model.projections.ChatRoomUnseenMessagesCount
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.EntityGraph
+import java.time.LocalDateTime
 
 @Repository
 interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
@@ -28,5 +28,11 @@ interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
         ORDER BY m.sentAt DESC
     """)
     fun findFirstByChatRoomIdOrderBySentAtDesc(chatRoomId: Long): ChatMessage?
+
+    fun findTopByChatRoomIdAndSentAtBeforeAndDeletedAtIsNullOrderBySentAtDesc(
+        chatRoomId: Long,
+        sentAt: LocalDateTime
+    ): ChatMessage?
+
 
 }
