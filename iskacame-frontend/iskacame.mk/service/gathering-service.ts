@@ -11,6 +11,8 @@ import type {
     DebtDto,
     CreatePaymentRequest,
     CreateExpenseRequest,
+    PlaceDto,
+    PlacePollDto,
 } from './dtos/gathering-types';
 
 export const gatheringService = {
@@ -102,6 +104,40 @@ export const gatheringService = {
 
     async deletePayment(gatheringId: number, paymentId: number): Promise<void> {
         return apiRequest<void>(`/api/gatherings/${gatheringId}/payments/${paymentId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    async generatePlaceSuggestions(gatheringId: number): Promise<PlaceDto[]> {
+        return apiRequest<PlaceDto[]>(`/api/gatherings/${gatheringId}/generate-place-suggestions`);
+    },
+
+    async createPoll(gatheringId: number, durationMinutes: number): Promise<PlacePollDto> {
+        return apiRequest<PlacePollDto>(`/api/gatherings/${gatheringId}/poll`, {
+            method: 'POST',
+            body: { durationMinutes },
+        });
+    },
+
+    async getPoll(gatheringId: number): Promise<PlacePollDto | null> {
+        return apiRequest<PlacePollDto | null>(`/api/gatherings/${gatheringId}/poll`);
+    },
+
+    async castVote(gatheringId: number, placeIds: number[]): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/poll/vote`, {
+            method: 'POST',
+            body: { placeIds },
+        });
+    },
+
+    async inviteUser(gatheringId: number, userId: number): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/invite/${userId}`, {
+            method: 'POST',
+        });
+    },
+
+    async removeParticipant(gatheringId: number, userId: number): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/participants/${userId}`, {
             method: 'DELETE',
         });
     },

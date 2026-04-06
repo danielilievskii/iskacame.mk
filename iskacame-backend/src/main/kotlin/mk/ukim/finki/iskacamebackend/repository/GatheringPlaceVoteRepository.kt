@@ -5,4 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface GatheringPlaceVoteRepository : JpaRepository<GatheringPlaceVote, Long>
+interface GatheringPlaceVoteRepository : JpaRepository<GatheringPlaceVote, Long> {
+
+    fun findAllByGatheringId(gatheringId: Long): List<GatheringPlaceVote>
+
+    fun existsByGatheringIdAndUserIdAndPlaceId(gatheringId: Long, userId: Long, placeId: Long): Boolean
+
+    fun deleteAllByGatheringIdAndUserId(gatheringId: Long, userId: Long)
+}

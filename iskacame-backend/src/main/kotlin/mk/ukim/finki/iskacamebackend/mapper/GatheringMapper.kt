@@ -34,5 +34,6 @@ interface GatheringMapper {
   @Mapping(target = "participants", ignore = true)
   @Mapping(target = "suggestedPlaces", ignore = true)
   @Mapping(target = "hasSubmittedResponse", ignore = true)
+  @Mapping(target = "activePoll", ignore = true)
   fun toGatheringDetailsDto(gathering: Gathering): GatheringDetailsDto
 }

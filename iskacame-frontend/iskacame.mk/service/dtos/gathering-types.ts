@@ -46,6 +46,7 @@ export interface GatheringDetailsDto {
     suggestedPlaces: PlaceDto[] | null;
     chatRoomId: number;
     hasSubmittedResponse: boolean;
+    activePoll: PlacePollDto | null;
 }
 
 export interface GatheringInvitationDto {
@@ -135,4 +136,34 @@ export interface CreateExpenseRequest {
     totalAmount: number;
     description: string;
     splits: CreateSplitRequest[];
+}
+
+// Poll types
+export type PollStatus = 'ACTIVE' | 'ENDED';
+
+export interface PlacePollOptionDto {
+    place: PlaceDto;
+    voteCount: number;
+}
+
+export interface PlacePollDto {
+    id: number;
+    status: PollStatus;
+    endsAt: string;
+    createdAt: string;
+    places: PlacePollOptionDto[];
+    myVotedPlaceIds: number[];
+}
+
+// Notification types
+export type NotificationType = 'GATHERING_INVITE' | 'VOTE_STARTED' | 'VOTE_ENDED' | 'GATHERING_CANCELLED';
+
+export interface NotificationDto {
+    id: number;
+    type: NotificationType;
+    title: string;
+    body: string;
+    gatheringId: number | null;
+    read: boolean;
+    createdAt: string;
 }

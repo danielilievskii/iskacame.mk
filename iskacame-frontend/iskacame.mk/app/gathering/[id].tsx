@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -13,14 +13,18 @@ import {
     Image,
     KeyboardAvoidingView,
     Platform,
+    Linking,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
 import { gatheringService } from '@/service/gathering-service';
+import { userSearchService, type UserSearchDto } from '@/service/user-search-service';
 import type {
     GatheringDetailsDto,
     ParticipantDto,
     PlaceDto,
+    PlacePollDto,
     ActivityDto,
     DebtDto,
 } from '@/service/dtos/gathering-types';
@@ -528,6 +532,505 @@ const emStyles = StyleSheet.create({
     confirmBtnText: { color: '#0B0B0F', fontWeight: '800', fontSize: 15 },
 });
 
+function buildMapsQuery(place: PlaceDto): string {
+    const parts = [place.name, place.address].filter(Boolean).join(' ');
+    return encodeURIComponent(parts);
+}
+
+function MapModal({
+    visible,
+    place,
+    onClose,
+}: {
+    visible: boolean;
+    place: PlaceDto | null;
+    onClose: () => void;
+}) {
+    if (!place) return null;
+
+    const query = buildMapsQuery(place);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    const handleOpenExternal = () => {
+        Linking.openURL(mapsUrl);
+    };
+
+    return (
+        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+            <View style={mapStyles.overlay}>
+                <View style={mapStyles.container}>
+                    <View style={mapStyles.header}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={mapStyles.title} numberOfLines={1}>{place.name}</Text>
+                            {place.address && (
+                                <Text style={mapStyles.address} numberOfLines={1}>{place.address}</Text>
+                            )}
+                        </View>
+                        <TouchableOpacity onPress={onClose} style={mapStyles.closeBtn}>
+                            <Text style={mapStyles.closeBtnText}>X</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={mapStyles.webviewContainer}>
+                        <WebView
+                            source={{ uri: mapsUrl }}
+                            style={mapStyles.webview}
+                            javaScriptEnabled
+                            domStorageEnabled
+                            scalesPageToFit
+                            startInLoadingState
+                            renderLoading={() => (
+                                <View style={mapStyles.loading}>
+                                    <ActivityIndicator color={primaryColor} size="large" />
+                                </View>
+                            )}
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={mapStyles.openBtn}
+                        onPress={handleOpenExternal}
+                        activeOpacity={0.85}
+                    >
+                        <Text style={mapStyles.openBtnText}>Open in Google Maps</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
+const mapStyles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'flex-end',
+    },
+    container: {
+        backgroundColor: '#16161D',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        borderWidth: 1,
+        borderColor: '#1F1F2E',
+        borderBottomWidth: 0,
+        overflow: 'hidden',
+        height: '75%',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        gap: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1F1F2E',
+    },
+    title: { fontSize: 16, fontWeight: '700', color: '#F0EBE1' },
+    address: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+    closeBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#0B0B0F',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#252530',
+    },
+    closeBtnText: { color: '#6B7280', fontWeight: '700', fontSize: 14 },
+    webviewContainer: { flex: 1 },
+    webview: { flex: 1 },
+    loading: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#0B0B0F',
+    },
+    openBtn: {
+        backgroundColor: primaryColor,
+        paddingVertical: 16,
+        alignItems: 'center',
+        margin: 16,
+        borderRadius: 12,
+    },
+    openBtnText: { color: '#0B0B0F', fontWeight: '800', fontSize: 15 },
+});
+
+function VotingCard({
+    poll,
+    gatheringId,
+    onVoteSubmitted,
+}: {
+    poll: PlacePollDto;
+    gatheringId: number;
+    onVoteSubmitted: () => void;
+}) {
+    const [selectedPlaceIds, setSelectedPlaceIds] = useState<number[]>(poll.myVotedPlaceIds);
+    const [submitting, setSubmitting] = useState(false);
+    const [timeLeft, setTimeLeft] = useState('');
+    const [mapPlace, setMapPlace] = useState<PlaceDto | null>(null);
+
+    useEffect(() => {
+        const updateTimer = () => {
+            const now = Date.now();
+            const end = new Date(poll.endsAt).getTime();
+            const diff = end - now;
+            if (diff <= 0) {
+                setTimeLeft('Ended');
+                return;
+            }
+            const hours = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            if (hours > 0) {
+                setTimeLeft(`${hours}h ${mins}m ${secs}s`);
+            } else {
+                setTimeLeft(`${mins}m ${secs}s`);
+            }
+        };
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [poll.endsAt]);
+
+    const togglePlace = (placeId: number) => {
+        setSelectedPlaceIds((prev) =>
+            prev.includes(placeId) ? prev.filter((id) => id !== placeId) : [...prev, placeId]
+        );
+    };
+
+    const handleSubmitVote = async () => {
+        if (selectedPlaceIds.length === 0) {
+            Alert.alert('Vote', 'Select at least one place.');
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await gatheringService.castVote(gatheringId, selectedPlaceIds);
+            onVoteSubmitted();
+        } catch (e: any) {
+            Alert.alert('Error', e.message ?? 'Failed to submit vote.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const isActive = poll.status === 'ACTIVE' && timeLeft !== 'Ended';
+    const sortedPlaces = [...poll.places].sort((a, b) => b.voteCount - a.voteCount);
+
+    return (
+        <View style={voteStyles.container}>
+            <View style={voteStyles.header}>
+                <SectionHeader title={isActive ? 'VOTE FOR A PLACE' : 'VOTE RESULTS'} />
+                <View style={[voteStyles.timerBadge, !isActive && { backgroundColor: '#2A1515' }]}>
+                    <Text style={[voteStyles.timerText, !isActive && { color: '#F87171' }]}>
+                        {isActive ? timeLeft : 'Ended'}
+                    </Text>
+                </View>
+            </View>
+
+            {sortedPlaces.map(({ place, voteCount }) => {
+                const isSelected = selectedPlaceIds.includes(place.id);
+                return (
+                    <TouchableOpacity
+                        key={place.id}
+                        style={[
+                            voteStyles.option,
+                            isSelected && voteStyles.optionSelected,
+                        ]}
+                        onPress={() => isActive && togglePlace(place.id)}
+                        onLongPress={() => setMapPlace(place)}
+                        activeOpacity={isActive ? 0.7 : 1}
+                    >
+                        <View style={voteStyles.optionContent}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={voteStyles.optionName}>{place.name}</Text>
+                                {place.address && (
+                                    <Text style={voteStyles.optionAddress} numberOfLines={1}>
+                                        {place.address}
+                                    </Text>
+                                )}
+                            </View>
+                            <View style={voteStyles.voteBadge}>
+                                <Text style={voteStyles.voteCount}>{voteCount}</Text>
+                            </View>
+                            {isActive && (
+                                <View style={[voteStyles.checkbox, isSelected && voteStyles.checkboxChecked]}>
+                                    {isSelected && <Text style={voteStyles.checkmark}>{'  '}</Text>}
+                                </View>
+                            )}
+                        </View>
+                    </TouchableOpacity>
+                );
+            })}
+
+            {isActive && (
+                <TouchableOpacity
+                    style={[voteStyles.submitBtn, submitting && { opacity: 0.6 }]}
+                    onPress={handleSubmitVote}
+                    disabled={submitting}
+                    activeOpacity={0.85}
+                >
+                    {submitting ? (
+                        <ActivityIndicator color="#0B0B0F" size="small" />
+                    ) : (
+                        <Text style={voteStyles.submitBtnText}>
+                            {poll.myVotedPlaceIds.length > 0 ? 'Update Vote' : 'Submit Vote'}
+                        </Text>
+                    )}
+                </TouchableOpacity>
+            )}
+
+            <Text style={voteStyles.hint}>Long press a place to view on map</Text>
+
+            <MapModal
+                visible={!!mapPlace}
+                place={mapPlace}
+                onClose={() => setMapPlace(null)}
+            />
+        </View>
+    );
+}
+
+const voteStyles = StyleSheet.create({
+    container: {
+        backgroundColor: '#16161D',
+        borderRadius: 16,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: '#1F1F2E',
+        marginBottom: 16,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    timerBadge: {
+        backgroundColor: '#2D2A45',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+    },
+    timerText: { color: primaryColor, fontSize: 12, fontWeight: '700' },
+    option: {
+        backgroundColor: '#0B0B0F',
+        borderRadius: 12,
+        padding: 14,
+        marginTop: 8,
+        borderWidth: 1,
+        borderColor: '#252530',
+    },
+    optionSelected: {
+        borderColor: primaryColor,
+        backgroundColor: '#1A1828',
+    },
+    optionContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    optionName: { fontSize: 14, fontWeight: '600', color: '#F0EBE1' },
+    optionAddress: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+    voteBadge: {
+        backgroundColor: '#2D2A45',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        minWidth: 32,
+        alignItems: 'center',
+    },
+    voteCount: { color: primaryColor, fontSize: 13, fontWeight: '700' },
+    checkbox: {
+        width: 22,
+        height: 22,
+        borderRadius: 6,
+        borderWidth: 2,
+        borderColor: '#4B5563',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    checkboxChecked: {
+        borderColor: primaryColor,
+        backgroundColor: primaryColor,
+    },
+    checkmark: { color: '#0B0B0F', fontSize: 13, fontWeight: '800' },
+    submitBtn: {
+        backgroundColor: primaryColor,
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    submitBtnText: { color: '#0B0B0F', fontWeight: '800', fontSize: 15 },
+    hint: { color: '#4B5563', fontSize: 11, textAlign: 'center', marginTop: 12 },
+});
+
+function InviteParticipantModal({
+    visible,
+    onClose,
+    gatheringId,
+    existingParticipantIds,
+    onInvited,
+}: {
+    visible: boolean;
+    onClose: () => void;
+    gatheringId: number;
+    existingParticipantIds: number[];
+    onInvited: () => void;
+}) {
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<UserSearchDto[]>([]);
+    const [searching, setSearching] = useState(false);
+    const [inviting, setInviting] = useState<number | null>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleSearch = (text: string) => {
+        setQuery(text);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        if (!text.trim()) {
+            setResults([]);
+            return;
+        }
+        debounceRef.current = setTimeout(async () => {
+            setSearching(true);
+            try {
+                const users = await userSearchService.searchUsers(text);
+                setResults(users.filter((u) => !existingParticipantIds.includes(u.id)));
+            } catch {
+                setResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 400);
+    };
+
+    const handleInvite = async (userId: number) => {
+        setInviting(userId);
+        try {
+            await gatheringService.inviteUser(gatheringId, userId);
+            setResults((prev) => prev.filter((u) => u.id !== userId));
+            onInvited();
+        } catch (e: any) {
+            Alert.alert('Error', e.message ?? 'Failed to invite user.');
+        } finally {
+            setInviting(null);
+        }
+    };
+
+    const handleClose = () => {
+        setQuery('');
+        setResults([]);
+        onClose();
+    };
+
+    return (
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+            <KeyboardAvoidingView
+                style={inviteStyles.overlay}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                <View style={inviteStyles.dialog}>
+                    <Text style={inviteStyles.title}>Invite Participant</Text>
+                    <TextInput
+                        style={inviteStyles.input}
+                        value={query}
+                        onChangeText={handleSearch}
+                        placeholder="Search by name or username..."
+                        placeholderTextColor="#6B7280"
+                        autoFocus
+                    />
+                    {searching && (
+                        <ActivityIndicator color={primaryColor} size="small" style={{ marginVertical: 12 }} />
+                    )}
+                    {results.length > 0 && (
+                        <View style={inviteStyles.resultsList}>
+                            {results.map((u) => {
+                                const initials = u.name
+                                    .split(' ')
+                                    .map((w) => w[0])
+                                    .join('')
+                                    .toUpperCase()
+                                    .slice(0, 2);
+                                return (
+                                    <View key={u.id} style={inviteStyles.resultRow}>
+                                        {u.avatarUrl ? (
+                                            <Image source={{ uri: u.avatarUrl }} style={inviteStyles.resultAvatar} />
+                                        ) : (
+                                            <View style={inviteStyles.resultAvatarPlaceholder}>
+                                                <Text style={inviteStyles.resultAvatarText}>{initials}</Text>
+                                            </View>
+                                        )}
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={inviteStyles.resultName}>{u.name}</Text>
+                                            <Text style={inviteStyles.resultUsername}>@{u.username}</Text>
+                                        </View>
+                                        <TouchableOpacity
+                                            style={inviteStyles.inviteBtn}
+                                            onPress={() => handleInvite(u.id)}
+                                            disabled={inviting === u.id}
+                                            activeOpacity={0.8}
+                                        >
+                                            {inviting === u.id ? (
+                                                <ActivityIndicator color="#0B0B0F" size="small" />
+                                            ) : (
+                                                <Text style={inviteStyles.inviteBtnText}>Invite</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                );
+                            })}
+                        </View>
+                    )}
+                    {!searching && query.trim().length > 0 && results.length === 0 && (
+                        <Text style={inviteStyles.noResults}>No users found</Text>
+                    )}
+                    <TouchableOpacity style={inviteStyles.closeBtn} onPress={handleClose}>
+                        <Text style={inviteStyles.closeBtnText}>Close</Text>
+                    </TouchableOpacity>
+                </View>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+}
+
+const inviteStyles = StyleSheet.create({
+    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 24 },
+    dialog: {
+        backgroundColor: '#16161D', borderRadius: 20, padding: 24,
+        borderWidth: 1, borderColor: '#1F1F2E', maxHeight: '80%',
+    },
+    title: { fontSize: 20, fontWeight: '800', color: '#F0EBE1', marginBottom: 16, textAlign: 'center' },
+    input: {
+        backgroundColor: '#0B0B0F', borderWidth: 1, borderColor: '#252530', borderRadius: 12,
+        paddingHorizontal: 16, paddingVertical: 12, color: '#F0EBE1', fontSize: 16,
+    },
+    resultsList: { marginTop: 12, maxHeight: 300 },
+    resultRow: {
+        flexDirection: 'row', alignItems: 'center', gap: 12,
+        paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1F1F2E',
+    },
+    resultAvatar: { width: 36, height: 36, borderRadius: 18 },
+    resultAvatarPlaceholder: {
+        width: 36, height: 36, borderRadius: 18, backgroundColor: '#2D2A45',
+        justifyContent: 'center', alignItems: 'center',
+    },
+    resultAvatarText: { fontSize: 13, fontWeight: '700', color: '#B8AEDE' },
+    resultName: { fontSize: 14, fontWeight: '600', color: '#F0EBE1' },
+    resultUsername: { fontSize: 12, color: '#6B7280', marginTop: 1 },
+    inviteBtn: {
+        backgroundColor: primaryColor, borderRadius: 10,
+        paddingHorizontal: 16, paddingVertical: 8,
+    },
+    inviteBtnText: { color: '#0B0B0F', fontWeight: '800', fontSize: 13 },
+    noResults: { color: '#6B7280', fontSize: 14, textAlign: 'center', marginTop: 16 },
+    closeBtn: {
+        marginTop: 16, paddingVertical: 12, alignItems: 'center',
+        backgroundColor: '#0B0B0F', borderRadius: 12, borderWidth: 1, borderColor: '#252530',
+    },
+    closeBtnText: { color: '#6B7280', fontWeight: '600', fontSize: 14 },
+});
+
 export default function GatheringDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
@@ -542,6 +1045,7 @@ export default function GatheringDetailsScreen() {
     const [paying, setPaying] = useState(false);
     const [previewParticipant, setPreviewParticipant] = useState<ParticipantDto | null>(null);
     const [showAddExpense, setShowAddExpense] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
 
     const load = useCallback(async () => {
         if (!id) return;
@@ -677,6 +1181,8 @@ export default function GatheringDetailsScreen() {
     const isCreator = gathering.creatorId === user?.id;
     const canManage = isCreator && gathering.status !== 'CANCELLED' && gathering.status !== 'FINALIZED';
     const canLeave = !isCreator && gathering.status !== 'CANCELLED';
+    const hasPoll = gathering.activePoll !== null;
+    const canShowAiSuggestions = isCreator && (gathering.status === 'OPEN' || gathering.status === 'DRAFT') && !hasPoll;
 
     const finalizedTimePassed = gathering.finalizedTime
         ? new Date(gathering.finalizedTime).getTime() < Date.now()
@@ -700,7 +1206,7 @@ export default function GatheringDetailsScreen() {
                     <Text style={styles.backText}>‹ Back</Text>
                 </TouchableOpacity>
                 <View style={styles.topBarRight}>
-                    {gathering.hasSubmittedResponse && gathering.status !== 'CANCELLED' && (
+                    {gathering.hasSubmittedResponse && gathering.status !== 'CANCELLED' && !hasPoll && (
                         <TouchableOpacity
                             onPress={() =>
                                 router.push({
@@ -752,7 +1258,18 @@ export default function GatheringDetailsScreen() {
             {/* Participants */}
             {gathering.participants && gathering.participants.length > 0 && (
                 <View style={styles.card}>
-                    <SectionHeader title={`PARTICIPANTS (${gathering.participants.length})`} />
+                    <View style={styles.sectionRow}>
+                        <SectionHeader title={`PARTICIPANTS (${gathering.participants.length})`} />
+                        {isCreator && (gathering.status === 'OPEN' || gathering.status === 'DRAFT') && (
+                            <TouchableOpacity
+                                onPress={() => setShowInviteModal(true)}
+                                style={styles.addExpenseBtn}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={styles.addExpenseBtnText}>+ Invite</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                     {gathering.participants.map((p) => (
                         <ParticipantRow
                             key={p.user.id}
@@ -763,14 +1280,43 @@ export default function GatheringDetailsScreen() {
                 </View>
             )}
 
-            {/* Suggested places */}
-            {gathering.suggestedPlaces && gathering.suggestedPlaces.length > 0 && (
+            {/* AI Suggestions button (creator only, no poll yet) */}
+            {canShowAiSuggestions && (
+                <TouchableOpacity
+                    style={styles.aiSuggestionsBtn}
+                    onPress={() =>
+                        router.push({
+                            pathname: '/gathering/place-suggestions',
+                            params: { gatheringId: id },
+                        })
+                    }
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.aiSuggestionsBtnText}>
+                        {gathering.suggestedPlaces && gathering.suggestedPlaces.length > 0
+                            ? 'Review AI Suggestions'
+                            : 'Generate AI Suggestions'}
+                    </Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Suggested places (when no poll) */}
+            {!hasPoll && gathering.suggestedPlaces && gathering.suggestedPlaces.length > 0 && (
                 <View style={styles.card}>
                     <SectionHeader title="SUGGESTED PLACES" />
                     {gathering.suggestedPlaces.map((place) => (
                         <PlaceCard key={place.id} place={place} />
                     ))}
                 </View>
+            )}
+
+            {/* Place vote */}
+            {gathering.activePoll && (
+                <VotingCard
+                    poll={gathering.activePoll}
+                    gatheringId={gathering.id}
+                    onVoteSubmitted={onRefresh}
+                />
             )}
 
             {/* Expenses Section — only when finalized time has passed */}
@@ -963,6 +1509,15 @@ export default function GatheringDetailsScreen() {
                     currentUserName={user?.name ?? 'You'}
                 />
             )}
+
+            {/* Invite participant modal */}
+            <InviteParticipantModal
+                visible={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                gatheringId={gathering.id}
+                existingParticipantIds={gathering.participants?.map((p) => p.user.id) ?? []}
+                onInvited={onRefresh}
+            />
         </ScrollView>
     );
 }
@@ -1054,6 +1609,16 @@ const styles = StyleSheet.create({
     },
     allDebtText: { fontSize: 13, color: '#9CA3AF' },
     allDebtAmount: { fontSize: 13, color: '#F0EBE1', fontWeight: '600' },
+    aiSuggestionsBtn: {
+        backgroundColor: '#2D2A45',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: primaryColor,
+    },
+    aiSuggestionsBtnText: { color: primaryColor, fontWeight: '800', fontSize: 15 },
     leaveBtn: {
         backgroundColor: '#16161D', borderRadius: 12, borderWidth: 1, borderColor: '#3B1D1D',
         paddingVertical: 16, alignItems: 'center', marginTop: 4,

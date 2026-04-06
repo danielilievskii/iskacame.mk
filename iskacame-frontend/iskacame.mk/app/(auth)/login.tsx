@@ -74,7 +74,7 @@ export default function LoginScreen() {
                     <Text style={styles.cardTitle}>Welcome back</Text>
 
                     <View style={styles.field}>
-                        <Text style={styles.label}>EMAIL</Text>
+                        <Text style={styles.label}>EMAIL OR USERNAME</Text>
                         <TextInput
                             style={styles.input}
                             value={identifier}
@@ -98,6 +98,17 @@ export default function LoginScreen() {
                             secureTextEntry
                         />
                     </View>
+
+                    <TouchableOpacity
+                        style={styles.forgotBtn}
+                        onPress={() => router.push({
+                            pathname: '/(auth)/forgot-password',
+                            params: { identifier: identifier.trim() },
+                        })}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.forgotText}>Forgot password?</Text>
+                    </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[styles.button, loading && styles.buttonDisabled]}
@@ -204,6 +215,15 @@ const styles = StyleSheet.create({
     link: {
         color: primaryColor,
         fontSize: 14,
+        fontWeight: '600',
+    },
+    forgotBtn: {
+        alignSelf: 'flex-end',
+        marginBottom: 8,
+    },
+    forgotText: {
+        color: '#6B7280',
+        fontSize: 13,
         fontWeight: '600',
     },
 });

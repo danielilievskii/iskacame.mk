@@ -16,6 +16,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/context/auth-context';
 import { userService } from '@/service/user-service';
+import { authService } from '@/service/auth-service';
 import { StatusBar } from 'expo-status-bar';
 import { primaryColor } from '@/constants/theme';
 
@@ -29,6 +30,22 @@ export default function ProfileScreen() {
     const [editUsername, setEditUsername] = useState('');
     const [editPhone, setEditPhone] = useState('');
     const [saving, setSaving] = useState(false);
+
+    // Change password state
+    const [pwModalVisible, setPwModalVisible] = useState(false);
+    const [pwStep, setPwStep] = useState<'current' | 'confirm'>('current');
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [pwToken, setPwToken] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [pwLoading, setPwLoading] = useState(false);
+
+    // Change email state
+    const [emailModalVisible, setEmailModalVisible] = useState(false);
+    const [emailStep, setEmailStep] = useState<'request' | 'confirm'>('request');
+    const [newEmail, setNewEmail] = useState('');
+    const [emailToken, setEmailToken] = useState('');
+    const [emailLoading, setEmailLoading] = useState(false);
 
     const openEditModal = () => {
         setEditName(user?.name ?? '');
@@ -129,6 +146,101 @@ export default function ProfileScreen() {
         ]);
     };
 
+    // Change password handlers
+    const openPwModal = () => {
+        setPwStep('current');
+        setCurrentPassword('');
+        setPwToken('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setPwModalVisible(true);
+    };
+
+    const handlePwRequest = async () => {
+        if (!currentPassword.trim()) {
+            Alert.alert('Validation', 'Please enter your current password.');
+            return;
+        }
+        setPwLoading(true);
+        try {
+            await authService.changePassword({ currentPassword: currentPassword.trim() });
+            Alert.alert('Code sent', 'A verification code has been sent to your email.');
+            setPwStep('confirm');
+        } catch (e: any) {
+            Alert.alert('Error', e.message ?? 'Failed to request password change.');
+        } finally {
+            setPwLoading(false);
+        }
+    };
+
+    const handlePwConfirm = async () => {
+        if (!pwToken.trim() || pwToken.trim().length !== 6) {
+            Alert.alert('Validation', 'Please enter the 6-digit code.');
+            return;
+        }
+        if (newPassword.length < 6) {
+            Alert.alert('Validation', 'New password must be at least 6 characters.');
+            return;
+        }
+        if (newPassword !== confirmNewPassword) {
+            Alert.alert('Validation', 'Passwords do not match.');
+            return;
+        }
+        setPwLoading(true);
+        try {
+            await authService.confirmPasswordChange({ token: pwToken.trim(), newPassword });
+            Alert.alert('Success', 'Your password has been changed.');
+            setPwModalVisible(false);
+        } catch (e: any) {
+            Alert.alert('Error', e.message ?? 'Failed to change password.');
+        } finally {
+            setPwLoading(false);
+        }
+    };
+
+    // Change email handlers
+    const openEmailModal = () => {
+        setEmailStep('request');
+        setNewEmail('');
+        setEmailToken('');
+        setEmailModalVisible(true);
+    };
+
+    const handleEmailRequest = async () => {
+        if (!newEmail.trim() || !newEmail.includes('@')) {
+            Alert.alert('Validation', 'Please enter a valid email address.');
+            return;
+        }
+        setEmailLoading(true);
+        try {
+            await authService.changeEmail({ newEmail: newEmail.trim() });
+            Alert.alert('Code sent', 'A verification code has been sent to your new email.');
+            setEmailStep('confirm');
+        } catch (e: any) {
+            Alert.alert('Error', e.message ?? 'Failed to request email change.');
+        } finally {
+            setEmailLoading(false);
+        }
+    };
+
+    const handleEmailConfirm = async () => {
+        if (!emailToken.trim() || emailToken.trim().length !== 6) {
+            Alert.alert('Validation', 'Please enter the 6-digit code.');
+            return;
+        }
+        setEmailLoading(true);
+        try {
+            await authService.confirmEmailChange({ newEmail: newEmail.trim(), token: emailToken.trim() });
+            Alert.alert('Success', 'Your email has been changed.');
+            setEmailModalVisible(false);
+            await refreshUser();
+        } catch (e: any) {
+            Alert.alert('Error', e.message ?? 'Failed to change email.');
+        } finally {
+            setEmailLoading(false);
+        }
+    };
+
     const initials = user?.name
         ?.split(' ')
         .map((w: string) => w[0])
@@ -225,6 +337,21 @@ export default function ProfileScreen() {
                 ) : null}
             </View>
 
+            {/* Security card */}
+            <View style={styles.infoCard}>
+                <Text style={styles.sectionLabel}>SECURITY</Text>
+                <View style={{ height: 12 }} />
+                <TouchableOpacity style={styles.securityBtn} onPress={openEmailModal} activeOpacity={0.7}>
+                    <Text style={styles.securityBtnText}>Change email</Text>
+                    <Text style={styles.chevron}>&#8250;</Text>
+                </TouchableOpacity>
+                <View style={styles.divider} />
+                <TouchableOpacity style={styles.securityBtn} onPress={openPwModal} activeOpacity={0.7}>
+                    <Text style={styles.securityBtnText}>Change password</Text>
+                    <Text style={styles.chevron}>&#8250;</Text>
+                </TouchableOpacity>
+            </View>
+
             {/* Sign out */}
             <TouchableOpacity
                 style={[styles.signOutBtn, signingOut && styles.btnDisabled]}
@@ -312,6 +439,215 @@ export default function ProfileScreen() {
                                 )}
                             </TouchableOpacity>
                         </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            {/* Change Password Modal */}
+            <Modal
+                visible={pwModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setPwModalVisible(false)}
+            >
+                <KeyboardAvoidingView
+                    style={styles.overlay}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                >
+                    <ScrollView contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
+                        <View style={styles.dialog}>
+                            <Text style={styles.dialogTitle}>
+                                {pwStep === 'current' ? 'Change Password' : 'Confirm New Password'}
+                            </Text>
+
+                            {pwStep === 'current' ? (
+                                <>
+                                    <View style={styles.field}>
+                                        <Text style={styles.fieldLabel}>CURRENT PASSWORD</Text>
+                                        <TextInput
+                                            style={styles.fieldInput}
+                                            value={currentPassword}
+                                            onChangeText={setCurrentPassword}
+                                            placeholder="Enter current password"
+                                            placeholderTextColor="#6B7280"
+                                            secureTextEntry
+                                        />
+                                    </View>
+                                    <View style={styles.dialogActions}>
+                                        <TouchableOpacity
+                                            style={styles.dialogCancel}
+                                            onPress={() => setPwModalVisible(false)}
+                                            disabled={pwLoading}
+                                        >
+                                            <Text style={styles.dialogCancelText}>Cancel</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.dialogConfirm, pwLoading && { opacity: 0.6 }]}
+                                            onPress={handlePwRequest}
+                                            disabled={pwLoading}
+                                            activeOpacity={0.85}
+                                        >
+                                            {pwLoading ? (
+                                                <ActivityIndicator color="#0B0B0F" size="small" />
+                                            ) : (
+                                                <Text style={styles.dialogConfirmText}>Send code</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            ) : (
+                                <>
+                                    <View style={styles.field}>
+                                        <Text style={styles.fieldLabel}>VERIFICATION CODE</Text>
+                                        <TextInput
+                                            style={[styles.fieldInput, styles.codeInput]}
+                                            value={pwToken}
+                                            onChangeText={setPwToken}
+                                            placeholder="000000"
+                                            placeholderTextColor="#6B7280"
+                                            keyboardType="number-pad"
+                                            maxLength={6}
+                                        />
+                                    </View>
+                                    <View style={styles.field}>
+                                        <Text style={styles.fieldLabel}>NEW PASSWORD</Text>
+                                        <TextInput
+                                            style={styles.fieldInput}
+                                            value={newPassword}
+                                            onChangeText={setNewPassword}
+                                            placeholder="Min. 6 characters"
+                                            placeholderTextColor="#6B7280"
+                                            secureTextEntry
+                                        />
+                                    </View>
+                                    <View style={styles.field}>
+                                        <Text style={styles.fieldLabel}>CONFIRM NEW PASSWORD</Text>
+                                        <TextInput
+                                            style={styles.fieldInput}
+                                            value={confirmNewPassword}
+                                            onChangeText={setConfirmNewPassword}
+                                            placeholder="Repeat password"
+                                            placeholderTextColor="#6B7280"
+                                            secureTextEntry
+                                        />
+                                    </View>
+                                    <View style={styles.dialogActions}>
+                                        <TouchableOpacity
+                                            style={styles.dialogCancel}
+                                            onPress={() => setPwModalVisible(false)}
+                                            disabled={pwLoading}
+                                        >
+                                            <Text style={styles.dialogCancelText}>Cancel</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.dialogConfirm, pwLoading && { opacity: 0.6 }]}
+                                            onPress={handlePwConfirm}
+                                            disabled={pwLoading}
+                                            activeOpacity={0.85}
+                                        >
+                                            {pwLoading ? (
+                                                <ActivityIndicator color="#0B0B0F" size="small" />
+                                            ) : (
+                                                <Text style={styles.dialogConfirmText}>Change</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            )}
+                        </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            {/* Change Email Modal */}
+            <Modal
+                visible={emailModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setEmailModalVisible(false)}
+            >
+                <KeyboardAvoidingView
+                    style={styles.overlay}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                >
+                    <View style={styles.dialog}>
+                        <Text style={styles.dialogTitle}>
+                            {emailStep === 'request' ? 'Change Email' : 'Confirm New Email'}
+                        </Text>
+
+                        {emailStep === 'request' ? (
+                            <>
+                                <View style={styles.field}>
+                                    <Text style={styles.fieldLabel}>NEW EMAIL</Text>
+                                    <TextInput
+                                        style={styles.fieldInput}
+                                        value={newEmail}
+                                        onChangeText={setNewEmail}
+                                        placeholder="new@example.com"
+                                        placeholderTextColor="#6B7280"
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                    />
+                                </View>
+                                <View style={styles.dialogActions}>
+                                    <TouchableOpacity
+                                        style={styles.dialogCancel}
+                                        onPress={() => setEmailModalVisible(false)}
+                                        disabled={emailLoading}
+                                    >
+                                        <Text style={styles.dialogCancelText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.dialogConfirm, emailLoading && { opacity: 0.6 }]}
+                                        onPress={handleEmailRequest}
+                                        disabled={emailLoading}
+                                        activeOpacity={0.85}
+                                    >
+                                        {emailLoading ? (
+                                            <ActivityIndicator color="#0B0B0F" size="small" />
+                                        ) : (
+                                            <Text style={styles.dialogConfirmText}>Send code</Text>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        ) : (
+                            <>
+                                <View style={styles.field}>
+                                    <Text style={styles.fieldLabel}>VERIFICATION CODE</Text>
+                                    <TextInput
+                                        style={[styles.fieldInput, styles.codeInput]}
+                                        value={emailToken}
+                                        onChangeText={setEmailToken}
+                                        placeholder="000000"
+                                        placeholderTextColor="#6B7280"
+                                        keyboardType="number-pad"
+                                        maxLength={6}
+                                    />
+                                </View>
+                                <View style={styles.dialogActions}>
+                                    <TouchableOpacity
+                                        style={styles.dialogCancel}
+                                        onPress={() => setEmailModalVisible(false)}
+                                        disabled={emailLoading}
+                                    >
+                                        <Text style={styles.dialogCancelText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.dialogConfirm, emailLoading && { opacity: 0.6 }]}
+                                        onPress={handleEmailConfirm}
+                                        disabled={emailLoading}
+                                        activeOpacity={0.85}
+                                    >
+                                        {emailLoading ? (
+                                            <ActivityIndicator color="#0B0B0F" size="small" />
+                                        ) : (
+                                            <Text style={styles.dialogConfirmText}>Confirm</Text>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        )}
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
@@ -481,4 +817,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     dialogConfirmText: { color: '#0B0B0F', fontWeight: '800', fontSize: 15 },
+
+    securityBtn: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 6,
+    },
+    securityBtnText: { fontSize: 14, color: '#F0EBE1', fontWeight: '500' },
+    chevron: { color: '#4B5563', fontSize: 20, fontWeight: '300' },
+    codeInput: {
+        textAlign: 'center',
+        fontSize: 24,
+        fontWeight: '700',
+        letterSpacing: 8,
+    },
+    modalScroll: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 32,
+    },
 });

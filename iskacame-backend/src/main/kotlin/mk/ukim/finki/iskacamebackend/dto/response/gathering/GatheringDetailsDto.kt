@@ -23,7 +23,8 @@ data class GatheringDetailsDto(
     val chatRoomId: Long,
     val timeSlotPreferences: List<GatheringTimeSlotPreferenceDto>?,
     val typePreferences: List<GatheringTypePreferenceDto>?,
-    val hasSubmittedResponse: Boolean = false
+    val hasSubmittedResponse: Boolean = false,
+    val activePoll: PlacePollDto? = null
 )
 
 data class ParticipantDto(

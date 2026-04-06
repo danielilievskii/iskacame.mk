@@ -2,11 +2,12 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import jakarta.transaction.Transactional
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.PlaceDto
-import mk.ukim.finki.iskacamebackend.dto.response.gathering.PlaceSuggestionDto
+import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.mapper.PlaceMapper
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringResponse
 import mk.ukim.finki.iskacamebackend.model.domain.Place
 import mk.ukim.finki.iskacamebackend.model.enums.PriceLevel
+import mk.ukim.finki.iskacamebackend.repository.PlacePollRepository
 import mk.ukim.finki.iskacamebackend.repository.PlaceRepository
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringResponseService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service
 @Service
 class PlaceSuggestionsServiceImpl(
     private val placeRepository: PlaceRepository,
+    private val placePollRepository: PlacePollRepository,
     private val gatheringService: GatheringService,
     private val gatheringResponseService: GatheringResponseService,
     private val chatClient: ChatClient,
@@ -32,6 +34,10 @@ class PlaceSuggestionsServiceImpl(
     @Transactional
     @PreAuthorize("@permissionService.isGatheringCreator(#gatheringId, authentication.principal.id)")
     override fun generateSuggestions(gatheringId: Long): List<PlaceDto> {
+
+        if (placePollRepository.findByGatheringId(gatheringId) != null) {
+            throw BadRequestException("Cannot regenerate places after a poll has been created.")
+        }
 
         val gathering = gatheringService.getGatheringById(gatheringId)
         val responses = gatheringResponseService.findAllByGatheringId(gatheringId)

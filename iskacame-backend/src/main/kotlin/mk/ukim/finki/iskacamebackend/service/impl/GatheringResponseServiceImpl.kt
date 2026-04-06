@@ -2,13 +2,17 @@ package mk.ukim.finki.iskacamebackend.service.impl
 
 import mk.ukim.finki.iskacamebackend.common.GatheringResponseExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.request.gathering.SubmitGatheringResponseRequest
+import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringResponseOptionsDto
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.GatheringTimeSlotMapper
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringResponse
+import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringType
+import mk.ukim.finki.iskacamebackend.repository.GatheringRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringResponseRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringTimeSlotRepository
+import mk.ukim.finki.iskacamebackend.repository.PlacePollRepository
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringResponseService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
@@ -24,7 +28,9 @@ class GatheringResponseServiceImpl(
     private val authService: AuthService,
     private val gatheringResponseRepository: GatheringResponseRepository,
     private val gatheringTimeSlotRepository: GatheringTimeSlotRepository,
+    private val placePollRepository: PlacePollRepository,
     private val gatheringService: GatheringService,
+    private val gatheringRepository: GatheringRepository,
     private val gatheringTimeSlotMapper: GatheringTimeSlotMapper
     ) : GatheringResponseService {
 
@@ -54,6 +60,8 @@ class GatheringResponseServiceImpl(
         gatheringId: Long,
         request: SubmitGatheringResponseRequest
     ) {
+        checkPollNotStarted(gatheringId)
+
         val currentUser = authService.getCurrentUser()
         val gathering = gatheringService.getGatheringById(gatheringId)
 
@@ -74,6 +82,12 @@ class GatheringResponseServiceImpl(
         )
 
         gatheringResponseRepository.save(response)
+
+        // Transition DRAFT → OPEN when first response is submitted
+        if (gathering.status == GatheringStatus.DRAFT) {
+            gathering.status = GatheringStatus.OPEN
+            gatheringRepository.save(gathering)
+        }
     }
 
     @Transactional
@@ -82,6 +96,8 @@ class GatheringResponseServiceImpl(
         gatheringId: Long,
         request: SubmitGatheringResponseRequest
     ) {
+        checkPollNotStarted(gatheringId)
+
         val currentUser = authService.getCurrentUser()
 
         val response = gatheringResponseRepository.findByGatheringIdAndUserId(gatheringId, currentUser.id!!)
@@ -100,5 +116,11 @@ class GatheringResponseServiceImpl(
         }
 
         gatheringResponseRepository.save(response)
+    }
+
+    private fun checkPollNotStarted(gatheringId: Long) {
+        if (placePollRepository.findByGatheringId(gatheringId) != null) {
+            throw BadRequestException("Cannot submit or update preferences after voting has started.")
+        }
     }
 }

@@ -1,12 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiRequest, TOKEN_KEY } from '@/service/api';
-import {
+import type {
     AuthResponse,
     ResendTokenRequest,
     SignInRequest,
-    SignUpRequest, UserDto,
-    VerifyTokenRequest
-} from "@/service/dtos/auth-types";
+    SignUpRequest,
+    UserDto,
+    VerifyTokenRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    ChangePasswordRequest,
+    ConfirmPasswordRequest,
+    ChangeEmailRequest,
+    ConfirmEmailRequest,
+} from '@/service/dtos/auth-types';
 
 export const authService = {
     async signUp(data: SignUpRequest): Promise<void> {
@@ -41,5 +48,32 @@ export const authService = {
 
     async getStoredToken(): Promise<string | null> {
         return AsyncStorage.getItem(TOKEN_KEY);
+    },
+
+    // Forgot password (unauthenticated)
+    async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+        await apiRequest('/api/auth/forgot-password', { method: 'POST', body: data, auth: false });
+    },
+
+    async resetPassword(data: ResetPasswordRequest): Promise<void> {
+        await apiRequest('/api/auth/reset-password', { method: 'PATCH', body: data, auth: false });
+    },
+
+    // Change password (authenticated)
+    async changePassword(data: ChangePasswordRequest): Promise<void> {
+        await apiRequest('/api/users/change-password', { method: 'POST', body: data });
+    },
+
+    async confirmPasswordChange(data: ConfirmPasswordRequest): Promise<void> {
+        await apiRequest('/api/users/confirm-password', { method: 'PATCH', body: data });
+    },
+
+    // Change email (authenticated)
+    async changeEmail(data: ChangeEmailRequest): Promise<void> {
+        await apiRequest('/api/users/change-email', { method: 'POST', body: data });
+    },
+
+    async confirmEmailChange(data: ConfirmEmailRequest): Promise<void> {
+        await apiRequest('/api/users/confirm-email', { method: 'PATCH', body: data });
     },
 };

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '@/service/auth-service';
+import { deviceTokenService } from '@/service/device-token-service';
 import { UserDto } from "@/service/dtos/auth-types";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthState {
     user: UserDto | null;
@@ -47,6 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signOut = useCallback(async () => {
+        try {
+            const pushToken = await AsyncStorage.getItem('push_token');
+            if (pushToken) {
+                await deviceTokenService.unregister(pushToken);
+                await AsyncStorage.removeItem('push_token');
+            }
+        } catch { }
         await authService.signOut();
         setState({ user: null, isLoading: false, isAuthenticated: false });
     }, []);
