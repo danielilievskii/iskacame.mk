@@ -30,6 +30,8 @@ export interface GatheringSummaryDto {
     title: string;
     status: GatheringStatus;
     createdAt: string;
+    chatRoomId: number;
+    unseenMessagesCount: number | null;
 }
 
 export interface GatheringDetailsDto {

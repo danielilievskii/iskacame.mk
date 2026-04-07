@@ -46,29 +46,41 @@ export default function HomeScreen() {
         load(true);
     };
 
-    const renderItem = ({ item }: { item: GatheringSummaryDto }) => (
-        <TouchableOpacity
-            style={styles.card}
-            onPress={() => router.push({ pathname: '/gathering/[id]', params: { id: item.id } })}
-            activeOpacity={0.75}
-        >
-            <View style={styles.cardTop}>
-                <View style={styles.cardLeft}>
-                    <View style={styles.dateChip}>
-                        <Text style={styles.dateChipText}>{formatShortDate(item.createdAt)}</Text>
+    const renderItem = ({ item }: { item: GatheringSummaryDto }) => {
+        const unread = item.unseenMessagesCount ?? 0;
+        return (
+            <TouchableOpacity
+                style={styles.card}
+                onPress={() => router.push({ pathname: '/gathering/[id]', params: { id: item.id } })}
+                activeOpacity={0.75}
+            >
+                <View style={styles.cardTop}>
+                    <View style={styles.cardLeft}>
+                        <View style={styles.dateChip}>
+                            <Text style={styles.dateChipText}>{formatShortDate(item.createdAt)}</Text>
+                        </View>
+                        <StatusBadge status={item.status}/>
                     </View>
-                    <StatusBadge status={item.status}/>
+                    <View style={styles.cardRight}>
+                        {unread > 0 && (
+                            <View style={styles.unreadBadge}>
+                                <Text style={styles.unreadBadgeText}>
+                                    {unread > 99 ? '99+' : unread}
+                                </Text>
+                            </View>
+                        )}
+                        <Text style={styles.chevron}>›</Text>
+                    </View>
                 </View>
-                <Text style={styles.chevron}>›</Text>
-            </View>
-            <Text style={styles.cardTitle} numberOfLines={2}>
-                {item.title}
-            </Text>
-            <View style={styles.cardFooter}>
-                <Text style={styles.creatorLabel}>by {item.creator.name}</Text>
-            </View>
-        </TouchableOpacity>
-    );
+                <Text style={styles.cardTitle} numberOfLines={2}>
+                    {item.title}
+                </Text>
+                <View style={styles.cardFooter}>
+                    <Text style={styles.creatorLabel}>by {item.creator.name}</Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -160,6 +172,21 @@ const styles = StyleSheet.create({
         borderColor: '#252530',
     },
     dateChipText: { color: '#9CA3AF', fontSize: 11, fontWeight: '600' },
+    cardRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    unreadBadge: {
+        backgroundColor: primaryColor,
+        borderRadius: 12,
+        minWidth: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 7,
+    },
+    unreadBadgeText: {
+        color: '#0B0B0F',
+        fontSize: 12,
+        fontWeight: '800',
+    },
     chevron: { color: '#4B5563', fontSize: 22, fontWeight: '300' },
     cardTitle: { fontSize: 17, fontWeight: '700', color: '#F0EBE1', lineHeight: 24, marginBottom: 10 },
     cardFooter: { flexDirection: 'row', alignItems: 'center' },

@@ -36,6 +36,7 @@ import {
     formatDate,
 } from '@/components/ui/gathering-ui';
 import { primaryColor } from '@/constants/theme';
+import ChatBubble from '@/components/ui/chat-bubble';
 
 function ProfilePreviewModal({
     visible,
@@ -1178,6 +1179,8 @@ export default function GatheringDetailsScreen() {
         return <EmptyState icon="❓" title="Not found" subtitle="This gathering could not be loaded." />;
     }
 
+    const chatRoomId = gathering.chatRoomId;
+
     const isCreator = gathering.creatorId === user?.id;
     const canManage = isCreator && gathering.status !== 'CANCELLED' && gathering.status !== 'FINALIZED';
     const canLeave = !isCreator && gathering.status !== 'CANCELLED';
@@ -1192,6 +1195,7 @@ export default function GatheringDetailsScreen() {
     const myDebts = debts.filter((d) => d.fromUserId === user?.id && d.amount > 0);
 
     return (
+        <View style={{ flex: 1, backgroundColor: '#0B0B0F' }}>
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
@@ -1519,6 +1523,12 @@ export default function GatheringDetailsScreen() {
                 onInvited={onRefresh}
             />
         </ScrollView>
+
+        {/* Chat bubble */}
+        {chatRoomId && (
+            <ChatBubble chatRoomId={chatRoomId} participants={gathering.participants} />
+        )}
+        </View>
     );
 }
 
