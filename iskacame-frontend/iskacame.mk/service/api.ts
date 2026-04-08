@@ -50,3 +50,30 @@ export async function apiRequest<T>(
         return text as unknown as T;
     }
 }
+
+export async function apiUpload<T>(
+    path: string,
+    formData: FormData
+): Promise<T> {
+    const token = await getToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${BASE_URL}${path}`, {
+        method: 'POST',
+        headers,
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        const error = new Error(text || `Upload failed: ${response.status}`);
+        (error as any).status = response.status;
+        throw error;
+    }
+    const text = await response.text();
+    if (!text) return undefined as T;
+    return JSON.parse(text) as T;
+}

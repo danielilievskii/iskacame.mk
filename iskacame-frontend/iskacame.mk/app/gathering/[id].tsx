@@ -1223,6 +1223,18 @@ export default function GatheringDetailsScreen() {
                     <Text style={styles.backText}>‹ Back</Text>
                 </TouchableOpacity>
                 <View style={styles.topBarRight}>
+                    <TouchableOpacity
+                        onPress={() =>
+                            router.push({
+                                pathname: '/gathering/gallery' as any,
+                                params: { gatheringId: id },
+                            })
+                        }
+                        style={styles.photosBtn}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.photosBtnText}>Photos</Text>
+                    </TouchableOpacity>
                     {gathering.hasSubmittedResponse && gathering.status !== 'CANCELLED' && !hasPoll && (
                         <TouchableOpacity
                             onPress={() =>
@@ -1573,6 +1585,13 @@ const styles = StyleSheet.create({
     topBarRight: { flexDirection: 'row', gap: 8 },
     backBtn: {},
     backText: { color: primaryColor, fontSize: 16, fontWeight: '600' },
+    photosBtn: {
+        backgroundColor: '#2D2A45',
+        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+    },
+    photosBtnText: { color: primaryColor, fontWeight: '700', fontSize: 13 },
     editPrefsBtn: {
         backgroundColor: '#1F1F2E',
         borderRadius: 12,

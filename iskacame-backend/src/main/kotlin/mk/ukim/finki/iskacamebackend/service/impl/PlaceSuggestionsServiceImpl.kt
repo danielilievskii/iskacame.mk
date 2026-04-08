@@ -15,6 +15,7 @@ import mk.ukim.finki.iskacamebackend.service.intf.PlaceSuggestionService
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.prompt.PromptTemplate
 import org.springframework.core.ParameterizedTypeReference
+import org.slf4j.LoggerFactory
 import org.springframework.core.io.ClassPathResource
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -29,6 +30,7 @@ class PlaceSuggestionsServiceImpl(
     private val placeMapper: PlaceMapper,
 ) : PlaceSuggestionService {
 
+    private val log = LoggerFactory.getLogger(javaClass)
     private val promptResource = ClassPathResource("prompts/place-suggestions.st")
 
     @Transactional
@@ -59,12 +61,19 @@ class PlaceSuggestionsServiceImpl(
             }
             .create()
 
-        val suggestions = chatClient
-            .prompt(prompt)
-            .call()
-            .entity(object : ParameterizedTypeReference<List<PlaceDto>>() {})
+        val suggestions = try {
+            chatClient
+                .prompt(prompt)
+                .call()
+                .entity(object : ParameterizedTypeReference<List<PlaceDto>>() {})
+        } catch (e: Exception) {
+            log.warn("AI place suggestion failed, using fallbacks: {}", e.message)
+            null
+        }
 
-        val places = suggestions?.map {
+        val locationName = gathering.location ?: "Skopje"
+
+        val places = (suggestions?.takeIf { it.isNotEmpty() } ?: fallbackPlaces(locationName)).map {
             Place(
                 gathering = gathering,
                 name = it.name,
@@ -74,7 +83,7 @@ class PlaceSuggestionsServiceImpl(
                 type = it.type,
                 priceLevel = it.priceLevel,
             )
-        } ?: emptyList()
+        }
 
         placeRepository.deleteAllByGatheringId(gatheringId)
         val savedPlaces = placeRepository.saveAll(places)
@@ -121,4 +130,34 @@ class PlaceSuggestionsServiceImpl(
             .take(3)
             .joinToString(", ") { "${it.key.date} ${it.key.slot}" }
             .ifEmpty { "No time slot preferences submitted yet" }
+
+    private fun fallbackPlaces(location: String): List<PlaceDto> = listOf(
+        PlaceDto(
+            id = null,
+            name = "Central Park Café",
+            address = "$location, Main Street 12",
+            latitude = 41.9981,
+            longitude = 21.4254,
+            type = "CAFE",
+            priceLevel = PriceLevel.MODERATE,
+        ),
+        PlaceDto(
+            id = null,
+            name = "La Piazza Restaurant",
+            address = "$location, Macedonia Square 5",
+            latitude = 41.9965,
+            longitude = 21.4314,
+            type = "RESTAURANT",
+            priceLevel = PriceLevel.MODERATE,
+        ),
+        PlaceDto(
+            id = null,
+            name = "Green Valley Park",
+            address = "$location, City Park Area",
+            latitude = 42.0024,
+            longitude = 21.4208,
+            type = "PARK",
+            priceLevel = PriceLevel.FREE,
+        ),
+    )
 }

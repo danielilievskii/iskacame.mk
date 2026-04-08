@@ -4,6 +4,7 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    Pressable,
     TextInput,
     FlatList,
     KeyboardAvoidingView,
@@ -11,7 +12,9 @@ import {
     ActivityIndicator,
     Image,
     Modal,
+    Alert,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth-context';
 import { chatService } from '@/service/chat-service';
@@ -44,6 +47,7 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
     const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
     const [connected, setConnected] = useState(false);
     const [expandedMsgId, setExpandedMsgId] = useState<number | null>(null);
+    const [menuMsgId, setMenuMsgId] = useState<number | null>(null);
 
     const stompClientRef = useRef<Client | null>(null);
     const subscriptionRef = useRef<StompSubscription | null>(null);
@@ -201,6 +205,25 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         }
     }, [inputText, chatRoomId]);
 
+    const confirmDeleteMessage = useCallback((messageId: number) => {
+        setMenuMsgId(null);
+        Alert.alert('Delete Message', 'Are you sure you want to delete this message?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await chatService.deleteMessage(messageId);
+                        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+                    } catch (e: any) {
+                        Alert.alert('Error', e.message ?? 'Failed to delete message.');
+                    }
+                },
+            },
+        ]);
+    }, []);
+
     const formatTime = (dateStr: string) => {
         const d = new Date(dateStr);
         return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
@@ -275,10 +298,14 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                             )}
                         </View>
                     )}
-                    <TouchableOpacity
+                    <Pressable
                         style={[cs.bubbleWrapper, isMe && cs.bubbleWrapperMe]}
-                        activeOpacity={0.8}
                         onPress={() => setExpandedMsgId(isExpanded ? null : item.id)}
+                        onLongPress={isMe ? () => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            setMenuMsgId(item.id);
+                        } : undefined}
+                        delayLongPress={400}
                     >
                         <View style={[cs.bubble, isMe ? cs.bubbleMe : cs.bubbleOther]}>
                             {!isMe && <Text style={cs.senderName}>{item.sender.name}</Text>}
@@ -295,7 +322,7 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                                 {receipt.label}
                             </Text>
                         )}
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </View>
         );
@@ -390,6 +417,31 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
+
+                {/* iOS-style action sheet for message actions */}
+                {menuMsgId !== null && (
+                    <View style={cs.actionSheetOverlay}>
+                        <Pressable style={cs.actionSheetBackdrop} onPress={() => setMenuMsgId(null)} />
+                        <View style={cs.actionSheetContainer}>
+                            <View style={cs.actionSheetGroup}>
+                                <TouchableOpacity
+                                    style={cs.actionSheetBtn}
+                                    onPress={() => menuMsgId && confirmDeleteMessage(menuMsgId)}
+                                    activeOpacity={0.6}
+                                >
+                                    <Text style={cs.actionSheetDeleteText}>Delete Message</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <TouchableOpacity
+                                style={cs.actionSheetCancelBtn}
+                                onPress={() => setMenuMsgId(null)}
+                                activeOpacity={0.6}
+                            >
+                                <Text style={cs.actionSheetCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
             </Modal>
 
             {/* Floating button */}
@@ -627,6 +679,55 @@ const cs = StyleSheet.create({
     },
     receiptSeen: {
         color: '#60A5FA',
+    },
+
+    // iOS-style action sheet
+    actionSheetOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'flex-end',
+        zIndex: 100,
+    },
+    actionSheetBackdrop: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    actionSheetContainer: {
+        paddingHorizontal: 10,
+        paddingBottom: 34,
+        gap: 8,
+    },
+    actionSheetGroup: {
+        backgroundColor: '#2C2C2E',
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    actionSheetBtn: {
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    actionSheetDeleteText: {
+        color: '#FF453A',
+        fontSize: 20,
+        fontWeight: '400',
+    },
+    actionSheetCancelBtn: {
+        backgroundColor: '#2C2C2E',
+        borderRadius: 14,
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    actionSheetCancelText: {
+        color: '#0A84FF',
+        fontSize: 20,
+        fontWeight: '600',
     },
 
     // Connection bar

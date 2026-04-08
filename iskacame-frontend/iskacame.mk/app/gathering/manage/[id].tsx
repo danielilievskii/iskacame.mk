@@ -15,12 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { gatheringService } from '@/service/gathering-service';
 import type { GatheringDetailsDto } from '@/service/dtos/gathering-types';
 import { StatusBadge, formatDate } from '@/components/ui/gathering-ui';
-import { DateTimePicker, toLocalDateTimeString } from '@/components/ui/date-time-picker';
 import { primaryColor } from '@/constants/theme';
-
-function parseLocalDateTime(s: string): Date {
-    return new Date(s);
-}
 
 export default function ManageGatheringScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -32,9 +27,6 @@ export default function ManageGatheringScreen() {
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [location, setLocation] = useState('');
-    const [startDate, setStartDate] = useState<Date>(new Date());
-    const [endDate, setEndDate] = useState<Date>(new Date());
 
     const load = useCallback(async () => {
         if (!id) return;
@@ -43,9 +35,6 @@ export default function ManageGatheringScreen() {
             setGathering(data);
             setTitle(data.title);
             setDescription(data.description ?? '');
-            setLocation(data.location ?? '');
-            setStartDate(parseLocalDateTime(data.startDate));
-            setEndDate(parseLocalDateTime(data.endDate));
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to load gathering.');
         } finally {
@@ -62,18 +51,11 @@ export default function ManageGatheringScreen() {
             Alert.alert('Validation', 'Title cannot be empty.');
             return;
         }
-        if (endDate <= startDate) {
-            Alert.alert('Validation', 'End date must be after start date.');
-            return;
-        }
         setSaving(true);
         try {
             await gatheringService.updateGathering(Number(id), {
                 title: title.trim(),
                 description: description.trim() || undefined,
-                location: location.trim() || undefined,
-                startDate: toLocalDateTimeString(startDate),
-                endDate: toLocalDateTimeString(endDate),
             });
             Alert.alert('Saved', 'Gathering updated successfully.', [
                 { text: 'OK', onPress: () => router.back() },
@@ -182,32 +164,6 @@ export default function ManageGatheringScreen() {
                         />
                         <Text style={styles.charCount}>{description.length}/500</Text>
                     </View>
-
-                    <View style={styles.field}>
-                        <Text style={styles.label}>LOCATION</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={location}
-                            onChangeText={setLocation}
-                            placeholder="City or area for AI suggestions…"
-                            placeholderTextColor="#6B7280"
-                            maxLength={200}
-                        />
-                        <Text style={styles.charCount}>{location.length}/200</Text>
-                    </View>
-
-                    <DateTimePicker
-                        label="START DATE"
-                        value={startDate}
-                        onChange={setStartDate}
-                    />
-
-                    <DateTimePicker
-                        label="END DATE"
-                        value={endDate}
-                        onChange={setEndDate}
-                        minimumDate={startDate}
-                    />
 
                     <TouchableOpacity
                         style={[styles.saveBtn, saving && styles.btnDisabled]}

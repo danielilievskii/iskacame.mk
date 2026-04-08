@@ -1,4 +1,4 @@
-import { apiRequest } from './api';
+import { apiRequest, apiUpload } from './api';
 import type {
     GatheringSummaryDto,
     GatheringDetailsDto,
@@ -14,6 +14,7 @@ import type {
     CreateExpenseRequest,
     PlaceDto,
     PlacePollDto,
+    GatheringImageDto,
 } from './dtos/gathering-types';
 
 export const gatheringService = {
@@ -143,6 +144,27 @@ export const gatheringService = {
 
     async removeParticipant(gatheringId: number, userId: number): Promise<void> {
         return apiRequest<void>(`/api/gatherings/${gatheringId}/participants/${userId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    async getGallery(gatheringId: number): Promise<GatheringImageDto[]> {
+        return apiRequest<GatheringImageDto[]>(`/api/gatherings/${gatheringId}/gallery`);
+    },
+
+    async uploadImages(gatheringId: number, uris: string[]): Promise<GatheringImageDto[]> {
+        const formData = new FormData();
+        uris.forEach((uri, i) => {
+            const name = uri.split('/').pop() ?? `photo_${i}.jpg`;
+            const ext = name.split('.').pop()?.toLowerCase() ?? 'jpg';
+            const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+            formData.append('files', { uri, name, type: mimeType } as any);
+        });
+        return apiUpload<GatheringImageDto[]>(`/api/gatherings/${gatheringId}/gallery`, formData);
+    },
+
+    async deleteImage(gatheringId: number, imageId: number): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/gallery/${imageId}`, {
             method: 'DELETE',
         });
     },

@@ -181,3 +181,12 @@ export interface NotificationDto {
     read: boolean;
     createdAt: string;
 }
+
+// Gallery types
+export interface GatheringImageDto {
+    id: number;
+    gatheringId: number;
+    url: string;
+    uploader: import('@/service/dtos/auth-types').UserDto;
+    uploadedAt: string;
+}
