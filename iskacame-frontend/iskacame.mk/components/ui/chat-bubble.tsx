@@ -28,9 +28,10 @@ import { Client, StompSubscription } from '@stomp/stompjs';
 interface ChatBubbleProps {
     chatRoomId: number;
     participants?: ParticipantDto[] | null;
+    initialUnreadCount?: number;
 }
 
-export default function ChatBubble({ chatRoomId, participants }: ChatBubbleProps) {
+export default function ChatBubble({ chatRoomId, participants, initialUnreadCount = 0 }: ChatBubbleProps) {
     const { user } = useAuth();
     const insets = useSafeAreaInsets();
     const [open, setOpen] = useState(false);
@@ -40,7 +41,7 @@ export default function ChatBubble({ chatRoomId, participants }: ChatBubbleProps
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
     const [connected, setConnected] = useState(false);
     const [expandedMsgId, setExpandedMsgId] = useState<number | null>(null);
 

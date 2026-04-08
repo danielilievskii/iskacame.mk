@@ -12,6 +12,9 @@ data class UpdateGatheringRequest(
     @field:Size(max = 500, message = GatheringExceptionMessages.DESCRIPTION_MAX_LENGTH)
     val description: String? = null,
 
+    @field:Size(max = 200, message = GatheringExceptionMessages.LOCATION_MAX_LENGTH)
+    val location: String? = null,
+
     val startDate: LocalDateTime? = null,
     val endDate: LocalDateTime? = null,
 )

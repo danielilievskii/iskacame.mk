@@ -52,6 +52,7 @@ class PlaceSuggestionsServiceImpl(
                 add("count", 3)
                 add("title", gathering.title)
                 add("description", gathering.description)
+                add("location", gathering.location ?: "Not specified")
                 add("topTypePreferences", topTypePreferences)
                 add("topTimeSlotPreferences", topTimeSlotPreferences)
                 add("priceLevels", priceLevels)

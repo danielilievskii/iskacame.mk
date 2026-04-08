@@ -7,6 +7,7 @@ import type {
     GatheringInvitationDto,
     GatheringResponseOptionsDto,
     SubmitGatheringResponseRequest,
+    MyGatheringResponseDto,
     ActivityDto,
     DebtDto,
     CreatePaymentRequest,
@@ -78,6 +79,10 @@ export const gatheringService = {
             method: 'PUT',
             body: data,
         });
+    },
+
+    async getMyResponse(gatheringId: number): Promise<MyGatheringResponseDto | null> {
+        return apiRequest<MyGatheringResponseDto | null>(`/api/gatherings/${gatheringId}/responses/my`);
     },
 
     async getActivities(gatheringId: number): Promise<ActivityDto[]> {

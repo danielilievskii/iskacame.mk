@@ -18,6 +18,9 @@ class Gathering(
     @Column(name = "description")
     var description: String?,
 
+    @Column(name = "location")
+    var location: String?,
+
     @Column(name = "start_date")
     var startDate: LocalDateTime,
 

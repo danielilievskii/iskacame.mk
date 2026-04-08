@@ -61,6 +61,7 @@ class GatheringServiceImpl(
             creator = currentUser,
             title = request.title,
             description = request.description,
+            location = request.location,
             startDate = request.startDate,
             endDate = request.endDate,
             status = GatheringStatus.DRAFT,
@@ -125,6 +126,7 @@ class GatheringServiceImpl(
 
         request.title?.let { gathering.title = it }
         request.description?.let { gathering.description = it }
+        request.location?.let { gathering.location = it }
         request.startDate?.let { gathering.startDate = it }
         request.endDate?.let { gathering.endDate = it }
 

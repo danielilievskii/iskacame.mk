@@ -63,12 +63,20 @@ export default function PickPreferencesScreen() {
         try {
             const data = await gatheringService.getResponseOptions(Number(gatheringId));
             setOptions(data);
+
+            if (isEditMode) {
+                const myResponse = await gatheringService.getMyResponse(Number(gatheringId));
+                if (myResponse) {
+                    setSelectedTypes(new Set(myResponse.types));
+                    setSelectedSlotIds(new Set(myResponse.timeSlotIds));
+                }
+            }
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to load options.');
         } finally {
             setLoading(false);
         }
-    }, [gatheringId]);
+    }, [gatheringId, isEditMode]);
 
     useEffect(() => {
         load();

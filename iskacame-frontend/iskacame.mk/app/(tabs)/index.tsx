@@ -56,9 +56,17 @@ export default function HomeScreen() {
             >
                 <View style={styles.cardTop}>
                     <View style={styles.cardLeft}>
-                        <View style={styles.dateChip}>
-                            <Text style={styles.dateChipText}>{formatShortDate(item.createdAt)}</Text>
-                        </View>
+                        {item.finalizedTime ? (
+                            <View style={styles.dateChip}>
+                                <Text style={styles.dateChipText}>{formatShortDate(item.finalizedTime)}</Text>
+                            </View>
+                        ) : (
+                            <View style={styles.dateChip}>
+                                <Text style={styles.dateChipText}>
+                                    {formatShortDate(item.startDate)} – {formatShortDate(item.endDate)}
+                                </Text>
+                            </View>
+                        )}
                         <StatusBadge status={item.status}/>
                     </View>
                     <View style={styles.cardRight}>

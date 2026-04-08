@@ -30,6 +30,9 @@ export interface GatheringSummaryDto {
     title: string;
     status: GatheringStatus;
     createdAt: string;
+    startDate: string;
+    endDate: string;
+    finalizedTime: string | null;
     chatRoomId: number;
     unseenMessagesCount: number | null;
 }
@@ -39,6 +42,7 @@ export interface GatheringDetailsDto {
     creatorId: number;
     title: string;
     description: string | null;
+    location: string | null;
     startDate: string;
     endDate: string;
     status: GatheringStatus;
@@ -49,6 +53,7 @@ export interface GatheringDetailsDto {
     chatRoomId: number;
     hasSubmittedResponse: boolean;
     activePoll: PlacePollDto | null;
+    unseenMessagesCount: number;
 }
 
 export interface GatheringInvitationDto {
@@ -62,6 +67,7 @@ export interface GatheringInvitationDto {
 export interface CreateGatheringRequest {
     title: string;
     description?: string;
+    location?: string;
     startDate: string;
     endDate: string;
     participantIds: number[];
@@ -70,6 +76,7 @@ export interface CreateGatheringRequest {
 export interface UpdateGatheringRequest {
     title?: string;
     description?: string;
+    location?: string;
     startDate?: string;
     endDate?: string;
 }
@@ -86,6 +93,11 @@ export interface GatheringResponseOptionsDto {
 }
 
 export interface SubmitGatheringResponseRequest {
+    types: GatheringType[];
+    timeSlotIds: number[];
+}
+
+export interface MyGatheringResponseDto {
     types: GatheringType[];
     timeSlotIds: number[];
 }

@@ -8,7 +8,10 @@ import {
     ActivityIndicator,
     Alert,
     Modal,
+    Linking,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { gatheringService } from '@/service/gathering-service';
 import type { PlaceDto } from '@/service/dtos/gathering-types';
@@ -22,12 +25,17 @@ const DURATION_OPTIONS = [
     { label: '24 hours', value: 1440 },
 ];
 
-function PlaceSuggestionCard({ place }: { place: PlaceDto }) {
-    const levelEmoji: Record<string, string> = {
-        FREE: '', BUDGET: '', CHEAP: '', MODERATE: '', EXPENSIVE: '', LUXURY: '',
-    };
+function PlaceSuggestionCard({ place, onLongPress }: { place: PlaceDto; onLongPress?: () => void }) {
     return (
-        <View style={cardStyles.card}>
+        <TouchableOpacity
+            style={cardStyles.card}
+            onLongPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onLongPress?.();
+            }}
+            activeOpacity={0.8}
+            delayLongPress={400}
+        >
             <View style={cardStyles.info}>
                 <Text style={cardStyles.name}>{place.name}</Text>
                 {place.address && (
@@ -42,7 +50,7 @@ function PlaceSuggestionCard({ place }: { place: PlaceDto }) {
                     </View>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
@@ -76,6 +84,7 @@ export default function PlaceSuggestionsScreen() {
     const [regenerating, setRegenerating] = useState(false);
     const [showDurationModal, setShowDurationModal] = useState(false);
     const [creatingPoll, setCreatingPoll] = useState(false);
+    const [mapPlace, setMapPlace] = useState<PlaceDto | null>(null);
 
     const loadSuggestions = useCallback(async () => {
         if (!gatheringId) return;
@@ -160,9 +169,12 @@ export default function PlaceSuggestionsScreen() {
                         </Text>
                     </View>
                 ) : (
-                    places.map((place, index) => (
-                        <PlaceSuggestionCard key={place.id ?? index} place={place} />
-                    ))
+                    <>
+                        {places.map((place, index) => (
+                            <PlaceSuggestionCard key={place.id ?? index} place={place} onLongPress={() => setMapPlace(place)} />
+                        ))}
+                        <Text style={styles.hintText}>Long press a place to view on map</Text>
+                    </>
                 )}
 
                 {/* Action buttons */}
@@ -229,9 +241,74 @@ export default function PlaceSuggestionsScreen() {
                     </View>
                 </View>
             </Modal>
+
+            {/* Map modal */}
+            {mapPlace && (
+                <Modal visible={!!mapPlace} transparent animationType="slide" onRequestClose={() => setMapPlace(null)}>
+                    <View style={mapModalStyles.overlay}>
+                        <View style={mapModalStyles.container}>
+                            <View style={mapModalStyles.header}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={mapModalStyles.title} numberOfLines={1}>{mapPlace.name}</Text>
+                                    {mapPlace.address && (
+                                        <Text style={mapModalStyles.address} numberOfLines={1}>{mapPlace.address}</Text>
+                                    )}
+                                </View>
+                                <TouchableOpacity onPress={() => setMapPlace(null)} style={mapModalStyles.closeBtn}>
+                                    <Text style={mapModalStyles.closeBtnText}>X</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <WebView
+                                    source={{ uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([mapPlace.name, mapPlace.address].filter(Boolean).join(' '))}` }}
+                                    style={{ flex: 1 }}
+                                    javaScriptEnabled
+                                    domStorageEnabled
+                                    startInLoadingState
+                                    renderLoading={() => (
+                                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                                            <ActivityIndicator color={primaryColor} size="large" />
+                                        </View>
+                                    )}
+                                />
+                            </View>
+                            <TouchableOpacity
+                                style={mapModalStyles.openBtn}
+                                onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([mapPlace.name, mapPlace.address].filter(Boolean).join(' '))}`)}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={mapModalStyles.openBtnText}>Open in Google Maps</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
         </View>
     );
 }
+
+const mapModalStyles = StyleSheet.create({
+    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+    container: {
+        backgroundColor: '#16161D', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+        borderWidth: 1, borderColor: '#1F1F2E', borderBottomWidth: 0, overflow: 'hidden', height: '75%',
+    },
+    header: {
+        flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
+        borderBottomWidth: 1, borderBottomColor: '#1F1F2E',
+    },
+    title: { fontSize: 16, fontWeight: '700', color: '#F0EBE1' },
+    address: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+    closeBtn: {
+        width: 32, height: 32, borderRadius: 16, backgroundColor: '#0B0B0F',
+        justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#252530',
+    },
+    closeBtnText: { color: '#6B7280', fontWeight: '700', fontSize: 14 },
+    openBtn: {
+        backgroundColor: primaryColor, margin: 16, borderRadius: 12, paddingVertical: 14, alignItems: 'center',
+    },
+    openBtnText: { color: '#0B0B0F', fontWeight: '800', fontSize: 15 },
+});
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#0B0B0F' },
@@ -247,6 +324,7 @@ const styles = StyleSheet.create({
     emptyIcon: { fontSize: 40, marginBottom: 12 },
     emptyTitle: { fontSize: 18, fontWeight: '700', color: '#F0EBE1', marginBottom: 4 },
     emptySubtitle: { fontSize: 14, color: '#6B7280', textAlign: 'center' },
+    hintText: { fontSize: 11, color: '#4B5563', marginTop: 4, marginBottom: 8 },
     actions: { flexDirection: 'row', gap: 12, marginTop: 24 },
     regenerateBtn: {
         flex: 1,

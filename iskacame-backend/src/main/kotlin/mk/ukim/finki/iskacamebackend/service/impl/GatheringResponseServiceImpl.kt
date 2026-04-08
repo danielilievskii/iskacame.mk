@@ -4,6 +4,7 @@ import mk.ukim.finki.iskacamebackend.common.GatheringResponseExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.request.gathering.SubmitGatheringResponseRequest
 import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringResponseOptionsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.MyGatheringResponseDto
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.GatheringTimeSlotMapper
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringResponse
@@ -116,6 +117,19 @@ class GatheringResponseServiceImpl(
         }
 
         gatheringResponseRepository.save(response)
+    }
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("@permissionService.isGatheringParticipant(#gatheringId, authentication.principal.id)")
+    override fun getMyResponse(gatheringId: Long): MyGatheringResponseDto? {
+        val currentUser = authService.getCurrentUser()
+        val response = gatheringResponseRepository.findByGatheringIdAndUserId(gatheringId, currentUser.id!!)
+            ?: return null
+
+        return MyGatheringResponseDto(
+            types = response.typePreferences.toSet(),
+            timeSlotIds = response.timeSlotPreferences.mapNotNull { it.id }.toSet()
+        )
     }
 
     private fun checkPollNotStarted(gatheringId: Long) {

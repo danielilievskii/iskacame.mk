@@ -34,6 +34,7 @@ export default function AddGatheringScreen() {
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [location, setLocation] = useState('');
     const [startDate, setStartDate] = useState<Date>(defaultStart);
     const [endDate, setEndDate] = useState<Date>(defaultEnd);
     const [selectedParticipants, setSelectedParticipants] = useState<UserSearchDto[]>([]);
@@ -42,6 +43,7 @@ export default function AddGatheringScreen() {
     const reset = () => {
         setTitle('');
         setDescription('');
+        setLocation('');
         setStartDate(defaultStart);
         setEndDate(defaultEnd);
         setSelectedParticipants([]);
@@ -76,6 +78,7 @@ export default function AddGatheringScreen() {
             const gathering = await gatheringService.createGathering({
                 title: title.trim(),
                 description: description.trim() || undefined,
+                location: location.trim() || undefined,
                 startDate: toLocalDateTimeString(startDate),
                 endDate: toLocalDateTimeString(endDate),
                 participantIds: selectedParticipants.map((u) => u.id),
@@ -136,6 +139,20 @@ export default function AddGatheringScreen() {
                             maxLength={500}
                         />
                         <Text style={styles.charCount}>{description.length}/500</Text>
+                    </View>
+
+                    {/* Location */}
+                    <View style={styles.field}>
+                        <Text style={styles.label}>LOCATION</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={location}
+                            onChangeText={setLocation}
+                            placeholder="City or area for AI suggestions…"
+                            placeholderTextColor="#6B7280"
+                            maxLength={200}
+                        />
+                        <Text style={styles.charCount}>{location.length}/200</Text>
                     </View>
 
                     {/* Date pickers */}

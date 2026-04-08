@@ -16,6 +16,7 @@ import {
     Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
 import { gatheringService } from '@/service/gathering-service';
@@ -175,7 +176,7 @@ const rowStyles = StyleSheet.create({
     statusDot: { width: 8, height: 8, borderRadius: 4 },
 });
 
-function PlaceCard({ place }: { place: PlaceDto }) {
+function PlaceCard({ place, onLongPress }: { place: PlaceDto; onLongPress?: () => void }) {
     const levelEmoji: Record<string, string> = {
         FREE: '🆓', CHEAP: '💰', MODERATE: '💰💰', EXPENSIVE: '💰💰💰', LUXURY: '💎',
     };
@@ -183,14 +184,22 @@ function PlaceCard({ place }: { place: PlaceDto }) {
         CAFE: '☕', RESTAURANT: '🍽️', PARK: '🌳', OTHER: '📍',
     };
     return (
-        <View style={placeStyles.card}>
+        <TouchableOpacity
+            style={placeStyles.card}
+            onLongPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onLongPress?.();
+            }}
+            activeOpacity={0.8}
+            delayLongPress={400}
+        >
             <Text style={placeStyles.emoji}>{typeEmoji[place.type] ?? '📍'}</Text>
             <View style={placeStyles.info}>
                 <Text style={placeStyles.name}>{place.name}</Text>
                 {place.address && <Text style={placeStyles.address} numberOfLines={1}>{place.address}</Text>}
             </View>
             <Text style={placeStyles.level}>{levelEmoji[place.priceLevel] ?? ''}</Text>
-        </View>
+        </TouchableOpacity>
     );
 }
 
@@ -743,7 +752,10 @@ function VotingCard({
                             isSelected && voteStyles.optionSelected,
                         ]}
                         onPress={() => isActive && togglePlace(place.id)}
-                        onLongPress={() => setMapPlace(place)}
+                        onLongPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            setMapPlace(place);
+                        }}
                         activeOpacity={isActive ? 0.7 : 1}
                     >
                         <View style={voteStyles.optionContent}>
@@ -1047,6 +1059,7 @@ export default function GatheringDetailsScreen() {
     const [previewParticipant, setPreviewParticipant] = useState<ParticipantDto | null>(null);
     const [showAddExpense, setShowAddExpense] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [mapPlace, setMapPlace] = useState<PlaceDto | null>(null);
 
     const load = useCallback(async () => {
         if (!id) return;
@@ -1241,11 +1254,17 @@ export default function GatheringDetailsScreen() {
                 {gathering.description ? (
                     <Text style={styles.description}>{gathering.description}</Text>
                 ) : null}
+                {gathering.location ? (
+                    <Text style={styles.locationTag}>{'📍 ' + gathering.location}</Text>
+                ) : null}
             </View>
 
             {/* Details card */}
             <View style={styles.card}>
                 <SectionHeader title="DETAILS" />
+                {gathering.location && (
+                    <DetailRow label="Location" value={gathering.location} />
+                )}
                 <DetailRow label="Start" value={formatDate(gathering.startDate)} />
                 <DetailRow label="End" value={formatDate(gathering.endDate)} />
                 {gathering.finalizedTime && (
@@ -1253,8 +1272,9 @@ export default function GatheringDetailsScreen() {
                 )}
                 {gathering.finalizedPlace && (
                     <View style={{ marginTop: 12 }}>
-                        <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>FINALIZED PLACE</Text>
-                        <PlaceCard place={gathering.finalizedPlace} />
+                        <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 4 }}>FINALIZED PLACE</Text>
+                        <PlaceCard place={gathering.finalizedPlace} onLongPress={() => setMapPlace(gathering.finalizedPlace)} />
+                        <Text style={{ fontSize: 11, color: '#4B5563', marginTop: 2 }}>Long press to view on map</Text>
                     </View>
                 )}
             </View>
@@ -1309,8 +1329,9 @@ export default function GatheringDetailsScreen() {
                 <View style={styles.card}>
                     <SectionHeader title="SUGGESTED PLACES" />
                     {gathering.suggestedPlaces.map((place) => (
-                        <PlaceCard key={place.id} place={place} />
+                        <PlaceCard key={place.id} place={place} onLongPress={() => setMapPlace(place)} />
                     ))}
+                    <Text style={{ fontSize: 11, color: '#4B5563', marginTop: 4 }}>Long press a place to view on map</Text>
                 </View>
             )}
 
@@ -1526,8 +1547,15 @@ export default function GatheringDetailsScreen() {
 
         {/* Chat bubble */}
         {chatRoomId && (
-            <ChatBubble chatRoomId={chatRoomId} participants={gathering.participants} />
+            <ChatBubble chatRoomId={chatRoomId} participants={gathering.participants} initialUnreadCount={gathering.unseenMessagesCount} />
         )}
+
+        {/* Map modal for place long press */}
+        <MapModal
+            visible={!!mapPlace}
+            place={mapPlace}
+            onClose={() => setMapPlace(null)}
+        />
         </View>
     );
 }
@@ -1566,6 +1594,7 @@ const styles = StyleSheet.create({
     heroSection: { marginBottom: 24, gap: 12 },
     title: { fontSize: 26, fontWeight: '800', color: '#F0EBE1', letterSpacing: -0.5, lineHeight: 34 },
     description: { fontSize: 15, color: '#9CA3AF', lineHeight: 23 },
+    locationTag: { fontSize: 14, color: '#6B7280', marginTop: -4 },
     card: {
         backgroundColor: '#16161D',
         borderRadius: 16,

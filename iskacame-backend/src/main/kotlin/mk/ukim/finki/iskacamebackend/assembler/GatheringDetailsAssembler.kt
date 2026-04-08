@@ -29,7 +29,8 @@ class GatheringDetailsAssembler(
     private val gatheringParticipationMapper: GatheringParticipationMapper,
     private val placeMapper: PlaceMapper,
     private val authService: AuthService,
-    private val gatheringRepository: GatheringRepository
+    private val gatheringRepository: GatheringRepository,
+    private val chatMessageRepository: ChatMessageRepository
 ) {
 
     /**
@@ -61,6 +62,13 @@ class GatheringDetailsAssembler(
 
         val activePollDto = assemblePoll(gathering, suggestedPlaceDtos, currentUserId)
 
+        val chatRoomId = gathering.chatRoom?.id
+        val unseenMessagesCount = if (chatRoomId != null) {
+            chatMessageRepository
+                .countUnseenForUserGrouped(listOf(chatRoomId), currentUserId)
+                .firstOrNull()?.unseenMessagesCount ?: 0
+        } else 0
+
         return gatheringMapper
             .toGatheringDetailsDto(gathering)
             .copy(
@@ -69,7 +77,8 @@ class GatheringDetailsAssembler(
                 timeSlotPreferences = timeSlotPreferenceDtos,
                 typePreferences = typePreferenceDtos,
                 hasSubmittedResponse = hasSubmittedResponse,
-                activePoll = activePollDto
+                activePoll = activePollDto,
+                unseenMessagesCount = unseenMessagesCount
             )
     }
 

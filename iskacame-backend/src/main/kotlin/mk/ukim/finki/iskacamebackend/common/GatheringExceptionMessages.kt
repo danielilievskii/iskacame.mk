@@ -10,6 +10,7 @@ object GatheringExceptionMessages {
     const val TITLE_REQUIRED = "Title must not be blank."
     const val TITLE_MAX_LENGTH = "Title must not exceed 100 characters."
     const val DESCRIPTION_MAX_LENGTH = "Description must not exceed 500 characters."
+    const val LOCATION_MAX_LENGTH = "Location must not exceed 200 characters."
     const val START_DATE_REQUIRED = "Start date is required."
     const val END_DATE_REQUIRED = "End date is required."
     const val INVALID_DATE_RANGE = "End date must be after start date."

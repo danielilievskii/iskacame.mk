@@ -32,6 +32,7 @@ export default function ManageGatheringScreen() {
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [location, setLocation] = useState('');
     const [startDate, setStartDate] = useState<Date>(new Date());
     const [endDate, setEndDate] = useState<Date>(new Date());
 
@@ -42,6 +43,7 @@ export default function ManageGatheringScreen() {
             setGathering(data);
             setTitle(data.title);
             setDescription(data.description ?? '');
+            setLocation(data.location ?? '');
             setStartDate(parseLocalDateTime(data.startDate));
             setEndDate(parseLocalDateTime(data.endDate));
         } catch (e: any) {
@@ -69,6 +71,7 @@ export default function ManageGatheringScreen() {
             await gatheringService.updateGathering(Number(id), {
                 title: title.trim(),
                 description: description.trim() || undefined,
+                location: location.trim() || undefined,
                 startDate: toLocalDateTimeString(startDate),
                 endDate: toLocalDateTimeString(endDate),
             });
@@ -178,6 +181,19 @@ export default function ManageGatheringScreen() {
                             maxLength={500}
                         />
                         <Text style={styles.charCount}>{description.length}/500</Text>
+                    </View>
+
+                    <View style={styles.field}>
+                        <Text style={styles.label}>LOCATION</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={location}
+                            onChangeText={setLocation}
+                            placeholder="City or area for AI suggestions…"
+                            placeholderTextColor="#6B7280"
+                            maxLength={200}
+                        />
+                        <Text style={styles.charCount}>{location.length}/200</Text>
                     </View>
 
                     <DateTimePicker

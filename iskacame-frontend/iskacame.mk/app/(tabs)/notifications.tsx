@@ -16,6 +16,7 @@ import { notificationService } from '@/service/notification-service';
 import type { NotificationDto, GatheringInvitationDto } from '@/service/dtos/gathering-types';
 import { UserAvatar, EmptyState } from '@/components/ui/gathering-ui';
 import { primaryColor } from '@/constants/theme';
+import { useNotifications } from '@/context/notification-context';
 
 const ICON_MAP: Record<string, string> = {
     GATHERING_INVITE: '✉️',
@@ -39,6 +40,7 @@ function timeAgo(dateStr: string): string {
 
 export default function NotificationsScreen() {
     const router = useRouter();
+    const { refresh: refreshBadge } = useNotifications();
     const [notifications, setNotifications] = useState<NotificationDto[]>([]);
     const [invitations, setInvitations] = useState<GatheringInvitationDto[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,6 +57,7 @@ export default function NotificationsScreen() {
             ]);
             setNotifications(notifData);
             setInvitations(inviteData);
+            refreshBadge();
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to load notifications.');
         } finally {
@@ -78,6 +81,7 @@ export default function NotificationsScreen() {
         try {
             await notificationService.markAllAsRead();
             setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+            refreshBadge();
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to mark all as read.');
         }
@@ -90,6 +94,7 @@ export default function NotificationsScreen() {
                 setNotifications((prev) =>
                     prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
                 );
+                refreshBadge();
             } catch { }
         }
 
