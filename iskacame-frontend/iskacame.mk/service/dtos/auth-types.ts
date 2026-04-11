@@ -2,6 +2,7 @@ export interface UserDto {
     id: number;
     name: string;
     username: string;
+    email: string | null;
     avatarUrl: string | null;
     phone: string | null;
 }

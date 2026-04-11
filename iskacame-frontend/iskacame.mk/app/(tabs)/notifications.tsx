@@ -115,11 +115,9 @@ export default function NotificationsScreen() {
         setActionLoading(true);
         try {
             await gatheringService.acceptInvitation(selectedInvite.id);
+            const gatheringId = selectedInvite.gatheringId;
             setSelectedInvite(null);
-            router.push({
-                pathname: '/gathering/pick-preferences',
-                params: { gatheringId: selectedInvite.gatheringId },
-            });
+            router.push(`/gathering/${gatheringId}`);
         } catch (e: any) {
             Alert.alert('Error', e.message ?? 'Failed to accept invitation.');
         } finally {

@@ -10,6 +10,7 @@ import mk.ukim.finki.iskacamebackend.events.PasswordChangeEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
+import mk.ukim.finki.iskacamebackend.mapper.CurrentUserMapper
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
 import mk.ukim.finki.iskacamebackend.model.domain.AvatarImage
 import mk.ukim.finki.iskacamebackend.model.domain.User
@@ -38,6 +39,7 @@ class UserServiceImpl(
   private val authService: AuthService,
   private val cloudinaryStorageService: CloudinaryStorageService,
   private val userMapper: UserMapper,
+  private val currentUserMapper: CurrentUserMapper,
   private val verificationTokenService: VerificationTokenService,
   private val passwordEncoder: PasswordEncoder,
   private val eventPublisher: ApplicationEventPublisher
@@ -101,7 +103,7 @@ class UserServiceImpl(
     user.phone = request.phone
 
     val updatedUser = userRepository.save(user)
-    return userMapper.toUserDto(updatedUser)
+    return currentUserMapper.toCurrentUserDto(updatedUser)
   }
 
   @Transactional

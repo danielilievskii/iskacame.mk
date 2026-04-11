@@ -24,6 +24,7 @@ interface UserMapper {
    * @return the mapped UserDto object
    */
   @Mapping(target = "avatarUrl", source = "avatar.url")
+  @Mapping(target = "email", ignore = true)
   fun toUserDto(user: User): UserDto
 
   /**

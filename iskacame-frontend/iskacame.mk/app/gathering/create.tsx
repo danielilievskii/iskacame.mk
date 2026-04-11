@@ -18,18 +18,43 @@ import { DateTimePicker, toLocalDateTimeString } from '@/components/ui/date-time
 import { ParticipantSearch } from '@/components/ui/participant-search';
 import { primaryColor } from '@/constants/theme';
 
+const TIME_SLOT_START_HOUR = 6;
+const TIME_SLOT_END_HOUR = 23;
+
+function clampToTimeSlotWindow(d: Date): Date {
+    const clamped = new Date(d);
+    const hour = clamped.getHours();
+    if (hour < TIME_SLOT_START_HOUR) {
+        clamped.setHours(TIME_SLOT_START_HOUR, 0, 0, 0);
+    } else if (
+        hour > TIME_SLOT_END_HOUR ||
+        (hour === TIME_SLOT_END_HOUR && (clamped.getMinutes() > 0 || clamped.getSeconds() > 0))
+    ) {
+        clamped.setHours(TIME_SLOT_END_HOUR, 0, 0, 0);
+    }
+    return clamped;
+}
+
+function isWithinTimeSlotWindow(d: Date): boolean {
+    const hour = d.getHours();
+    if (hour < TIME_SLOT_START_HOUR) return false;
+    if (hour > TIME_SLOT_END_HOUR) return false;
+    if (hour === TIME_SLOT_END_HOUR && (d.getMinutes() > 0 || d.getSeconds() > 0)) return false;
+    return true;
+}
+
 export default function CreateGatheringScreen() {
     const router = useRouter();
 
     const defaultStart = (() => {
         const d = new Date();
         d.setHours(d.getHours() + 1, 0, 0, 0);
-        return d;
+        return clampToTimeSlotWindow(d);
     })();
     const defaultEnd = (() => {
         const d = new Date();
         d.setHours(d.getHours() + 3, 0, 0, 0);
-        return d;
+        return clampToTimeSlotWindow(d);
     })();
 
     const [title, setTitle] = useState('');
@@ -55,8 +80,15 @@ export default function CreateGatheringScreen() {
             Alert.alert('Validation', 'Title is required.');
             return;
         }
-        if (endDate <= startDate) {
-            Alert.alert('Validation', 'End date must be after start date.');
+        if (endDate.getTime() - startDate.getTime() < 60 * 60 * 1000) {
+            Alert.alert('Validation', 'End date must be at least 1 hour after start date.');
+            return;
+        }
+        if (!isWithinTimeSlotWindow(startDate) || !isWithinTimeSlotWindow(endDate)) {
+            Alert.alert(
+                'Validation',
+                `Times must be between ${String(TIME_SLOT_START_HOUR).padStart(2, '0')}:00 and ${String(TIME_SLOT_END_HOUR).padStart(2, '0')}:00.`
+            );
             return;
         }
         if (selectedParticipants.length === 0) {
@@ -161,16 +193,35 @@ export default function CreateGatheringScreen() {
                     <DateTimePicker
                         label="START DATE *"
                         value={startDate}
-                        onChange={setStartDate}
+                        onChange={(d) => {
+                            const clamped = clampToTimeSlotWindow(d);
+                            setStartDate(clamped);
+                            if (endDate.getTime() - clamped.getTime() < 60 * 60 * 1000) {
+                                const bumped = new Date(clamped.getTime() + 60 * 60 * 1000);
+                                setEndDate(clampToTimeSlotWindow(bumped));
+                            }
+                        }}
                         minimumDate={new Date()}
                     />
 
                     <DateTimePicker
                         label="END DATE *"
                         value={endDate}
-                        onChange={setEndDate}
-                        minimumDate={startDate}
+                        onChange={(d) => {
+                            const minEnd = startDate.getTime() + 60 * 60 * 1000;
+                            const floored =
+                                d.getTime() < minEnd ? new Date(minEnd) : d;
+                            setEndDate(clampToTimeSlotWindow(floored));
+                        }}
+                        minimumDate={new Date(startDate.getTime() + 60 * 60 * 1000)}
                     />
+
+                    <Text style={styles.hint}>
+                        Times are restricted to{' '}
+                        {String(TIME_SLOT_START_HOUR).padStart(2, '0')}:00 –{' '}
+                        {String(TIME_SLOT_END_HOUR).padStart(2, '0')}:00 so they line up with the
+                        available time slots.
+                    </Text>
 
                     {/* Participant search */}
                     <ParticipantSearch
@@ -232,6 +283,7 @@ const styles = StyleSheet.create({
     },
     multiline: { height: 100, textAlignVertical: 'top', paddingTop: 14 },
     charCount: { fontSize: 11, color: '#4B5563', marginTop: 4, textAlign: 'right' },
+    hint: { fontSize: 11, color: '#6B7280', marginTop: -8, marginBottom: 16, lineHeight: 16 },
     button: {
         backgroundColor: primaryColor,
         borderRadius: 12,

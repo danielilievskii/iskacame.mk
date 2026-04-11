@@ -18,6 +18,7 @@ import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
+import mk.ukim.finki.iskacamebackend.mapper.CurrentUserMapper
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
 import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
@@ -45,6 +46,7 @@ class AuthServiceImpl(
   private val userRepository: UserRepository,
   private val passwordEncoder: PasswordEncoder,
   private val userMapper: UserMapper,
+  private val currentUserMapper: CurrentUserMapper,
   private val authenticationManager: AuthenticationManager,
   private val jwtService: JwtService,
   private val refreshTokenService: RefreshTokenService,
@@ -112,7 +114,7 @@ class AuthServiceImpl(
 
     refreshTokenService.create(user, refreshToken)
 
-    val userDto = userMapper.toUserDto(user)
+    val userDto = currentUserMapper.toCurrentUserDto(user)
 
     return AuthResponse(
       token = token,
@@ -132,7 +134,7 @@ class AuthServiceImpl(
     return AuthResponse(
       token = newAccessToken,
       refreshToken = newRefreshToken,
-      user = userMapper.toUserDto(user)
+      user = currentUserMapper.toCurrentUserDto(user)
     )
   }
 
@@ -231,7 +233,7 @@ class AuthServiceImpl(
   override fun getCurrentUserDto(): UserDto {
 
     val user = getCurrentUser()
-    return userMapper.toUserDto(user)
+    return currentUserMapper.toCurrentUserDto(user)
   }
 
   override fun getUserDtoByIdentifier(identifier: String): List<UserSearchDto> {

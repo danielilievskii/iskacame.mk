@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
 import { gatheringService } from '@/service/gathering-service';
 import { userSearchService, type UserSearchDto } from '@/service/user-search-service';
@@ -1089,9 +1089,11 @@ export default function GatheringDetailsScreen() {
         }
     }, [id]);
 
-    useEffect(() => {
-        load();
-    }, [load]);
+    useFocusEffect(
+        useCallback(() => {
+            load();
+        }, [load])
+    );
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -1204,6 +1206,39 @@ export default function GatheringDetailsScreen() {
         : false;
     const showExpenses = finalizedTimePassed;
 
+    const isGmailUser = !!user?.email && user.email.toLowerCase().endsWith('@gmail.com');
+    const canAddToGoogleCalendar =
+        isGmailUser &&
+        gathering.status === 'FINALIZED' &&
+        !!gathering.finalizedTime &&
+        !!gathering.finalizedPlace;
+
+    const handleAddToGoogleCalendar = async () => {
+        if (!gathering.finalizedTime) return;
+        const start = new Date(gathering.finalizedTime);
+        const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+        const fmt = (d: Date) =>
+            d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+        const place = gathering.finalizedPlace;
+        const locationParts = [
+            place?.name,
+            place?.address,
+        ].filter(Boolean);
+        const params = new URLSearchParams({
+            action: 'TEMPLATE',
+            text: gathering.title,
+            dates: `${fmt(start)}/${fmt(end)}`,
+            details: gathering.description ?? '',
+            location: locationParts.join(', '),
+        });
+        const url = `https://www.google.com/calendar/render?${params.toString()}`;
+        try {
+            await Linking.openURL(url);
+        } catch {
+            Alert.alert('Error', 'Could not open Google Calendar.');
+        }
+    };
+
     const myDebts = debts.filter((d) => d.fromUserId === user?.id && d.amount > 0);
 
     return (
@@ -1287,6 +1322,15 @@ export default function GatheringDetailsScreen() {
                         <PlaceCard place={gathering.finalizedPlace} onLongPress={() => setMapPlace(gathering.finalizedPlace)} />
                         <Text style={{ fontSize: 11, color: '#4B5563', marginTop: 2 }}>Long press to view on map</Text>
                     </View>
+                )}
+                {canAddToGoogleCalendar && (
+                    <TouchableOpacity
+                        style={styles.googleCalBtn}
+                        onPress={handleAddToGoogleCalendar}
+                        activeOpacity={0.85}
+                    >
+                        <Text style={styles.googleCalBtnText}>📅  Add to Google Calendar</Text>
+                    </TouchableOpacity>
                 )}
             </View>
 
@@ -1676,6 +1720,16 @@ const styles = StyleSheet.create({
         borderColor: primaryColor,
     },
     aiSuggestionsBtnText: { color: primaryColor, fontWeight: '800', fontSize: 15 },
+    googleCalBtn: {
+        backgroundColor: '#1A1D2E',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: 16,
+        borderWidth: 1,
+        borderColor: '#2E3558',
+    },
+    googleCalBtnText: { color: '#8AB4F8', fontWeight: '700', fontSize: 14 },
     leaveBtn: {
         backgroundColor: '#16161D', borderRadius: 12, borderWidth: 1, borderColor: '#3B1D1D',
         paddingVertical: 16, alignItems: 'center', marginTop: 4,
