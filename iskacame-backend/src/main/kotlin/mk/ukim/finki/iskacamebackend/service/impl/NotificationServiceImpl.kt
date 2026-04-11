@@ -12,7 +12,6 @@ import mk.ukim.finki.iskacamebackend.repository.NotificationRepository
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
 import mk.ukim.finki.iskacamebackend.service.intf.NotificationService
-import mk.ukim.finki.iskacamebackend.service.intf.PushNotificationService
 import mk.ukim.finki.iskacamebackend.service.intf.UserService
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
@@ -25,8 +24,7 @@ class NotificationServiceImpl(
     private val authService: AuthService,
     private val userService: UserService,
     @Lazy private val gatheringService: GatheringService,
-    private val notificationMapper: NotificationMapper,
-    private val pushNotificationService: PushNotificationService
+    private val notificationMapper: NotificationMapper
 ) : NotificationService {
 
     @Transactional(readOnly = true)
@@ -76,13 +74,6 @@ class NotificationServiceImpl(
             body = body
         )
         notificationRepository.save(notification)
-
-        pushNotificationService.sendPushNotification(
-            recipientIds = listOf(recipientId),
-            title = title,
-            body = body,
-            data = gathering.id?.let { mapOf("gatheringId" to it.toString()) }
-        )
     }
 
     @Transactional
@@ -107,13 +98,5 @@ class NotificationServiceImpl(
             )
         }
         notificationRepository.saveAll(notifications)
-
-        val recipientIds = participations.mapNotNull { it.user.id }
-        pushNotificationService.sendPushNotification(
-            recipientIds = recipientIds,
-            title = title,
-            body = body,
-            data = mapOf("gatheringId" to gatheringId.toString())
-        )
     }
 }

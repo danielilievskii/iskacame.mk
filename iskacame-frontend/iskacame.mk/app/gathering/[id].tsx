@@ -78,11 +78,6 @@ function ProfilePreviewModal({
                             <Text style={modalStyles.infoLabel}>Status</Text>
                             <Text style={modalStyles.infoValue}>{participant.participationStatus}</Text>
                         </View>
-                        <View style={modalStyles.divider} />
-                        <View style={modalStyles.infoRow}>
-                            <Text style={modalStyles.infoLabel}>User ID</Text>
-                            <Text style={modalStyles.infoValue}>#{user.id}</Text>
-                        </View>
                     </View>
 
                     <TouchableOpacity style={modalStyles.closeBtn} onPress={onClose}>

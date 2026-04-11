@@ -148,7 +148,6 @@ class GatheringDetailsAssembler(
         val gatheringId = gathering.id!!
         val poll = placePollRepository.findByGatheringId(gatheringId) ?: return null
 
-        // Auto-end expired polls and finalize gathering
         if (poll.status == PollStatus.ACTIVE && poll.endsAt.isBefore(Instant.now())) {
             poll.status = PollStatus.ENDED
             placePollRepository.save(poll)

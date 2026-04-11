@@ -36,12 +36,10 @@ export const chatService = {
         const wsUrl = getWsUrl();
 
         const client = new Client({
-            // Use webSocketFactory for React Native compatibility instead of brokerURL
             webSocketFactory: () => new WebSocket(wsUrl),
             connectHeaders: {
                 Authorization: `Bearer ${token ?? ''}`,
             },
-            // Required for React Native - binary frames and missing NULL byte handling
             forceBinaryWSFrames: true,
             appendMissingNULLonIncoming: true,
             reconnectDelay: 5000,

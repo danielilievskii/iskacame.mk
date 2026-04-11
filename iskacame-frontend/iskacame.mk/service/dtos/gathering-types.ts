@@ -152,7 +152,6 @@ export interface CreateExpenseRequest {
     splits: CreateSplitRequest[];
 }
 
-// Poll types
 export type PollStatus = 'ACTIVE' | 'ENDED';
 
 export interface PlacePollOptionDto {
@@ -169,7 +168,6 @@ export interface PlacePollDto {
     myVotedPlaceIds: number[];
 }
 
-// Notification types
 export type NotificationType = 'GATHERING_INVITE' | 'VOTE_STARTED' | 'VOTE_ENDED' | 'GATHERING_CANCELLED';
 
 export interface NotificationDto {
@@ -182,7 +180,6 @@ export interface NotificationDto {
     createdAt: string;
 }
 
-// Gallery types
 export interface GatheringImageDto {
     id: number;
     gatheringId: number;

@@ -31,7 +31,6 @@ export default function ProfileScreen() {
     const [editPhone, setEditPhone] = useState('');
     const [saving, setSaving] = useState(false);
 
-    // Change password state
     const [pwModalVisible, setPwModalVisible] = useState(false);
     const [pwStep, setPwStep] = useState<'current' | 'confirm'>('current');
     const [currentPassword, setCurrentPassword] = useState('');
@@ -40,7 +39,6 @@ export default function ProfileScreen() {
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [pwLoading, setPwLoading] = useState(false);
 
-    // Change email state
     const [emailModalVisible, setEmailModalVisible] = useState(false);
     const [emailStep, setEmailStep] = useState<'request' | 'confirm'>('request');
     const [newEmail, setNewEmail] = useState('');
@@ -146,7 +144,6 @@ export default function ProfileScreen() {
         ]);
     };
 
-    // Change password handlers
     const openPwModal = () => {
         setPwStep('current');
         setCurrentPassword('');
@@ -198,7 +195,6 @@ export default function ProfileScreen() {
         }
     };
 
-    // Change email handlers
     const openEmailModal = () => {
         setEmailStep('request');
         setNewEmail('');
@@ -327,8 +323,6 @@ export default function ProfileScreen() {
                 <InfoRow label="Name" value={user?.name ?? '—'} />
                 <View style={styles.divider} />
                 <InfoRow label="Username" value={`@${user?.username}`} />
-                <View style={styles.divider} />
-                <InfoRow label="User ID" value={`#${user?.id}`} />
                 {user?.phone ? (
                     <>
                         <View style={styles.divider} />

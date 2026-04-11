@@ -84,7 +84,6 @@ class GatheringResponseServiceImpl(
 
         gatheringResponseRepository.save(response)
 
-        // Transition DRAFT → OPEN when first response is submitted
         if (gathering.status == GatheringStatus.DRAFT) {
             gathering.status = GatheringStatus.OPEN
             gatheringRepository.save(gathering)

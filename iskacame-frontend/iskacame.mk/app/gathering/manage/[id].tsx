@@ -127,9 +127,7 @@ export default function ManageGatheringScreen() {
 
                 {/* Current info */}
                 <View style={styles.infoCard}>
-                    <Text style={styles.infoLabel}>GATHERING ID</Text>
-                    <Text style={styles.infoValue}>#{gathering.id}</Text>
-                    <Text style={[styles.infoLabel, { marginTop: 8 }]}>ORIGINAL START DATE</Text>
+                    <Text style={styles.infoLabel}>ORIGINAL START DATE</Text>
                     <Text style={styles.infoValue}>{formatDate(gathering.startDate)}</Text>
                 </View>
 

@@ -10,7 +10,6 @@ import {
 export function Logo({
                          isLogoOnly = false,
                          size = 38,
-                         // color = "#F0EBE1",
                          color = "#B8AEDE",
                          style,
                      }: {

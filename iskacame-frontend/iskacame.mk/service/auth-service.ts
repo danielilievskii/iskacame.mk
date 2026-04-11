@@ -50,7 +50,6 @@ export const authService = {
         return AsyncStorage.getItem(TOKEN_KEY);
     },
 
-    // Forgot password (unauthenticated)
     async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
         await apiRequest('/api/auth/forgot-password', { method: 'POST', body: data, auth: false });
     },
@@ -59,7 +58,6 @@ export const authService = {
         await apiRequest('/api/auth/reset-password', { method: 'PATCH', body: data, auth: false });
     },
 
-    // Change password (authenticated)
     async changePassword(data: ChangePasswordRequest): Promise<void> {
         await apiRequest('/api/users/change-password', { method: 'POST', body: data });
     },
@@ -68,7 +66,6 @@ export const authService = {
         await apiRequest('/api/users/confirm-password', { method: 'PATCH', body: data });
     },
 
-    // Change email (authenticated)
     async changeEmail(data: ChangeEmailRequest): Promise<void> {
         await apiRequest('/api/users/change-email', { method: 'POST', body: data });
     },

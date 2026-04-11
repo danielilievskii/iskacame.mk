@@ -21,9 +21,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         try {
             const count = await notificationService.getUnreadCount();
             setUnreadCount(count);
-        } catch {
-            // silently fail
-        }
+        } catch {}
     }, [user]);
 
     useEffect(() => {

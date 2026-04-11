@@ -45,7 +45,6 @@ export interface ResendTokenRequest {
     identifier: string;
 }
 
-// Forgot / Reset password (unauthenticated)
 export interface ForgotPasswordRequest {
     identifier: string;
 }
@@ -56,7 +55,6 @@ export interface ResetPasswordRequest {
     newPassword: string;
 }
 
-// Change password (authenticated)
 export interface ChangePasswordRequest {
     currentPassword: string;
 }
@@ -66,7 +64,6 @@ export interface ConfirmPasswordRequest {
     newPassword: string;
 }
 
-// Change email (authenticated)
 export interface ChangeEmailRequest {
     newEmail: string;
 }

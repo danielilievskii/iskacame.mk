@@ -55,7 +55,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
     const flatListRef = useRef<FlatList>(null);
     const openRef = useRef(open);
 
-    // Build a lookup map: userId -> participant name
     const participantMap = useRef<Map<number, string>>(new Map());
     useEffect(() => {
         const map = new Map<number, string>();
@@ -67,7 +66,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         openRef.current = open;
     }, [open]);
 
-    // Load initial messages
     const loadMessages = useCallback(async () => {
         setLoading(true);
         try {
@@ -76,13 +74,11 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
             setPage(0);
             setHasMore(!response.last);
         } catch {
-            // silently fail
         } finally {
             setLoading(false);
         }
     }, [chatRoomId]);
 
-    // Load more (older) messages
     const loadMore = useCallback(async () => {
         if (loadingMore || !hasMore) return;
         setLoadingMore(true);
@@ -93,21 +89,17 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
             setPage(nextPage);
             setHasMore(!response.last);
         } catch {
-            // silently fail
         } finally {
             setLoadingMore(false);
         }
     }, [chatRoomId, page, hasMore, loadingMore]);
 
-    // Handle receipt WebSocket notification - update message receipts in state
     const handleReceiptNotification = useCallback((notification: MessageReceiptNotification) => {
         const { messageId, recipientId, status } = notification;
 
         setMessages((prev) =>
             prev.map((msg) => {
-                // messageId === -1 means bulk update for all messages in the room
                 if (messageId !== -1 && msg.id !== messageId) return msg;
-                // Only update if this recipient has a receipt on this message
                 const updatedReceipts = msg.receipts.map((r) => {
                     if (r.recipientId !== recipientId) return r;
                     return {
@@ -122,7 +114,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         );
     }, []);
 
-    // Connect WebSocket
     useEffect(() => {
         let client: Client | null = null;
 
@@ -131,7 +122,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                 () => {
                     setConnected(true);
                     if (client) {
-                        // Subscribe to messages
                         subscriptionRef.current = chatService.subscribeToChatRoom(
                             client,
                             chatRoomId,
@@ -153,7 +143,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                             }
                         );
 
-                        // Subscribe to receipts
                         receiptsSubRef.current = chatService.subscribeToReceipts(
                             client,
                             chatRoomId,
@@ -180,7 +169,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         };
     }, [chatRoomId, user?.id, handleReceiptNotification]);
 
-    // When chat opens, mark seen & reset unread
     useEffect(() => {
         if (open) {
             setUnreadCount(0);
@@ -244,7 +232,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         return new Date(messages[index].sentAt).toDateString() !== new Date(messages[index - 1].sentAt).toDateString();
     };
 
-    // Get receipt status summary for a message sent by the current user
     const getReceiptSummary = (receipts: MessageReceiptDto[]) => {
         if (receipts.length === 0) return null;
         const seenBy = receipts.filter((r) => r.status === 'SEEN');
@@ -462,7 +449,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
 }
 
 const cs = StyleSheet.create({
-    // FAB
     fabWrapper: {
         position: 'absolute',
         bottom: 0,
@@ -510,13 +496,11 @@ const cs = StyleSheet.create({
         fontWeight: '800',
     },
 
-    // Modal
     modalContainer: {
         flex: 1,
         backgroundColor: '#0D0D14',
     },
 
-    // Header
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -548,7 +532,6 @@ const cs = StyleSheet.create({
         fontSize: 14,
     },
 
-    // Messages
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -579,7 +562,6 @@ const cs = StyleSheet.create({
         paddingVertical: 8,
     },
 
-    // Date separator
     dateSeparator: {
         alignItems: 'center',
         marginVertical: 12,
@@ -595,7 +577,6 @@ const cs = StyleSheet.create({
         overflow: 'hidden',
     },
 
-    // Message row
     msgRow: {
         flexDirection: 'row',
         alignItems: 'flex-end',
@@ -625,7 +606,6 @@ const cs = StyleSheet.create({
         color: primaryColor,
     },
 
-    // Bubble wrapper + bubble
     bubbleWrapper: {
         maxWidth: '75%',
     },
@@ -669,7 +649,6 @@ const cs = StyleSheet.create({
         color: 'rgba(11,11,15,0.5)',
     },
 
-    // Receipt text
     receiptText: {
         fontSize: 10,
         color: '#4B5563',
@@ -681,7 +660,6 @@ const cs = StyleSheet.create({
         color: '#60A5FA',
     },
 
-    // iOS-style action sheet
     actionSheetOverlay: {
         position: 'absolute',
         top: 0,
@@ -730,7 +708,6 @@ const cs = StyleSheet.create({
         fontWeight: '600',
     },
 
-    // Connection bar
     connectionBar: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -747,7 +724,6 @@ const cs = StyleSheet.create({
         fontWeight: '600',
     },
 
-    // Input bar
     inputBar: {
         flexDirection: 'row',
         alignItems: 'flex-end',

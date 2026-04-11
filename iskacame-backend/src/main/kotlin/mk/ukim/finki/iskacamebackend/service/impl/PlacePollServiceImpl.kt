@@ -80,7 +80,6 @@ class PlacePollServiceImpl(
     override fun getPoll(gatheringId: Long): PlacePollDto? {
         val poll = placePollRepository.findByGatheringId(gatheringId) ?: return null
 
-        // Auto-end and finalize if poll expired
         if (poll.status == PollStatus.ACTIVE && poll.endsAt.isBefore(Instant.now())) {
             poll.status = PollStatus.ENDED
             placePollRepository.save(poll)
@@ -92,6 +91,7 @@ class PlacePollServiceImpl(
                     .groupBy { it.place }
                     .maxByOrNull { it.value.size }
                     ?.key
+                    ?: placeRepository.findAllByGatheringId(gatheringId).randomOrNull()
 
                 val responses = gatheringResponseRepository.findAllByGatheringId(gatheringId)
                 val winningTimeSlot = responses
@@ -140,11 +140,8 @@ class PlacePollServiceImpl(
         if (invalidIds.isNotEmpty()) {
             throw BadRequestException("Invalid place IDs: $invalidIds")
         }
-
-        // Remove existing votes by this user for this gathering
         gatheringPlaceVoteRepository.deleteAllByGatheringIdAndUserId(gatheringId, currentUser.id!!)
 
-        // Create new votes
         val votes = request.placeIds.map { placeId ->
             GatheringPlaceVote(
                 user = currentUser,
@@ -165,14 +162,13 @@ class PlacePollServiceImpl(
             val gathering = poll.gathering
             val gatheringId = gathering.id!!
 
-            // Determine winning place (most votes)
             val votes = gatheringPlaceVoteRepository.findAllByGatheringId(gatheringId)
             val winningPlace = votes
                 .groupBy { it.place }
                 .maxByOrNull { it.value.size }
                 ?.key
+                ?: placeRepository.findAllByGatheringId(gatheringId).randomOrNull()
 
-            // Determine most popular time slot from responses
             val responses = gatheringResponseRepository.findAllByGatheringId(gatheringId)
             val winningTimeSlot = responses
                 .flatMap { it.timeSlotPreferences }
@@ -181,7 +177,6 @@ class PlacePollServiceImpl(
                 .maxByOrNull { it.value }
                 ?.key
 
-            // Finalize the gathering
             if (winningPlace != null) {
                 gathering.finalizedPlace = winningPlace
             }
