@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { userSearchService, UserSearchDto } from '@/service/user-search-service';
 import { primaryColor } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
 
 function Avatar({ user, size = 38 }: { user: UserSearchDto; size?: number }) {
     const initials = user.name
@@ -173,6 +174,7 @@ interface Props {
 }
 
 export function ParticipantSearch({ selectedUsers, onAdd, onRemove }: Props) {
+    const { user: currentUser } = useAuth();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<UserSearchDto[]>([]);
     const [searching, setSearching] = useState(false);
@@ -192,7 +194,10 @@ export function ParticipantSearch({ selectedUsers, onAdd, onRemove }: Props) {
             setSearching(true);
             try {
                 const data = await userSearchService.searchUsers(query);
-                setResults(data);
+                const filtered = currentUser
+                    ? data.filter((u) => u.id !== currentUser.id)
+                    : data;
+                setResults(filtered);
                 setDropdownOpen(true);
             } catch {
                 setResults([]);
@@ -204,7 +209,7 @@ export function ParticipantSearch({ selectedUsers, onAdd, onRemove }: Props) {
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [query]);
+    }, [query, currentUser?.id]);
 
     const handleAdd = (user: UserSearchDto) => {
         onAdd(user);

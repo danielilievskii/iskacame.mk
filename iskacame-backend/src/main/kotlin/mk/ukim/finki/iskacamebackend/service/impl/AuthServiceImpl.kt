@@ -3,6 +3,7 @@ package mk.ukim.finki.iskacamebackend.service.impl
 import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.RefreshTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
@@ -25,6 +26,7 @@ import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import mk.ukim.finki.iskacamebackend.security.jwt.JwtService
 import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.RefreshTokenService
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
@@ -45,6 +47,7 @@ class AuthServiceImpl(
   private val userMapper: UserMapper,
   private val authenticationManager: AuthenticationManager,
   private val jwtService: JwtService,
+  private val refreshTokenService: RefreshTokenService,
   private val verificationTokenService: VerificationTokenService,
   private val eventPublisher: ApplicationEventPublisher
 ) : AuthService {
@@ -102,16 +105,39 @@ class AuthServiceImpl(
     context.authentication = authentication
 
     val token = jwtService.generateToken(userPrincipal)
+    val refreshToken = jwtService.generateRefreshToken(userPrincipal)
 
     val user = userRepository.findByEmail(userPrincipal.email)
       ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    refreshTokenService.create(user, refreshToken)
 
     val userDto = userMapper.toUserDto(user)
 
     return AuthResponse(
       token = token,
+      refreshToken = refreshToken,
       user = userDto
     )
+  }
+
+  override fun refreshToken(request: RefreshTokenRequest): AuthResponse {
+
+    val (newAccessToken, newRefreshToken) = refreshTokenService.rotate(request.refreshToken)
+
+    val email = jwtService.getEmailFromToken(newAccessToken)
+    val user = userRepository.findByEmail(email)
+      ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
+
+    return AuthResponse(
+      token = newAccessToken,
+      refreshToken = newRefreshToken,
+      user = userMapper.toUserDto(user)
+    )
+  }
+
+  override fun logout(request: RefreshTokenRequest) {
+    refreshTokenService.revoke(request.refreshToken)
   }
 
   override fun resendVerificationToken(request: ResendTokenRequest) {

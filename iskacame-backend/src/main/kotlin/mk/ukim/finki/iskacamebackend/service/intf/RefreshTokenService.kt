@@ -28,4 +28,10 @@ interface RefreshTokenService {
    * Revokes a single refresh token by its value. No-op if the token does not exist.
    */
   fun revoke(token: String)
+
+  /**
+   * Deletes refresh tokens that are expired or have been revoked.
+   * Intended to be called periodically by a scheduled cleanup job.
+   */
+  fun cleanExpiredOrRevoked(): Int
 }

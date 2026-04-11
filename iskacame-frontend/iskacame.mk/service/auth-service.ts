@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiRequest, TOKEN_KEY } from '@/service/api';
+import { apiRequest, TOKEN_KEY, REFRESH_TOKEN_KEY, setTokens, clearTokens } from '@/service/api';
 import type {
     AuthResponse,
     ResendTokenRequest,
@@ -26,7 +26,7 @@ export const authService = {
             body: data,
             auth: false,
         });
-        await AsyncStorage.setItem(TOKEN_KEY, response.token);
+        await setTokens(response.token, response.refreshToken);
         return response;
     },
 
@@ -39,7 +39,19 @@ export const authService = {
     },
 
     async signOut(): Promise<void> {
-        await AsyncStorage.removeItem(TOKEN_KEY);
+        const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+        if (refreshToken) {
+            try {
+                await apiRequest('/api/auth/logout', {
+                    method: 'POST',
+                    body: { refreshToken },
+                    auth: false,
+                });
+            } catch {
+                // ignore server-side revocation failures — still clear local tokens
+            }
+        }
+        await clearTokens();
     },
 
     async getMe(): Promise<UserDto> {
@@ -48,6 +60,10 @@ export const authService = {
 
     async getStoredToken(): Promise<string | null> {
         return AsyncStorage.getItem(TOKEN_KEY);
+    },
+
+    async getStoredRefreshToken(): Promise<string | null> {
+        return AsyncStorage.getItem(REFRESH_TOKEN_KEY);
     },
 
     async forgotPassword(data: ForgotPasswordRequest): Promise<void> {

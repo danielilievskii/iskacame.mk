@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '@/service/auth-service';
+import { setOnAuthFailure } from '@/service/api';
 import { UserDto } from "@/service/dtos/auth-types";
 
 interface AuthState {
@@ -40,6 +41,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         refreshUser();
     }, [refreshUser]);
+
+    useEffect(() => {
+        setOnAuthFailure(() => {
+            setState({ user: null, isLoading: false, isAuthenticated: false });
+        });
+        return () => setOnAuthFailure(null);
+    }, []);
 
     const signIn = useCallback(async (identifier: string, password: string) => {
         const response = await authService.signIn({ identifier, password });

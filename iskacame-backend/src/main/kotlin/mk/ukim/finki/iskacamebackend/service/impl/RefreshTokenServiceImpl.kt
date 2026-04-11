@@ -83,4 +83,9 @@ class RefreshTokenServiceImpl(
       refreshTokenRepository.save(stored)
     }
   }
+
+  @Transactional
+  override fun cleanExpiredOrRevoked(): Int {
+    return refreshTokenRepository.deleteAllExpiredOrRevoked(Instant.now())
+  }
 }

@@ -21,7 +21,12 @@ export interface UserSearchDto {
 
 export interface AuthResponse {
     token: string;
+    refreshToken: string;
     user: UserDto;
+}
+
+export interface RefreshTokenRequest {
+    refreshToken: string;
 }
 
 export interface SignUpRequest {

@@ -1061,7 +1061,11 @@ export default function GatheringDetailsScreen() {
         try {
             const data = await gatheringService.getGatheringDetails(Number(id));
 
-            if (!data.hasSubmittedResponse && data.status !== 'CANCELLED') {
+            if (
+                !data.hasSubmittedResponse &&
+                data.status !== 'CANCELLED' &&
+                !data.activePoll
+            ) {
                 router.replace({
                     pathname: '/gathering/pick-preferences',
                     params: { gatheringId: id },

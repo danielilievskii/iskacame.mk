@@ -3,6 +3,7 @@ package mk.ukim.finki.iskacamebackend.web
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.RefreshTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.SignInRequest
@@ -38,6 +39,22 @@ class AuthController(
 
     val response = authService.signIn(signInRequest)
     return ResponseEntity.ok(response)
+  }
+
+  @PostMapping("/refresh")
+  @Operation(summary = "Exchanges a refresh token for a new access + refresh token pair")
+  fun refresh(@Valid @RequestBody refreshTokenRequest: RefreshTokenRequest): ResponseEntity<AuthResponse> {
+
+    val response = authService.refreshToken(refreshTokenRequest)
+    return ResponseEntity.ok(response)
+  }
+
+  @PostMapping("/logout")
+  @Operation(summary = "Revokes the provided refresh token")
+  fun logout(@Valid @RequestBody refreshTokenRequest: RefreshTokenRequest): ResponseEntity<Void> {
+
+    authService.logout(refreshTokenRequest)
+    return ResponseEntity.noContent().build()
   }
 
   @PostMapping("/resend-verification-code")
