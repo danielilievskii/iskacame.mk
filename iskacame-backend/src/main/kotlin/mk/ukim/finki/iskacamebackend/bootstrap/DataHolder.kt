@@ -2,6 +2,7 @@ package mk.ukim.finki.iskacamebackend.bootstrap
 
 import jakarta.annotation.PostConstruct
 import mk.ukim.finki.iskacamebackend.model.domain.ChatRoom
+import mk.ukim.finki.iskacamebackend.model.domain.ChatRoomReceipt
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringTimeSlot
@@ -9,6 +10,7 @@ import mk.ukim.finki.iskacamebackend.model.domain.User
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
+import mk.ukim.finki.iskacamebackend.repository.ChatRoomReceiptRepository
 import mk.ukim.finki.iskacamebackend.repository.ChatRoomRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
 import mk.ukim.finki.iskacamebackend.repository.GatheringRepository
@@ -27,7 +29,8 @@ class DataHolder(
     private val gatheringRepository: GatheringRepository,
     private val gatheringParticipationRepository: GatheringParticipationRepository,
     private val gatheringTimeSlotRepository: GatheringTimeSlotRepository,
-    private val chatRoomRepository: ChatRoomRepository
+    private val chatRoomRepository: ChatRoomRepository,
+    private val chatRoomReceiptRepository: ChatRoomReceiptRepository,
 ) {
     @PostConstruct
     fun init() {
@@ -80,6 +83,7 @@ class DataHolder(
         val gatherings = mutableListOf<Gathering>()
         val participations = mutableListOf<GatheringParticipation>()
         val chatRooms = mutableListOf<ChatRoom>()
+        val chatRoomReceipts = mutableListOf<ChatRoomReceipt>()
         if (gatheringRepository.count() == 0L && gatheringParticipationRepository.count() == 0L) {
 
             val now = LocalDateTime.now()
@@ -95,7 +99,6 @@ class DataHolder(
                 finalizedPlace = null
             )
             gatherings.add(gathering1)
-            chatRooms.add(ChatRoom(gathering = gathering1))
 
             val gathering2 = Gathering(
                 creator = users[1],
@@ -108,7 +111,6 @@ class DataHolder(
                 finalizedPlace = null
             )
             gatherings.add(gathering2)
-            chatRooms.add(ChatRoom(gathering = gathering2))
 
             val gathering3 = Gathering(
                 creator = users[2],
@@ -121,9 +123,15 @@ class DataHolder(
                 finalizedPlace = null
             )
             gatherings.add(gathering3)
-            chatRooms.add(ChatRoom(gathering = gathering3))
 
-            gatheringRepository.saveAll(gatherings)
+            val savedGatherings = gatheringRepository.saveAll(gatherings)
+
+            val chatRooms = savedGatherings.map { gathering ->
+                ChatRoom(gathering = gathering).also {
+                    gathering.chatRoom = it
+                }
+            }
+
             chatRoomRepository.saveAll(chatRooms)
 
             val timeSlots = gatherings.flatMap { gathering ->
@@ -147,6 +155,14 @@ class DataHolder(
                         status = ParticipationStatus.JOINED
                     )
                 )
+                chatRoomReceipts.add(
+                    ChatRoomReceipt(
+                        chatRoom = gathering.chatRoom!!,
+                        user = gathering.creator,
+                        lastSeenMessage = null,
+                        unseenMessagesCounter = 0
+                    )
+                )
 
                 val otherUsers = users.filter { it.id != gathering.creator.id }
 
@@ -155,6 +171,14 @@ class DataHolder(
                         user = otherUsers[0],
                         gathering = gathering,
                         status = ParticipationStatus.JOINED
+                    )
+                )
+                chatRoomReceipts.add(
+                    ChatRoomReceipt(
+                        chatRoom = gathering.chatRoom!!,
+                        user = otherUsers[0],
+                        lastSeenMessage = null,
+                        unseenMessagesCounter = 0
                     )
                 )
 
@@ -168,6 +192,7 @@ class DataHolder(
             }
 
             gatheringParticipationRepository.saveAll(participations)
+            chatRoomReceiptRepository.saveAll(chatRoomReceipts)
         }
     }
 }

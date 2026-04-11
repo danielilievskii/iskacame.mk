@@ -36,17 +36,11 @@ class ChatController(
         return ResponseEntity.noContent().build()
     }
 
-    @GetMapping("/room/{chatRoomId}/delivered")
-    @Operation(summary = "Mark chat room messages as delivered")
-    fun markChatRoomMessagesDelivered(@PathVariable chatRoomId: Long): ResponseEntity<Void> {
-
-        chatService.markChatRoomMessagesDelivered(chatRoomId)
-        return ResponseEntity.noContent().build()
-    }
-
     @GetMapping("/room/{chatRoomId}/seen")
     @Operation(summary = "Mark chat room messages as seen")
-    fun markChatRoomMessagesSeen(@PathVariable chatRoomId: Long): ResponseEntity<Void> {
+    fun markChatRoomMessagesSeen(
+        @PathVariable chatRoomId: Long,
+    ): ResponseEntity<Void> {
 
         chatService.markChatRoomMessagesSeen(chatRoomId)
         return ResponseEntity.noContent().build()

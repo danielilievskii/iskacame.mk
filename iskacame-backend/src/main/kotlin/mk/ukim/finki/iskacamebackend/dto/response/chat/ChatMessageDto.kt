@@ -9,12 +9,6 @@ data class ChatMessageDto(
     val sender: UserDto,
     val content: String,
     val sentAt: LocalDateTime,
-    val receipts: List<MessageReceiptDto>
+    val latestSeenBy: List<Long>
 )
 
-data class MessageReceiptDto(
-    val recipientId: Long,
-    val status: MessageReceiptStatus,
-    val deliveredAt: LocalDateTime?,
-    val seenAt: LocalDateTime?
-)

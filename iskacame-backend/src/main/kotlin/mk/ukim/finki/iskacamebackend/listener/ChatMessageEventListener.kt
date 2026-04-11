@@ -8,6 +8,7 @@ import mk.ukim.finki.iskacamebackend.events.ChatMessageDeletedEvent
 import mk.ukim.finki.iskacamebackend.events.ChatMessageSentEvent
 import mk.ukim.finki.iskacamebackend.events.ChatMessagesSeenEvent
 import mk.ukim.finki.iskacamebackend.model.enums.MessageReceiptStatus
+import mk.ukim.finki.iskacamebackend.repository.ChatRoomReceiptRepository
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
@@ -18,7 +19,7 @@ import org.springframework.transaction.event.TransactionalEventListener
  */
 @Component
 class ChatMessageEventListener(
-    private val messagingTemplate: SimpMessagingTemplate
+    private val messagingTemplate: SimpMessagingTemplate,
 ) {
 
     /**

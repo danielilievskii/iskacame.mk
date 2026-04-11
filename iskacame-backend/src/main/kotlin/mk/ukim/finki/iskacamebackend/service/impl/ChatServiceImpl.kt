@@ -12,8 +12,6 @@ import mk.ukim.finki.iskacamebackend.exception.CustomAccessDeniedException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.ChatMessageMapper
 import mk.ukim.finki.iskacamebackend.model.domain.*
-import mk.ukim.finki.iskacamebackend.model.enums.MessageReceiptStatus
-import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.repository.*
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.ChatService
@@ -31,8 +29,7 @@ import java.time.LocalDateTime
 class ChatServiceImpl(
     private val chatRoomRepository: ChatRoomRepository,
     private val chatMessageRepository: ChatMessageRepository,
-    private val messageReceiptRepository: MessageReceiptRepository,
-    private val gatheringParticipationRepository: GatheringParticipationRepository,
+    private val chatRoomReceiptRepository: ChatRoomReceiptRepository,
     private val authService: AuthService,
     private val chatMessageMapper: ChatMessageMapper,
     private val userService: UserService,
@@ -53,10 +50,34 @@ class ChatServiceImpl(
     @PreAuthorize("@permissionService.isGatheringParticipantByChatRoom(#chatRoomId, authentication.principal.id)")
     override fun getChatRoomMessages(chatRoomId: Long, page: Int, size: Int): Page<ChatMessageDto> {
 
+        val currentUser = authService.getCurrentUser()
+
         val pageable = PageRequest.of(page, size)
         val messagesPage = chatMessageRepository.findByChatRoomId(chatRoomId, pageable)
 
-        return messagesPage.map { chatMessageMapper.toChatMessageDto(it) }
+        return messagesPage.map { chatMessageMapper.toChatMessageDto(it, currentUser) }
+    }
+
+    override fun createReceiptForUser(chatRoom: ChatRoom, user: User): ChatRoomReceipt {
+
+        val unseenMessagesCount = chatMessageRepository.countByChatRoomIdAndDeletedAtIsNull(chatRoom.id!!)
+
+        val receipt = ChatRoomReceipt(
+            chatRoom = chatRoom,
+            user = user,
+            lastSeenMessage = null,
+            unseenMessagesCounter = unseenMessagesCount
+        )
+
+        return chatRoomReceiptRepository.save(receipt)
+    }
+
+    override fun deleteReceiptForUser(chatRoom: ChatRoom, user: User) {
+
+        val receipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoom.id!!, user.id!!)
+            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
+
+        chatRoomReceiptRepository.delete(receipt)
     }
 
     @Transactional
@@ -74,26 +95,25 @@ class ChatServiceImpl(
 
         val savedMessage = chatMessageRepository.save(message)
 
-        val recipients = gatheringParticipationRepository
-            .findAllByGatheringIdAndStatus(chatRoom.gathering.id!!, ParticipationStatus.JOINED)
-            .map { it.user }
-            .filter { it.id != currentUser.id }
+        val senderReceipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoomId, currentUser.id!!)
+            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
 
-        val receipts = recipients.map {
-            MessageReceipt(
-                message = savedMessage,
-                recipient = it,
-                status = MessageReceiptStatus.SENT
-            )
-        }
+        senderReceipt.lastSeenMessage = savedMessage
+        senderReceipt.unseenMessagesCounter = 0
 
-        messageReceiptRepository.saveAll(receipts)
+        chatRoomReceiptRepository.save(senderReceipt)
 
-        val chatMessageDto = chatMessageMapper.toChatMessageDto(savedMessage)
+        val chatMessageDto = chatMessageMapper.toChatMessageDto(savedMessage, currentUser)
 
-        val offlineRecipientIds = recipients
-            .filter { !webSocketSessionRegistry.isConnected(it.id!!) }
-            .map { it.id!! }
+        val recipientReceipts =
+            chatRoomReceiptRepository.findByChatRoomIdAndUserIdNot(chatRoomId, currentUser.id!!)
+
+        recipientReceipts.forEach { it.unseenMessagesCounter += 1 }
+        chatRoomReceiptRepository.saveAll(recipientReceipts)
+
+        val offlineRecipientIds = recipientReceipts
+            .map { it.user.id!! }
+            .filter { !webSocketSessionRegistry.isConnected(it) }
 
         val event = ChatMessageSentEvent(
             chatRoomId = chatRoomId,
@@ -120,6 +140,34 @@ class ChatServiceImpl(
         message.deletedAt = LocalDateTime.now()
         chatMessageRepository.save(message)
 
+        val chatRoomId = message.chatRoom.id!!
+
+        val recipientReceipts =
+            chatRoomReceiptRepository.findByChatRoomIdAndUserIdNot(message.chatRoom.id!!, currentUserId)
+
+        recipientReceipts.forEach { receipt ->
+            val lastSeenMessage = receipt.lastSeenMessage
+
+            val isDeletedMessageUnseen = lastSeenMessage == null || message.sentAt.isAfter(lastSeenMessage.sentAt)
+
+            if (isDeletedMessageUnseen && receipt.unseenMessagesCounter > 0) {
+                receipt.unseenMessagesCounter -= 1
+            }
+
+            val isDeletedMessageLastSeen = lastSeenMessage?.id == message.id
+
+            if (isDeletedMessageLastSeen) {
+                val previousMessage = chatMessageRepository
+                    .findTopByChatRoomIdAndSentAtBeforeAndDeletedAtIsNullOrderBySentAtDesc(
+                        chatRoomId,
+                        message.sentAt
+                    )
+
+                receipt.lastSeenMessage = previousMessage
+            }
+        }
+        chatRoomReceiptRepository.saveAll(recipientReceipts)
+
         val event = ChatMessageDeletedEvent(
             chatRoomId = message.chatRoom.id!!,
             messageId = messageId
@@ -129,23 +177,27 @@ class ChatServiceImpl(
 
     @Transactional
     @PreAuthorize("@permissionService.isGatheringParticipantByChatRoom(#chatRoomId, authentication.principal.id)")
-    override fun markChatRoomMessagesDelivered(chatRoomId: Long) {
-
-        val currentUserId = authService.getCurrentUserId()
-        messageReceiptRepository.markDeliveredForChatRoom(chatRoomId, currentUserId)
-    }
-
-    @Transactional
-    @PreAuthorize("@permissionService.isGatheringParticipantByChatRoom(#chatRoomId, authentication.principal.id)")
     override fun markChatRoomMessagesSeen(chatRoomId: Long) {
 
-        val currentUserId = authService.getCurrentUserId()
-        val updatedReceipts = messageReceiptRepository.markSeenForChatRoom(chatRoomId, currentUserId)
+        val currentUser = authService.getCurrentUser()
 
-        if (updatedReceipts > 0) {
+        val senderReceipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoomId, currentUser.id!!)
+            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
+
+        val lastMessage = chatMessageRepository.findFirstByChatRoomIdOrderBySentAtDesc(chatRoomId)
+            ?: return
+
+        val isLastMessageAlreadySeen = senderReceipt.lastSeenMessage?.id == lastMessage.id
+
+        if (!isLastMessageAlreadySeen) {
+            senderReceipt.lastSeenMessage = lastMessage
+            senderReceipt.unseenMessagesCounter = 0
+
+            chatRoomReceiptRepository.save(senderReceipt)
+
             val event = ChatMessagesSeenEvent(
                 chatRoomId = chatRoomId,
-                recipientId = currentUserId
+                recipientId = currentUser.id!!,
             )
 
             eventPublisher.publishEvent(event)
