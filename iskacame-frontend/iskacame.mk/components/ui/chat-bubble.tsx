@@ -1,0 +1,769 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Pressable,
+    TextInput,
+    FlatList,
+    KeyboardAvoidingView,
+    Platform,
+    ActivityIndicator,
+    Image,
+    Modal,
+    Alert,
+} from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/auth-context';
+import { chatService } from '@/service/chat-service';
+import type {
+    ChatMessageDto,
+    ChatNotification,
+    MessageReceiptNotification,
+} from '@/service/dtos/chat-types';
+import type { ParticipantDto } from '@/service/dtos/gathering-types';
+import { primaryColor } from '@/constants/theme';
+import { Client, StompSubscription } from '@stomp/stompjs';
+
+interface ChatBubbleProps {
+    chatRoomId: number;
+    participants?: ParticipantDto[] | null;
+    initialUnreadCount?: number;
+}
+
+export default function ChatBubble({ chatRoomId, participants, initialUnreadCount = 0 }: ChatBubbleProps) {
+    const { user } = useAuth();
+    const insets = useSafeAreaInsets();
+    const [open, setOpen] = useState(false);
+    const [messages, setMessages] = useState<ChatMessageDto[]>([]);
+    const [inputText, setInputText] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
+    const [connected, setConnected] = useState(false);
+    const [expandedMsgId, setExpandedMsgId] = useState<number | null>(null);
+    const [menuMsgId, setMenuMsgId] = useState<number | null>(null);
+
+    const stompClientRef = useRef<Client | null>(null);
+    const subscriptionRef = useRef<StompSubscription | null>(null);
+    const receiptsSubRef = useRef<StompSubscription | null>(null);
+    const flatListRef = useRef<FlatList>(null);
+    const openRef = useRef(open);
+
+    const participantMap = useRef<Map<number, string>>(new Map());
+    useEffect(() => {
+        const map = new Map<number, string>();
+        participants?.forEach((p) => map.set(p.user.id, p.user.name));
+        participantMap.current = map;
+    }, [participants]);
+
+    useEffect(() => {
+        openRef.current = open;
+    }, [open]);
+
+    const loadMessages = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await chatService.getMessages(chatRoomId, 0, 30);
+            setMessages(response.content.reverse());
+            setPage(0);
+            setHasMore(!response.last);
+        } catch {
+        } finally {
+            setLoading(false);
+        }
+    }, [chatRoomId]);
+
+    const loadMore = useCallback(async () => {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const nextPage = page + 1;
+            const response = await chatService.getMessages(chatRoomId, nextPage, 30);
+            setMessages((prev) => [...response.content.reverse(), ...prev]);
+            setPage(nextPage);
+            setHasMore(!response.last);
+        } catch {
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [chatRoomId, page, hasMore, loadingMore]);
+
+    const handleReceiptNotification = useCallback((notification: MessageReceiptNotification) => {
+        const { recipientId, status } = notification;
+
+        if (status !== 'SEEN') return;
+
+        setMessages((prev) => {
+            const lastIdx = prev.length - 1;
+            return prev.map((msg, idx) => {
+                const filtered = msg.latestSeenBy.filter((id) => id !== recipientId);
+                if (idx === lastIdx) {
+                    if (filtered.includes(recipientId)) return msg;
+                    return { ...msg, latestSeenBy: [...filtered, recipientId] };
+                }
+                if (filtered.length !== msg.latestSeenBy.length) {
+                    return { ...msg, latestSeenBy: filtered };
+                }
+                return msg;
+            });
+        });
+    }, []);
+
+    useEffect(() => {
+        let client: Client | null = null;
+
+        const connect = async () => {
+            client = await chatService.createStompClient(
+                () => {
+                    setConnected(true);
+                    if (client) {
+                        subscriptionRef.current = chatService.subscribeToChatRoom(
+                            client,
+                            chatRoomId,
+                            (notification: ChatNotification) => {
+                                if (notification.type === 'MESSAGE_SENT') {
+                                    const msg = notification.message;
+                                    setMessages((prev) => {
+                                        if (prev.some((m) => m.id === msg.id)) return prev;
+                                        return [...prev, msg];
+                                    });
+                                    if (!openRef.current && msg.sender.id !== user?.id) {
+                                        setUnreadCount((c) => c + 1);
+                                    }
+                                } else if (notification.type === 'MESSAGE_DELETED') {
+                                    setMessages((prev) =>
+                                        prev.filter((m) => m.id !== notification.messageId)
+                                    );
+                                }
+                            }
+                        );
+
+                        receiptsSubRef.current = chatService.subscribeToReceipts(
+                            client,
+                            chatRoomId,
+                            handleReceiptNotification
+                        );
+                    }
+                },
+                () => {
+                    setConnected(false);
+                }
+            );
+            stompClientRef.current = client;
+            client.activate();
+        };
+
+        connect();
+
+        return () => {
+            subscriptionRef.current?.unsubscribe();
+            receiptsSubRef.current?.unsubscribe();
+            client?.deactivate();
+            stompClientRef.current = null;
+            setConnected(false);
+        };
+    }, [chatRoomId, user?.id, handleReceiptNotification]);
+
+    const hasOpenedRef = useRef(false);
+
+    useEffect(() => {
+        if (open) {
+            hasOpenedRef.current = true;
+            setUnreadCount(0);
+            chatService.markSeen(chatRoomId).catch((e) => console.warn('[Chat] markSeen failed:', e));
+            loadMessages();
+        } else if (hasOpenedRef.current) {
+            chatService.markSeen(chatRoomId).catch((e) => console.warn('[Chat] markSeen failed:', e));
+        }
+    }, [open, chatRoomId, loadMessages]);
+
+    const handleSend = useCallback(() => {
+        const text = inputText.trim();
+        if (!text) return;
+        const client = stompClientRef.current;
+        if (!client || !client.connected) {
+            console.warn('[Chat] Cannot send: not connected');
+            return;
+        }
+        try {
+            chatService.sendMessage(client, chatRoomId, { content: text });
+            setInputText('');
+        } catch (e) {
+            console.warn('[Chat] Send failed:', e);
+        }
+    }, [inputText, chatRoomId]);
+
+    const confirmDeleteMessage = useCallback((messageId: number) => {
+        setMenuMsgId(null);
+        Alert.alert('Delete Message', 'Are you sure you want to delete this message?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await chatService.deleteMessage(messageId);
+                        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+                    } catch (e: any) {
+                        Alert.alert('Error', e.message ?? 'Failed to delete message.');
+                    }
+                },
+            },
+        ]);
+    }, []);
+
+    const formatTime = (dateStr: string) => {
+        const d = new Date(dateStr);
+        return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    };
+
+    const formatDateSeparator = (dateStr: string) => {
+        const d = new Date(dateStr);
+        const now = new Date();
+        if (d.toDateString() === now.toDateString()) return 'Today';
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const shouldShowDateSeparator = (index: number) => {
+        if (index === 0) return true;
+        return new Date(messages[index].sentAt).toDateString() !== new Date(messages[index - 1].sentAt).toDateString();
+    };
+
+    const cumulativeSeenBy = useMemo(() => {
+        const map = new Map<number, number[]>();
+        const accumulated = new Set<number>();
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+            msg.latestSeenBy.forEach((id) => accumulated.add(id));
+            map.set(msg.id, [...accumulated]);
+        }
+        return map;
+    }, [messages]);
+
+    const getSeenSummary = (messageId: number) => {
+        const seenBy = cumulativeSeenBy.get(messageId) ?? [];
+        if (seenBy.length === 0) return null;
+
+        const totalOtherParticipants = (participants?.length ?? 0) - 1; // exclude self
+        if (seenBy.length >= totalOtherParticipants && totalOtherParticipants > 1) {
+            return 'Seen by all';
+        }
+        const names = seenBy
+            .map((id) => participantMap.current.get(id)?.split(' ')[0] ?? 'Someone')
+            .join(', ');
+        return `Seen by ${names}`;
+    };
+
+    const renderMessage = ({ item, index }: { item: ChatMessageDto; index: number }) => {
+        const isMe = item.sender.id === user?.id;
+        const showDate = shouldShowDateSeparator(index);
+        const initials = item.sender.name
+            .split(' ')
+            .map((w) => w[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+
+        const seenLabel = isMe ? getSeenSummary(item.id) : null;
+        const showSeenInfo = isMe;
+        const isExpanded = expandedMsgId === item.id;
+
+        return (
+            <View>
+                {showDate && (
+                    <View style={cs.dateSeparator}>
+                        <Text style={cs.dateSeparatorText}>{formatDateSeparator(item.sentAt)}</Text>
+                    </View>
+                )}
+                <View style={[cs.msgRow, isMe && cs.msgRowMe]}>
+                    {!isMe && (
+                        <View style={cs.avatarSmall}>
+                            {item.sender.avatarUrl ? (
+                                <Image source={{ uri: item.sender.avatarUrl }} style={cs.avatarImg} />
+                            ) : (
+                                <Text style={cs.avatarText}>{initials}</Text>
+                            )}
+                        </View>
+                    )}
+                    <Pressable
+                        style={[cs.bubbleWrapper, isMe && cs.bubbleWrapperMe]}
+                        onPress={() => setExpandedMsgId(isExpanded ? null : item.id)}
+                        onLongPress={isMe ? () => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            setMenuMsgId(item.id);
+                        } : undefined}
+                        delayLongPress={400}
+                    >
+                        <View style={[cs.bubble, isMe ? cs.bubbleMe : cs.bubbleOther]}>
+                            {!isMe && <Text style={cs.senderName}>{item.sender.name}</Text>}
+                            <Text style={[cs.msgText, isMe && cs.msgTextMe]}>{item.content}</Text>
+                            <Text style={[cs.msgTime, isMe && cs.msgTimeMe]}>{formatTime(item.sentAt)}</Text>
+                        </View>
+                        {isExpanded && showSeenInfo && (
+                            <Text style={[cs.receiptText, seenLabel ? cs.receiptSeen : null]}>
+                                {seenLabel ?? 'Sent'}
+                            </Text>
+                        )}
+                    </Pressable>
+                </View>
+            </View>
+        );
+    };
+
+    return (
+        <>
+            {/* Full-screen modal chat */}
+            <Modal
+                visible={open}
+                animationType="slide"
+                transparent={false}
+                onRequestClose={() => setOpen(false)}
+            >
+                <KeyboardAvoidingView
+                    style={[cs.modalContainer, { paddingTop: insets.top }]}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={0}
+                >
+                    {/* Header */}
+                    <View style={cs.header}>
+                        <Text style={cs.headerTitle}>Chat</Text>
+                        <TouchableOpacity onPress={() => setOpen(false)} style={cs.closeBtn}>
+                            <Text style={cs.closeBtnText}>X</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Messages */}
+                    {loading ? (
+                        <View style={cs.loadingContainer}>
+                            <ActivityIndicator color={primaryColor} size="large" />
+                        </View>
+                    ) : messages.length === 0 ? (
+                        <View style={cs.emptyContainer}>
+                            <Text style={cs.emptyText}>No messages yet</Text>
+                            <Text style={cs.emptySubtext}>Start the conversation!</Text>
+                        </View>
+                    ) : (
+                        <FlatList
+                            ref={flatListRef}
+                            data={messages}
+                            renderItem={renderMessage}
+                            keyExtractor={(item) => String(item.id)}
+                            style={cs.messagesList}
+                            contentContainerStyle={cs.messagesContent}
+                            onContentSizeChange={() =>
+                                flatListRef.current?.scrollToEnd({ animated: false })
+                            }
+                            onScroll={({ nativeEvent }) => {
+                                if (nativeEvent.contentOffset.y <= 0 && hasMore && !loadingMore) {
+                                    loadMore();
+                                }
+                            }}
+                            scrollEventThrottle={400}
+                            ListHeaderComponent={
+                                loadingMore ? (
+                                    <ActivityIndicator color={primaryColor} size="small" style={{ paddingVertical: 10 }} />
+                                ) : null
+                            }
+                            extraData={expandedMsgId}
+                            keyboardShouldPersistTaps="handled"
+                            keyboardDismissMode="interactive"
+                        />
+                    )}
+
+                    {/* Connection status */}
+                    {!connected && (
+                        <View style={cs.connectionBar}>
+                            <ActivityIndicator color={primaryColor} size="small" />
+                            <Text style={cs.connectionText}>Connecting...</Text>
+                        </View>
+                    )}
+
+                    {/* Input */}
+                    <View style={[cs.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+                        <TextInput
+                            style={cs.input}
+                            value={inputText}
+                            onChangeText={setInputText}
+                            placeholder={connected ? 'Type a message...' : 'Connecting...'}
+                            placeholderTextColor="#6B7280"
+                            multiline
+                            maxLength={1000}
+                            editable={connected}
+                        />
+                        <TouchableOpacity
+                            onPress={handleSend}
+                            style={[cs.sendBtn, (!inputText.trim() || !connected) && cs.sendBtnDisabled]}
+                            disabled={!inputText.trim() || !connected}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={cs.sendBtnText}>Send</Text>
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+
+                {/* iOS-style action sheet for message actions */}
+                {menuMsgId !== null && (
+                    <View style={cs.actionSheetOverlay}>
+                        <Pressable style={cs.actionSheetBackdrop} onPress={() => setMenuMsgId(null)} />
+                        <View style={cs.actionSheetContainer}>
+                            <View style={cs.actionSheetGroup}>
+                                <TouchableOpacity
+                                    style={cs.actionSheetBtn}
+                                    onPress={() => menuMsgId && confirmDeleteMessage(menuMsgId)}
+                                    activeOpacity={0.6}
+                                >
+                                    <Text style={cs.actionSheetDeleteText}>Delete Message</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <TouchableOpacity
+                                style={cs.actionSheetCancelBtn}
+                                onPress={() => setMenuMsgId(null)}
+                                activeOpacity={0.6}
+                            >
+                                <Text style={cs.actionSheetCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+            </Modal>
+
+            {/* Floating button */}
+            {!open && (
+                <View style={cs.fabWrapper} pointerEvents="box-none">
+                    <TouchableOpacity style={cs.fab} onPress={() => setOpen(true)} activeOpacity={0.8}>
+                        <Text style={cs.fabIcon}>💬</Text>
+                        {unreadCount > 0 && (
+                            <View style={cs.badge}>
+                                <Text style={cs.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            )}
+        </>
+    );
+}
+
+const cs = StyleSheet.create({
+    fabWrapper: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        left: 0,
+        top: 0,
+        justifyContent: 'flex-end',
+        alignItems: 'flex-end',
+    },
+    fab: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: primaryColor,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 20,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    fabIcon: {
+        fontSize: 26,
+    },
+    badge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#EF4444',
+        borderRadius: 12,
+        minWidth: 22,
+        height: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+        borderWidth: 2,
+        borderColor: '#0B0B0F',
+    },
+    badgeText: {
+        color: '#FFFFFF',
+        fontSize: 11,
+        fontWeight: '800',
+    },
+
+    modalContainer: {
+        flex: 1,
+        backgroundColor: '#0D0D14',
+    },
+
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1F1F2E',
+        backgroundColor: '#16161D',
+    },
+    headerTitle: {
+        fontSize: 17,
+        fontWeight: '800',
+        color: '#F0EBE1',
+    },
+    closeBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#0B0B0F',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#252530',
+    },
+    closeBtnText: {
+        color: '#6B7280',
+        fontWeight: '700',
+        fontSize: 14,
+    },
+
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+    },
+    emptyText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#4B5563',
+    },
+    emptySubtext: {
+        fontSize: 13,
+        color: '#374151',
+        marginTop: 4,
+    },
+    messagesList: {
+        flex: 1,
+        backgroundColor: '#0D0D14',
+    },
+    messagesContent: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+
+    dateSeparator: {
+        alignItems: 'center',
+        marginVertical: 12,
+    },
+    dateSeparatorText: {
+        fontSize: 11,
+        color: '#4B5563',
+        fontWeight: '600',
+        backgroundColor: '#16161D',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 10,
+        overflow: 'hidden',
+    },
+
+    msgRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        marginBottom: 6,
+        gap: 8,
+    },
+    msgRowMe: {
+        justifyContent: 'flex-end',
+    },
+    avatarSmall: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#2D2A45',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    avatarImg: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+    },
+    avatarText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: primaryColor,
+    },
+
+    bubbleWrapper: {
+        maxWidth: '75%',
+    },
+    bubbleWrapperMe: {
+        alignItems: 'flex-end',
+    },
+    bubble: {
+        borderRadius: 16,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+    },
+    bubbleMe: {
+        backgroundColor: primaryColor,
+        borderBottomRightRadius: 4,
+    },
+    bubbleOther: {
+        backgroundColor: '#252530',
+        borderBottomLeftRadius: 4,
+    },
+    senderName: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: primaryColor,
+        marginBottom: 2,
+    },
+    msgText: {
+        fontSize: 14,
+        color: '#F0EBE1',
+        lineHeight: 20,
+    },
+    msgTextMe: {
+        color: '#0B0B0F',
+    },
+    msgTime: {
+        fontSize: 10,
+        color: '#6B7280',
+        marginTop: 4,
+        alignSelf: 'flex-end',
+    },
+    msgTimeMe: {
+        color: 'rgba(11,11,15,0.5)',
+    },
+
+    receiptText: {
+        fontSize: 10,
+        color: '#4B5563',
+        marginTop: 2,
+        alignSelf: 'flex-end',
+        marginRight: 4,
+    },
+    receiptSeen: {
+        color: '#60A5FA',
+    },
+
+    actionSheetOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'flex-end',
+        zIndex: 100,
+    },
+    actionSheetBackdrop: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    actionSheetContainer: {
+        paddingHorizontal: 10,
+        paddingBottom: 34,
+        gap: 8,
+    },
+    actionSheetGroup: {
+        backgroundColor: '#2C2C2E',
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    actionSheetBtn: {
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    actionSheetDeleteText: {
+        color: '#FF453A',
+        fontSize: 20,
+        fontWeight: '400',
+    },
+    actionSheetCancelBtn: {
+        backgroundColor: '#2C2C2E',
+        borderRadius: 14,
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    actionSheetCancelText: {
+        color: '#0A84FF',
+        fontSize: 20,
+        fontWeight: '600',
+    },
+
+    connectionBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 8,
+        backgroundColor: '#1A1520',
+        borderTopWidth: 1,
+        borderTopColor: '#1F1F2E',
+    },
+    connectionText: {
+        fontSize: 12,
+        color: '#6B7280',
+        fontWeight: '600',
+    },
+
+    inputBar: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        paddingHorizontal: 12,
+        paddingTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#1F1F2E',
+        backgroundColor: '#16161D',
+        gap: 8,
+    },
+    input: {
+        flex: 1,
+        backgroundColor: '#0B0B0F',
+        borderWidth: 1,
+        borderColor: '#252530',
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        color: '#F0EBE1',
+        fontSize: 14,
+        maxHeight: 100,
+    },
+    sendBtn: {
+        backgroundColor: primaryColor,
+        borderRadius: 20,
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    sendBtnDisabled: {
+        opacity: 0.4,
+    },
+    sendBtnText: {
+        color: '#0B0B0F',
+        fontWeight: '800',
+        fontSize: 14,
+    },
+});

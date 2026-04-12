@@ -24,11 +24,20 @@ class JwtService {
   @Value("\${jwt.expiration.ms}")
   private var jwtExpirationMs: Long = 86400000
 
+  @Value("\${jwt.refresh.expiration.ms:2592000000}")
+  private var jwtRefreshExpirationMs: Long = 2592000000
+
+  private companion object {
+    const val TOKEN_TYPE_CLAIM = "type"
+    const val ACCESS_TOKEN_TYPE = "access"
+    const val REFRESH_TOKEN_TYPE = "refresh"
+  }
+
+  fun getRefreshExpirationMs(): Long = jwtRefreshExpirationMs
+
   /**
    * Returns the signing key for HMAC SHA token verification.
    * Decodes the Base64-encoded secret and generates a `Key` instance.
-   *
-   * @return the secret key for signing and verifying JWT tokens
    */
   private fun getSigningKey(): Key {
 
@@ -38,12 +47,7 @@ class JwtService {
 
 
   /**
-   * Generates a JWT token for the given authenticated user.
-   * The token contains subject (username), `userId` and `email`
-   * as custom claims `issuedAt` and `expiration` timestamps
-   *
-   * @param userPrincipal the authenticated user's details
-   * @return a signed JWT token as a `String`
+   * Generates a short-lived access JWT token for the given authenticated user.
    */
   fun generateToken(userPrincipal: UserPrincipal): String {
     val now = Date()
@@ -55,16 +59,32 @@ class JwtService {
       .expiration(expiryDate)
       .claim("userId", userPrincipal.id)
       .claim("roles", userPrincipal.authorities)
+      .claim(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE)
       .signWith(getSigningKey())
       .compact()
   }
 
   /**
-   * Extracts the email from a JWT token by parsing it using the signing key.
-   *
-   * @param token the JWT token string
-   * @return the user's email contained in the token
-   * @throws JwtException if the token is invalid or cannot be parsed
+   * Generates a long-lived refresh JWT token for the given authenticated user.
+   * The token carries only the subject and a `type=refresh` claim so it can be
+   * distinguished from access tokens at validation time.
+   */
+  fun generateRefreshToken(userPrincipal: UserPrincipal): String {
+    val now = Date()
+    val expiryDate = Date(now.time + jwtRefreshExpirationMs)
+
+    return Jwts.builder()
+      .subject(userPrincipal.email)
+      .issuedAt(now)
+      .expiration(expiryDate)
+      .claim("userId", userPrincipal.id)
+      .claim(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE)
+      .signWith(getSigningKey())
+      .compact()
+  }
+
+  /**
+   * Extracts the email from a JWT token.
    */
   fun getEmailFromToken(token: String): String {
 
@@ -78,12 +98,7 @@ class JwtService {
   }
 
   /**
-   * Validates a JWT token's signature and structure by verifying that
-   * the token is correctly signed with the configured secret key and
-   * a valid structure and has not been tampered with.
-   *
-   * @param token the JWT token string
-   * @throws JwtException if the token is invalid, expired, or unsupported
+   * Validates a JWT token's signature and structure.
    */
   fun validateToken(token: String) {
 
@@ -91,5 +106,23 @@ class JwtService {
       .verifyWith(getSigningKey() as SecretKey)
       .build()
       .parseSignedClaims(token)
+  }
+
+  /**
+   * Validates a token and asserts that it is a refresh token (has `type=refresh` claim).
+   *
+   * @throws JwtException when the signature/structure is invalid or the token is not a refresh token
+   */
+  fun validateRefreshToken(token: String) {
+    val claims = Jwts.parser()
+      .verifyWith(getSigningKey() as SecretKey)
+      .build()
+      .parseSignedClaims(token)
+      .payload
+
+    val type = claims[TOKEN_TYPE_CLAIM] as? String
+    if (type != REFRESH_TOKEN_TYPE) {
+      throw JwtException("Provided token is not a refresh token")
+    }
   }
 }

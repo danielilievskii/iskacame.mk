@@ -1,6 +1,7 @@
 package mk.ukim.finki.iskacamebackend.web
 
 import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringResponseOptionsDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.MyGatheringResponseDto
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringResponseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -36,6 +37,19 @@ class GatheringResponseController(
         @Parameter(description = "ID of the gathering") @PathVariable gatheringId: Long
     ): ResponseEntity<GatheringResponseOptionsDto> {
         return ResponseEntity.ok(gatheringResponseService.getGatheringResponseOptions(gatheringId))
+    }
+
+    @Operation(
+        summary = "Get my submitted response",
+        description = "Retrieve the current user's previously submitted response for a gathering."
+    )
+    @GetMapping("/my")
+    fun getMyResponse(
+        @Parameter(description = "ID of the gathering") @PathVariable gatheringId: Long
+    ): ResponseEntity<MyGatheringResponseDto> {
+        val response = gatheringResponseService.getMyResponse(gatheringId)
+            ?: return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(response)
     }
 
     @Operation(

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '@/service/auth-service';
+import { setOnAuthFailure } from '@/service/api';
 import { UserDto } from "@/service/dtos/auth-types";
 
 interface AuthState {
@@ -10,6 +11,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
     signIn: (identifier: string, password: string) => Promise<void>;
+    signInWithGoogle: (code: string, redirectUri: string) => Promise<void>;
     signOut: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -41,8 +43,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser();
     }, [refreshUser]);
 
+    useEffect(() => {
+        setOnAuthFailure(() => {
+            setState({ user: null, isLoading: false, isAuthenticated: false });
+        });
+        return () => setOnAuthFailure(null);
+    }, []);
+
     const signIn = useCallback(async (identifier: string, password: string) => {
         const response = await authService.signIn({ identifier, password });
+        setState({ user: response.user, isLoading: false, isAuthenticated: true });
+    }, []);
+
+    const signInWithGoogle = useCallback(async (code: string, redirectUri: string) => {
+        const response = await authService.googleSignIn({ code, redirectUri });
         setState({ user: response.user, isLoading: false, isAuthenticated: true });
     }, []);
 
@@ -52,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ ...state, signIn, signOut, refreshUser }}>
+        <AuthContext.Provider value={{ ...state, signIn, signInWithGoogle, signOut, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

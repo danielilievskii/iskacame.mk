@@ -36,10 +36,6 @@ class ChatMessageEventListener(
         )
 
         messagingTemplate.convertAndSend(destination, payload)
-
-        event.offlineRecipientIds.forEach { recipientId ->
-            // TODO: Send push notifications
-        }
     }
 
     /**

@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { authService } from '@/service/auth-service';
 import { StatusBar } from 'expo-status-bar';
 import { Logo } from "@/components/ui/logo";
+import { GoogleSignInButton } from "@/components/ui/google-sign-in-button";
 import { primaryColor } from "@/constants/theme";
 
 export default function RegisterScreen() {
@@ -37,7 +38,7 @@ export default function RegisterScreen() {
         setLoading(true);
         try {
             await authService.signUp({ name: name.trim(), username: username.trim(), email: email.trim(), password });
-            router.push({ pathname: '/(auth)/verify', params: { email: email.trim() } });
+            router.push({ pathname: '/(auth)/verify', params: { identifier: email.trim() } });
         } catch (err: any) {
             Alert.alert('Registration failed', err.message ?? 'Something went wrong.');
         } finally {
@@ -111,6 +112,14 @@ export default function RegisterScreen() {
                         }
                     </TouchableOpacity>
 
+                    <View style={styles.divider}>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dividerText}>or</Text>
+                        <View style={styles.dividerLine} />
+                    </View>
+
+                    <GoogleSignInButton />
+
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Already have an account? </Text>
                         <Link href="/(auth)/login" asChild>
@@ -150,7 +159,10 @@ const styles = StyleSheet.create({
         color: '#F0EBE1',
         fontSize: 16,
     },
-    button: { backgroundColor: primaryColor, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+    button: { backgroundColor: primaryColor, borderRadius: 12, paddingVertical: 16, alignItems: 'center' as const, marginTop: 8 },
+    divider: { flexDirection: 'row' as const, alignItems: 'center' as const, marginVertical: 16 },
+    dividerLine: { flex: 1, height: 1, backgroundColor: '#252530' },
+    dividerText: { color: '#6B7280', fontSize: 13, marginHorizontal: 12 },
     buttonDisabled: { opacity: 0.6 },
     buttonText: { color: '#0B0B0F', fontWeight: '800', fontSize: 16, letterSpacing: 0.3 },
     footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },

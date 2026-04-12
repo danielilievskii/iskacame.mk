@@ -1,17 +1,19 @@
 package mk.ukim.finki.iskacamebackend.assembler
 
-import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringDetailsDto
-import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringTimeSlotPreferenceDto
-import mk.ukim.finki.iskacamebackend.dto.response.gathering.GatheringTypePreferenceDto
+import mk.ukim.finki.iskacamebackend.dto.response.gathering.*
 import mk.ukim.finki.iskacamebackend.mapper.GatheringParticipationMapper
 import mk.ukim.finki.iskacamebackend.mapper.GatheringMapper
 import mk.ukim.finki.iskacamebackend.mapper.PlaceMapper
 import mk.ukim.finki.iskacamebackend.model.domain.Gathering
 import mk.ukim.finki.iskacamebackend.model.domain.GatheringResponse
-import mk.ukim.finki.iskacamebackend.repository.GatheringParticipationRepository
-import mk.ukim.finki.iskacamebackend.repository.PlaceRepository
-import mk.ukim.finki.iskacamebackend.repository.GatheringResponseRepository
+import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
+import mk.ukim.finki.iskacamebackend.model.enums.PollStatus
+import mk.ukim.finki.iskacamebackend.repository.*
+import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import org.springframework.stereotype.Component
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
  * Assembler responsible for constructing [GatheringDetailsDto] instances.
@@ -21,9 +23,14 @@ class GatheringDetailsAssembler(
     private val gatheringParticipationRepository: GatheringParticipationRepository,
     private val placeRepository: PlaceRepository,
     private val gatheringResponseRepository: GatheringResponseRepository,
+    private val placePollRepository: PlacePollRepository,
+    private val gatheringPlaceVoteRepository: GatheringPlaceVoteRepository,
     private val gatheringMapper: GatheringMapper,
     private val gatheringParticipationMapper: GatheringParticipationMapper,
-    private val placeMapper: PlaceMapper
+    private val placeMapper: PlaceMapper,
+    private val authService: AuthService,
+    private val gatheringRepository: GatheringRepository,
+    private val chatRoomReceiptRepository: ChatRoomReceiptRepository
 ) {
 
     /**
@@ -49,13 +56,29 @@ class GatheringDetailsAssembler(
         val timeSlotPreferenceDtos = assembleTimeSlotPreferences(responses)
         val typePreferenceDtos = assembleTypePreferences(responses)
 
+        val currentUserId = authService.getCurrentUserId()
+        val hasSubmittedResponse = gatheringResponseRepository
+            .existsByGatheringIdAndUserId(gathering.id!!, currentUserId)
+
+        val activePollDto = assemblePoll(gathering, suggestedPlaceDtos, currentUserId)
+
+        val chatRoomId = gathering.chatRoom?.id
+        val unseenMessagesCount = if (chatRoomId != null) {
+            chatRoomReceiptRepository
+                .findByChatRoomIdAndUserId(chatRoomId, currentUserId)
+                ?.unseenMessagesCounter ?: 0L
+        } else 0L
+
         return gatheringMapper
             .toGatheringDetailsDto(gathering)
             .copy(
                 participants = participantDtos,
                 suggestedPlaces = suggestedPlaceDtos,
                 timeSlotPreferences = timeSlotPreferenceDtos,
-                typePreferences = typePreferenceDtos
+                typePreferences = typePreferenceDtos,
+                hasSubmittedResponse = hasSubmittedResponse,
+                activePoll = activePollDto,
+                unseenMessagesCount = unseenMessagesCount
             )
     }
 
@@ -116,4 +139,68 @@ class GatheringDetailsAssembler(
                     preferredByParticipants = participantIds
                 )
             }
+
+    private fun assemblePoll(
+        gathering: Gathering,
+        suggestedPlaceDtos: List<PlaceDto>,
+        currentUserId: Long
+    ): PlacePollDto? {
+        val gatheringId = gathering.id!!
+        val poll = placePollRepository.findByGatheringId(gatheringId) ?: return null
+
+        if (poll.status == PollStatus.ACTIVE && poll.endsAt.isBefore(Instant.now())) {
+            poll.status = PollStatus.ENDED
+            placePollRepository.save(poll)
+
+            if (gathering.status != GatheringStatus.FINALIZED && gathering.status != GatheringStatus.CANCELLED) {
+                val votes = gatheringPlaceVoteRepository.findAllByGatheringId(gatheringId)
+                val winningPlace = votes
+                    .groupBy { it.place }
+                    .maxByOrNull { it.value.size }
+                    ?.key
+
+                val responses = gatheringResponseRepository.findAllByGatheringId(gatheringId)
+                val winningTimeSlot = responses
+                    .flatMap { it.timeSlotPreferences }
+                    .groupingBy { it }
+                    .eachCount()
+                    .maxByOrNull { it.value }
+                    ?.key
+
+                if (winningPlace != null) {
+                    gathering.finalizedPlace = winningPlace
+                }
+                if (winningTimeSlot != null) {
+                    gathering.finalizedTime = LocalDateTime.of(
+                        winningTimeSlot.date,
+                        LocalTime.of(winningTimeSlot.slot.startHour, 0)
+                    )
+                }
+                gathering.status = GatheringStatus.FINALIZED
+                gatheringRepository.save(gathering)
+            }
+        }
+
+        val allVotes = gatheringPlaceVoteRepository.findAllByGatheringId(gatheringId)
+        val voteCountByPlaceId = allVotes.groupBy { it.place.id!! }.mapValues { it.value.size }
+        val myVotedPlaceIds = allVotes
+            .filter { it.user.id == currentUserId }
+            .mapNotNull { it.place.id }
+
+        val placeOptions = suggestedPlaceDtos.map { placeDto ->
+            PlacePollOptionDto(
+                place = placeDto,
+                voteCount = voteCountByPlaceId[placeDto.id] ?: 0
+            )
+        }
+
+        return PlacePollDto(
+            id = poll.id!!,
+            status = poll.status,
+            endsAt = poll.endsAt,
+            createdAt = poll.createdAt!!,
+            places = placeOptions,
+            myVotedPlaceIds = myVotedPlaceIds
+        )
+    }
 }

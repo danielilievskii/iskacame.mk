@@ -5,6 +5,7 @@ import java.time.Instant
 
 data class GatheringInvitationDto(
     val id: Long,
+    val gatheringId: Long,
     val gatheringCreator: UserDto,
     val gatheringTitle: String,
     val createdAt: Instant

@@ -26,6 +26,7 @@ interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
         SELECT m FROM ChatMessage m
         WHERE m.chatRoom.id = :chatRoomId AND m.deletedAt IS NULL
         ORDER BY m.sentAt DESC
+        LIMIT 1
     """)
     fun findFirstByChatRoomIdOrderBySentAtDesc(chatRoomId: Long): ChatMessage?
 

@@ -4,5 +4,6 @@ import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
 
 data class AuthResponse(
   val token: String,
+  val refreshToken: String,
   val user: UserDto
 )

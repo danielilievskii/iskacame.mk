@@ -13,6 +13,7 @@ data class GatheringDetailsDto(
     val creatorId: Long,
     val title: String,
     val description: String?,
+    val location: String?,
     val startDate: LocalDateTime,
     val endDate: LocalDateTime,
     val status: GatheringStatus,
@@ -22,7 +23,10 @@ data class GatheringDetailsDto(
     val suggestedPlaces: List<PlaceDto>?,
     val chatRoomId: Long,
     val timeSlotPreferences: List<GatheringTimeSlotPreferenceDto>?,
-    val typePreferences: List<GatheringTypePreferenceDto>?
+    val typePreferences: List<GatheringTypePreferenceDto>?,
+    val hasSubmittedResponse: Boolean = false,
+    val activePoll: PlacePollDto? = null,
+    val unseenMessagesCount: Long = 0
 )
 
 data class ParticipantDto(

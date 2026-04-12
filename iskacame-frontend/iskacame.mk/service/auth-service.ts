@@ -1,12 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiRequest, TOKEN_KEY } from '@/service/api';
-import {
+import { apiRequest, TOKEN_KEY, REFRESH_TOKEN_KEY, setTokens, clearTokens } from '@/service/api';
+import type {
     AuthResponse,
+    GoogleAuthRequest,
     ResendTokenRequest,
     SignInRequest,
-    SignUpRequest, UserDto,
-    VerifyTokenRequest
-} from "@/service/dtos/auth-types";
+    SignUpRequest,
+    UserDto,
+    VerifyTokenRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    ChangePasswordRequest,
+    ConfirmPasswordRequest,
+    ChangeEmailRequest,
+    ConfirmEmailRequest,
+} from '@/service/dtos/auth-types';
 
 export const authService = {
     async signUp(data: SignUpRequest): Promise<void> {
@@ -19,7 +27,17 @@ export const authService = {
             body: data,
             auth: false,
         });
-        await AsyncStorage.setItem(TOKEN_KEY, response.token);
+        await setTokens(response.token, response.refreshToken);
+        return response;
+    },
+
+    async googleSignIn(data: GoogleAuthRequest): Promise<AuthResponse> {
+        const response = await apiRequest<AuthResponse>('/api/auth/google', {
+            method: 'POST',
+            body: data,
+            auth: false,
+        });
+        await setTokens(response.token, response.refreshToken);
         return response;
     },
 
@@ -32,7 +50,19 @@ export const authService = {
     },
 
     async signOut(): Promise<void> {
-        await AsyncStorage.removeItem(TOKEN_KEY);
+        const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+        if (refreshToken) {
+            try {
+                await apiRequest('/api/auth/logout', {
+                    method: 'POST',
+                    body: { refreshToken },
+                    auth: false,
+                });
+            } catch {
+                // ignore server-side revocation failures — still clear local tokens
+            }
+        }
+        await clearTokens();
     },
 
     async getMe(): Promise<UserDto> {
@@ -41,5 +71,33 @@ export const authService = {
 
     async getStoredToken(): Promise<string | null> {
         return AsyncStorage.getItem(TOKEN_KEY);
+    },
+
+    async getStoredRefreshToken(): Promise<string | null> {
+        return AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+    },
+
+    async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+        await apiRequest('/api/auth/forgot-password', { method: 'POST', body: data, auth: false });
+    },
+
+    async resetPassword(data: ResetPasswordRequest): Promise<void> {
+        await apiRequest('/api/auth/reset-password', { method: 'PATCH', body: data, auth: false });
+    },
+
+    async changePassword(data: ChangePasswordRequest): Promise<void> {
+        await apiRequest('/api/users/change-password', { method: 'POST', body: data });
+    },
+
+    async confirmPasswordChange(data: ConfirmPasswordRequest): Promise<void> {
+        await apiRequest('/api/users/confirm-password', { method: 'PATCH', body: data });
+    },
+
+    async changeEmail(data: ChangeEmailRequest): Promise<void> {
+        await apiRequest('/api/users/change-email', { method: 'POST', body: data });
+    },
+
+    async confirmEmailChange(data: ConfirmEmailRequest): Promise<void> {
+        await apiRequest('/api/users/confirm-email', { method: 'PATCH', body: data });
     },
 };

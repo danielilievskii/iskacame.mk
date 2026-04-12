@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/auth-context';
+import { NotificationProvider } from '@/context/notification-context';
 
 function RootNavigator() {
     const { isAuthenticated, isLoading } = useAuth();
@@ -29,6 +30,7 @@ function RootNavigator() {
         <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="gathering/pick-preferences" options={{ headerShown: false }} />
         </Stack>
     );
 }
@@ -39,8 +41,10 @@ export default function RootLayout() {
     return (
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <AuthProvider>
-                <RootNavigator />
-                <StatusBar style="auto" />
+                <NotificationProvider>
+                    <RootNavigator />
+                    <StatusBar style="auto" />
+                </NotificationProvider>
             </AuthProvider>
         </ThemeProvider>
     );

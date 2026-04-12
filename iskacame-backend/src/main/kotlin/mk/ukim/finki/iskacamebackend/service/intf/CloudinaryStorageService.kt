@@ -18,6 +18,15 @@ interface CloudinaryStorageService {
   fun uploadFile(file: MultipartFile, publicId: String? = null): CloudinaryUploadResponse
 
   /**
+   * Uploads a file to Cloudinary from a URL
+   *
+   * @param url The URL of the file to upload
+   * @param publicId Public identifier of the file
+   * @return The upload response containing URL and public ID
+   */
+  fun uploadFromUrl(url: String, publicId: String? = null): CloudinaryUploadResponse
+
+  /**
    * Deletes a file from Cloudinary
    *
    * @param publicId The public identifier of the file to delete

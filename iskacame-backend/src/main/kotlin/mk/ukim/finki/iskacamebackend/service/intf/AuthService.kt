@@ -1,6 +1,8 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.GoogleAuthRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.RefreshTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserDto
@@ -43,6 +45,21 @@ interface AuthService {
   fun signIn(request: SignInRequest): AuthResponse
 
   /**
+   * Exchanges a valid refresh token for a newly issued access + refresh token pair.
+   * The previously used refresh token is revoked (rotation), so replay attempts fail.
+   *
+   * @throws mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException if the refresh token is
+   *   invalid, expired, revoked, or not recognized
+   */
+  fun refreshToken(request: RefreshTokenRequest): AuthResponse
+
+  /**
+   * Revokes the provided refresh token so that it can no longer be exchanged for an access token.
+   * Use this on logout.
+   */
+  fun logout(request: RefreshTokenRequest)
+
+  /**
    * Resends a verification token to the user's email address using the provided email/username.
    *
    * @param request the resend request containing the user's email/username
@@ -72,6 +89,12 @@ interface AuthService {
   fun forgotPassword(request: ForgotPasswordRequest)
 
   fun resetPassword(request: ResetPasswordRequest)
+
+  /**
+   * Authenticates or registers a user via Google OAuth.
+   * Verifies the Google ID token, finds or creates the user, and returns JWT tokens.
+   */
+  fun googleSignIn(request: GoogleAuthRequest): AuthResponse
 
   /**
    * Returns the currently authenticated [User] from the current JWT

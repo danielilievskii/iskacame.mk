@@ -1,9 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TOKEN_KEY } from './api';
+import { apiRequest, TOKEN_KEY } from './api';
+import type { UserDto, UpdateUserRequest } from './dtos/auth-types';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8090';
 
 export const userService = {
+    async updateProfile(data: UpdateUserRequest): Promise<UserDto> {
+        return apiRequest<UserDto>('/api/users/me/update', {
+            method: 'PATCH',
+            body: data,
+        });
+    },
+
     async uploadAvatar(imageUri: string, mimeType: string = 'image/jpeg'): Promise<string> {
         const token = await AsyncStorage.getItem(TOKEN_KEY);
 

@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { StatusBar } from 'expo-status-bar';
 import { Logo } from "@/components/ui/logo";
+import { GoogleSignInButton } from "@/components/ui/google-sign-in-button";
 import { primaryColor } from "@/constants/theme";
 
 export default function LoginScreen() {
@@ -41,7 +42,7 @@ export default function LoginScreen() {
                         { text: 'Cancel', style: 'cancel' },
                         {
                             text: 'Verify now',
-                            onPress: () => router.push({ pathname: '/(auth)/verify', params: { email: identifier.trim() } })
+                            onPress: () => router.push({ pathname: '/(auth)/verify', params: { identifier: identifier.trim() } })
                         },
                     ]
                 );
@@ -74,7 +75,7 @@ export default function LoginScreen() {
                     <Text style={styles.cardTitle}>Welcome back</Text>
 
                     <View style={styles.field}>
-                        <Text style={styles.label}>EMAIL</Text>
+                        <Text style={styles.label}>EMAIL OR USERNAME</Text>
                         <TextInput
                             style={styles.input}
                             value={identifier}
@@ -100,6 +101,17 @@ export default function LoginScreen() {
                     </View>
 
                     <TouchableOpacity
+                        style={styles.forgotBtn}
+                        onPress={() => router.push({
+                            pathname: '/(auth)/forgot-password',
+                            params: { identifier: identifier.trim() },
+                        })}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.forgotText}>Forgot password?</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
                         style={[styles.button, loading && styles.buttonDisabled]}
                         onPress={handleLogin}
                         disabled={loading}
@@ -109,6 +121,14 @@ export default function LoginScreen() {
                             : <Text style={styles.buttonText}>Sign in</Text>
                         }
                     </TouchableOpacity>
+
+                    <View style={styles.divider}>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dividerText}>or</Text>
+                        <View style={styles.dividerLine} />
+                    </View>
+
+                    <GoogleSignInButton />
 
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Don't have an account? </Text>
@@ -204,6 +224,30 @@ const styles = StyleSheet.create({
     link: {
         color: primaryColor,
         fontSize: 14,
+        fontWeight: '600',
+    },
+    divider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 16,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#252530',
+    },
+    dividerText: {
+        color: '#6B7280',
+        fontSize: 13,
+        marginHorizontal: 12,
+    },
+    forgotBtn: {
+        alignSelf: 'flex-end',
+        marginBottom: 8,
+    },
+    forgotText: {
+        color: '#6B7280',
+        fontSize: 13,
         fontWeight: '600',
     },
 });

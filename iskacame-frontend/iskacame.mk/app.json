@@ -9,17 +9,19 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundColor": "#0B0B0F"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#151718",
+        "backgroundColor": "#0B0B0F",
         "foregroundImage": "./assets/images/favicon.png",
         "backgroundImage": "./assets/images/favicon.png",
         "monochromeImage": "./assets/images/favicon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.iskacame.mk"
     },
     "web": {
       "output": "static",
@@ -33,9 +35,9 @@
           "image": "./assets/images/favicon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#151718",
+          "backgroundColor": "#0B0B0F",
           "dark": {
-            "backgroundColor": "#151718"
+            "backgroundColor": "#0B0B0F"
           }
         }
       ],

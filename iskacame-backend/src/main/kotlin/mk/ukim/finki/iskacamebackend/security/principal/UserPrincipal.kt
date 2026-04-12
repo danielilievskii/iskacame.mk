@@ -7,7 +7,7 @@ data class UserPrincipal(
   val id: Long,
   private val name: String,
   val email: String,
-  private val password: String,
+  private val password: String?,
   val emailVerified: Boolean,
   private val enabled: Boolean,
   private val authorities: Collection<GrantedAuthority>
@@ -15,7 +15,7 @@ data class UserPrincipal(
 
   override fun getAuthorities(): Collection<GrantedAuthority> = authorities
 
-  override fun getPassword(): String = password
+  override fun getPassword(): String? = password
 
   override fun getUsername(): String = email
 

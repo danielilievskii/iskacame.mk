@@ -11,9 +11,11 @@ import mk.ukim.finki.iskacamebackend.model.domain.GatheringParticipation
 import mk.ukim.finki.iskacamebackend.model.enums.GatheringStatus
 import mk.ukim.finki.iskacamebackend.model.enums.ParticipationStatus
 import mk.ukim.finki.iskacamebackend.repository.*
+import mk.ukim.finki.iskacamebackend.model.enums.NotificationType
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringParticipationService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.NotificationService
 import mk.ukim.finki.iskacamebackend.service.intf.ChatService
 import mk.ukim.finki.iskacamebackend.service.intf.UserService
 import org.springframework.security.access.prepost.PreAuthorize
@@ -30,8 +32,9 @@ class GatheringParticipationServiceImpl(
     private val gatheringParticipationMapper: GatheringParticipationMapper,
     private val userService: UserService,
     private val gatheringService: GatheringService,
+    private val gatheringDetailsAssembler: GatheringDetailsAssembler,
+    private val notificationService: NotificationService,
     private val chatService: ChatService,
-    private val gatheringDetailsAssembler: GatheringDetailsAssembler
 ) : GatheringParticipationService {
 
     @Transactional(readOnly = true)
@@ -69,6 +72,14 @@ class GatheringParticipationServiceImpl(
             status = ParticipationStatus.INVITED
         )
         gatheringParticipationRepository.save(participation)
+
+        notificationService.createNotification(
+            recipientId = userId,
+            type = NotificationType.GATHERING_INVITE,
+            gathering = gathering,
+            title = "New Invitation",
+            body = "You've been invited to \"${gathering.title}\""
+        )
     }
 
     @Transactional
@@ -186,6 +197,16 @@ class GatheringParticipationServiceImpl(
             ParticipationStatus.DECLINED, ParticipationStatus.LEFT, ParticipationStatus.REMOVED -> {
                 participation.status = ParticipationStatus.INVITED
                 gatheringParticipationRepository.save(participation)
+
+                participation.user.id?.let { userId ->
+                    notificationService.createNotification(
+                        recipientId = userId,
+                        type = NotificationType.GATHERING_INVITE,
+                        gathering = participation.gathering,
+                        title = "New Invitation",
+                        body = "You've been invited to \"${participation.gathering.title}\""
+                    )
+                }
             }
         }
     }

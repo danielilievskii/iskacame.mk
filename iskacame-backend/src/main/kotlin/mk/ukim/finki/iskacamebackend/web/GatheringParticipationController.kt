@@ -38,8 +38,8 @@ class GatheringParticipationController(
     @Operation(summary = "Accept invitation")
     fun acceptInvitation(@PathVariable id: Long): ResponseEntity<GatheringDetailsDto> {
 
-        gatheringParticipationService.acceptInvitation(id)
-        return ResponseEntity.ok().build()
+        val gatheringDetails = gatheringParticipationService.acceptInvitation(id)
+        return ResponseEntity.ok(gatheringDetails)
     }
 
     @PostMapping("/invitations/{id}/decline")

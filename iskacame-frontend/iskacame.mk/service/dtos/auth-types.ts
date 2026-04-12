@@ -2,7 +2,15 @@ export interface UserDto {
     id: number;
     name: string;
     username: string;
+    email: string | null;
     avatarUrl: string | null;
+    phone: string | null;
+}
+
+export interface UpdateUserRequest {
+    name: string;
+    username: string;
+    phone?: string | null;
 }
 
 export interface UserSearchDto {
@@ -14,7 +22,12 @@ export interface UserSearchDto {
 
 export interface AuthResponse {
     token: string;
+    refreshToken: string;
     user: UserDto;
+}
+
+export interface RefreshTokenRequest {
+    refreshToken: string;
 }
 
 export interface SignUpRequest {
@@ -30,10 +43,43 @@ export interface SignInRequest {
 }
 
 export interface VerifyTokenRequest {
-    email: string;
+    identifier: string;
     token: string;
 }
 
 export interface ResendTokenRequest {
-    email: string;
+    identifier: string;
+}
+
+export interface ForgotPasswordRequest {
+    identifier: string;
+}
+
+export interface ResetPasswordRequest {
+    identifier: string;
+    token: string;
+    newPassword: string;
+}
+
+export interface ChangePasswordRequest {
+    currentPassword: string;
+}
+
+export interface ConfirmPasswordRequest {
+    token: string;
+    newPassword: string;
+}
+
+export interface ChangeEmailRequest {
+    newEmail: string;
+}
+
+export interface ConfirmEmailRequest {
+    newEmail: string;
+    token: string;
+}
+
+export interface GoogleAuthRequest {
+    code: string;
+    redirectUri: string;
 }

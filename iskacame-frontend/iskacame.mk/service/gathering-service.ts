@@ -1,10 +1,20 @@
-import { apiRequest } from './api';
+import { apiRequest, apiUpload } from './api';
 import type {
     GatheringSummaryDto,
     GatheringDetailsDto,
     CreateGatheringRequest,
     UpdateGatheringRequest,
     GatheringInvitationDto,
+    GatheringResponseOptionsDto,
+    SubmitGatheringResponseRequest,
+    MyGatheringResponseDto,
+    ActivityDto,
+    DebtDto,
+    CreatePaymentRequest,
+    CreateExpenseRequest,
+    PlaceDto,
+    PlacePollDto,
+    GatheringImageDto,
 } from './dtos/gathering-types';
 
 export const gatheringService = {
@@ -38,8 +48,8 @@ export const gatheringService = {
         return apiRequest<GatheringInvitationDto[]>('/api/gatherings/invitations');
     },
 
-    async acceptInvitation(participationId: number): Promise<void> {
-        return apiRequest<void>(`/api/gatherings/invitations/${participationId}/accept`, {
+    async acceptInvitation(participationId: number): Promise<GatheringDetailsDto> {
+        return apiRequest<GatheringDetailsDto>(`/api/gatherings/invitations/${participationId}/accept`, {
             method: 'POST',
         });
     },
@@ -52,5 +62,110 @@ export const gatheringService = {
 
     async leaveGathering(gatheringId: number): Promise<void> {
         return apiRequest<void>(`/api/gatherings/${gatheringId}/leave`, { method: 'DELETE' });
+    },
+
+    async getResponseOptions(gatheringId: number): Promise<GatheringResponseOptionsDto> {
+        return apiRequest<GatheringResponseOptionsDto>(`/api/gatherings/${gatheringId}/responses/options`);
+    },
+
+    async submitResponse(gatheringId: number, data: SubmitGatheringResponseRequest): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/responses`, {
+            method: 'POST',
+            body: data,
+        });
+    },
+
+    async updateResponse(gatheringId: number, data: SubmitGatheringResponseRequest): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/responses`, {
+            method: 'PUT',
+            body: data,
+        });
+    },
+
+    async getMyResponse(gatheringId: number): Promise<MyGatheringResponseDto | null> {
+        return apiRequest<MyGatheringResponseDto | null>(`/api/gatherings/${gatheringId}/responses/my`);
+    },
+
+    async getActivities(gatheringId: number): Promise<ActivityDto[]> {
+        return apiRequest<ActivityDto[]>(`/api/gatherings/${gatheringId}/activities`);
+    },
+
+    async getDebts(gatheringId: number): Promise<DebtDto[]> {
+        return apiRequest<DebtDto[]>(`/api/gatherings/${gatheringId}/debts`);
+    },
+
+    async createPayment(gatheringId: number, data: CreatePaymentRequest): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/payments`, {
+            method: 'POST',
+            body: data,
+        });
+    },
+
+    async createExpense(gatheringId: number, data: CreateExpenseRequest): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/expenses`, {
+            method: 'POST',
+            body: data,
+        });
+    },
+
+    async deletePayment(gatheringId: number, paymentId: number): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/payments/${paymentId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    async generatePlaceSuggestions(gatheringId: number): Promise<PlaceDto[]> {
+        return apiRequest<PlaceDto[]>(`/api/gatherings/${gatheringId}/generate-place-suggestions`);
+    },
+
+    async createPoll(gatheringId: number, durationMinutes: number): Promise<PlacePollDto> {
+        return apiRequest<PlacePollDto>(`/api/gatherings/${gatheringId}/poll`, {
+            method: 'POST',
+            body: { durationMinutes },
+        });
+    },
+
+    async getPoll(gatheringId: number): Promise<PlacePollDto | null> {
+        return apiRequest<PlacePollDto | null>(`/api/gatherings/${gatheringId}/poll`);
+    },
+
+    async castVote(gatheringId: number, placeIds: number[]): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/poll/vote`, {
+            method: 'POST',
+            body: { placeIds },
+        });
+    },
+
+    async inviteUser(gatheringId: number, userId: number): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/invite/${userId}`, {
+            method: 'POST',
+        });
+    },
+
+    async removeParticipant(gatheringId: number, userId: number): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/participants/${userId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    async getGallery(gatheringId: number): Promise<GatheringImageDto[]> {
+        return apiRequest<GatheringImageDto[]>(`/api/gatherings/${gatheringId}/gallery`);
+    },
+
+    async uploadImages(gatheringId: number, uris: string[]): Promise<GatheringImageDto[]> {
+        const formData = new FormData();
+        uris.forEach((uri, i) => {
+            const name = uri.split('/').pop() ?? `photo_${i}.jpg`;
+            const ext = name.split('.').pop()?.toLowerCase() ?? 'jpg';
+            const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+            formData.append('files', { uri, name, type: mimeType } as any);
+        });
+        return apiUpload<GatheringImageDto[]>(`/api/gatherings/${gatheringId}/gallery`, formData);
+    },
+
+    async deleteImage(gatheringId: number, imageId: number): Promise<void> {
+        return apiRequest<void>(`/api/gatherings/${gatheringId}/gallery/${imageId}`, {
+            method: 'DELETE',
+        });
     },
 };
