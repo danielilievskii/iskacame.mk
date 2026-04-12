@@ -30,7 +30,7 @@ class GatheringDetailsAssembler(
     private val placeMapper: PlaceMapper,
     private val authService: AuthService,
     private val gatheringRepository: GatheringRepository,
-    private val chatMessageRepository: ChatMessageRepository
+    private val chatRoomReceiptRepository: ChatRoomReceiptRepository
 ) {
 
     /**
@@ -64,10 +64,10 @@ class GatheringDetailsAssembler(
 
         val chatRoomId = gathering.chatRoom?.id
         val unseenMessagesCount = if (chatRoomId != null) {
-            chatMessageRepository
-                .countUnseenForUserGrouped(listOf(chatRoomId), currentUserId)
-                .firstOrNull()?.unseenMessagesCount ?: 0
-        } else 0
+            chatRoomReceiptRepository
+                .findByChatRoomIdAndUserId(chatRoomId, currentUserId)
+                ?.unseenMessagesCounter ?: 0L
+        } else 0L
 
         return gatheringMapper
             .toGatheringDetailsDto(gathering)

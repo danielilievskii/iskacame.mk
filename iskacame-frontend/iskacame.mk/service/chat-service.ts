@@ -20,10 +20,6 @@ export const chatService = {
         return apiRequest<void>(`/api/chat/messages/${messageId}`, { method: 'DELETE' });
     },
 
-    markDelivered(chatRoomId: number) {
-        return apiRequest<void>(`/api/chat/room/${chatRoomId}/delivered`);
-    },
-
     markSeen(chatRoomId: number) {
         return apiRequest<void>(`/api/chat/room/${chatRoomId}/seen`);
     },

@@ -1,22 +1,11 @@
 import { UserDto } from '@/service/dtos/auth-types';
 
-export type MessageReceiptStatus = 'SENT' | 'DELIVERED' | 'SEEN';
-
-export type ChatNotificationType = 'MESSAGE_SENT' | 'MESSAGE_DELETED';
-
-export interface MessageReceiptDto {
-    recipientId: number;
-    status: MessageReceiptStatus;
-    deliveredAt: string | null;
-    seenAt: string | null;
-}
-
 export interface ChatMessageDto {
     id: number;
     sender: UserDto;
     content: string;
     sentAt: string;
-    receipts: MessageReceiptDto[];
+    latestSeenBy: number[];
 }
 
 export interface SendMessageRequest {

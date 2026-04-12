@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -22,7 +22,6 @@ import type {
     ChatMessageDto,
     ChatNotification,
     MessageReceiptNotification,
-    MessageReceiptDto,
 } from '@/service/dtos/chat-types';
 import type { ParticipantDto } from '@/service/dtos/gathering-types';
 import { primaryColor } from '@/constants/theme';
@@ -95,23 +94,24 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
     }, [chatRoomId, page, hasMore, loadingMore]);
 
     const handleReceiptNotification = useCallback((notification: MessageReceiptNotification) => {
-        const { messageId, recipientId, status } = notification;
+        const { recipientId, status } = notification;
 
-        setMessages((prev) =>
-            prev.map((msg) => {
-                if (messageId !== -1 && msg.id !== messageId) return msg;
-                const updatedReceipts = msg.receipts.map((r) => {
-                    if (r.recipientId !== recipientId) return r;
-                    return {
-                        ...r,
-                        status: status as MessageReceiptDto['status'],
-                        ...(status === 'SEEN' ? { seenAt: new Date().toISOString() } : {}),
-                        ...(status === 'DELIVERED' ? { deliveredAt: new Date().toISOString() } : {}),
-                    };
-                });
-                return { ...msg, receipts: updatedReceipts };
-            })
-        );
+        if (status !== 'SEEN') return;
+
+        setMessages((prev) => {
+            const lastIdx = prev.length - 1;
+            return prev.map((msg, idx) => {
+                const filtered = msg.latestSeenBy.filter((id) => id !== recipientId);
+                if (idx === lastIdx) {
+                    if (filtered.includes(recipientId)) return msg;
+                    return { ...msg, latestSeenBy: [...filtered, recipientId] };
+                }
+                if (filtered.length !== msg.latestSeenBy.length) {
+                    return { ...msg, latestSeenBy: filtered };
+                }
+                return msg;
+            });
+        });
     }, []);
 
     useEffect(() => {
@@ -169,11 +169,16 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         };
     }, [chatRoomId, user?.id, handleReceiptNotification]);
 
+    const hasOpenedRef = useRef(false);
+
     useEffect(() => {
         if (open) {
+            hasOpenedRef.current = true;
             setUnreadCount(0);
-            chatService.markSeen(chatRoomId).catch(() => {});
+            chatService.markSeen(chatRoomId).catch((e) => console.warn('[Chat] markSeen failed:', e));
             loadMessages();
+        } else if (hasOpenedRef.current) {
+            chatService.markSeen(chatRoomId).catch((e) => console.warn('[Chat] markSeen failed:', e));
         }
     }, [open, chatRoomId, loadMessages]);
 
@@ -232,27 +237,29 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         return new Date(messages[index].sentAt).toDateString() !== new Date(messages[index - 1].sentAt).toDateString();
     };
 
-    const getReceiptSummary = (receipts: MessageReceiptDto[]) => {
-        if (receipts.length === 0) return null;
-        const seenBy = receipts.filter((r) => r.status === 'SEEN');
-        const deliveredTo = receipts.filter((r) => r.status === 'DELIVERED');
+    const cumulativeSeenBy = useMemo(() => {
+        const map = new Map<number, number[]>();
+        const accumulated = new Set<number>();
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+            msg.latestSeenBy.forEach((id) => accumulated.add(id));
+            map.set(msg.id, [...accumulated]);
+        }
+        return map;
+    }, [messages]);
 
-        if (seenBy.length > 0) {
-            if (seenBy.length === receipts.length && receipts.length > 1) {
-                return { label: 'Seen by all', type: 'seen' as const };
-            }
-            const names = seenBy
-                .map((r) => participantMap.current.get(r.recipientId)?.split(' ')[0] ?? 'Someone')
-                .join(', ');
-            return { label: `Seen by ${names}`, type: 'seen' as const };
+    const getSeenSummary = (messageId: number) => {
+        const seenBy = cumulativeSeenBy.get(messageId) ?? [];
+        if (seenBy.length === 0) return null;
+
+        const totalOtherParticipants = (participants?.length ?? 0) - 1; // exclude self
+        if (seenBy.length >= totalOtherParticipants && totalOtherParticipants > 1) {
+            return 'Seen by all';
         }
-        if (deliveredTo.length === receipts.length) {
-            return { label: 'Delivered', type: 'delivered' as const };
-        }
-        if (deliveredTo.length > 0) {
-            return { label: 'Delivered to some', type: 'delivered' as const };
-        }
-        return { label: 'Sent', type: 'sent' as const };
+        const names = seenBy
+            .map((id) => participantMap.current.get(id)?.split(' ')[0] ?? 'Someone')
+            .join(', ');
+        return `Seen by ${names}`;
     };
 
     const renderMessage = ({ item, index }: { item: ChatMessageDto; index: number }) => {
@@ -265,7 +272,8 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
             .toUpperCase()
             .slice(0, 2);
 
-        const receipt = isMe ? getReceiptSummary(item.receipts) : null;
+        const seenLabel = isMe ? getSeenSummary(item.id) : null;
+        const showSeenInfo = isMe;
         const isExpanded = expandedMsgId === item.id;
 
         return (
@@ -299,14 +307,9 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                             <Text style={[cs.msgText, isMe && cs.msgTextMe]}>{item.content}</Text>
                             <Text style={[cs.msgTime, isMe && cs.msgTimeMe]}>{formatTime(item.sentAt)}</Text>
                         </View>
-                        {isExpanded && receipt && (
-                            <Text
-                                style={[
-                                    cs.receiptText,
-                                    receipt.type === 'seen' && cs.receiptSeen,
-                                ]}
-                            >
-                                {receipt.label}
+                        {isExpanded && showSeenInfo && (
+                            <Text style={[cs.receiptText, seenLabel ? cs.receiptSeen : null]}>
+                                {seenLabel ?? 'Sent'}
                             </Text>
                         )}
                     </Pressable>
@@ -369,6 +372,7 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                                     <ActivityIndicator color={primaryColor} size="small" style={{ paddingVertical: 10 }} />
                                 ) : null
                             }
+                            extraData={expandedMsgId}
                             keyboardShouldPersistTaps="handled"
                             keyboardDismissMode="interactive"
                         />
