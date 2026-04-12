@@ -16,6 +16,7 @@ import mk.ukim.finki.iskacamebackend.service.intf.GatheringParticipationService
 import mk.ukim.finki.iskacamebackend.service.intf.GatheringService
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
 import mk.ukim.finki.iskacamebackend.service.intf.NotificationService
+import mk.ukim.finki.iskacamebackend.service.intf.ChatService
 import mk.ukim.finki.iskacamebackend.service.intf.UserService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -32,7 +33,8 @@ class GatheringParticipationServiceImpl(
     private val userService: UserService,
     private val gatheringService: GatheringService,
     private val gatheringDetailsAssembler: GatheringDetailsAssembler,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val chatService: ChatService,
 ) : GatheringParticipationService {
 
     @Transactional(readOnly = true)
@@ -80,9 +82,11 @@ class GatheringParticipationServiceImpl(
         )
     }
 
+    @Transactional
     @PreAuthorize("@permissionService.isParticipationOwner(#participationId, authentication.principal.id)")
     override fun acceptInvitation(participationId: Long): GatheringDetailsDto {
 
+        val currentUser = authService.getCurrentUser()
         val participation = getParticipationById(participationId)
 
         if (participation.status != ParticipationStatus.INVITED) {
@@ -97,6 +101,9 @@ class GatheringParticipationServiceImpl(
 
         participation.status = ParticipationStatus.JOINED
         gatheringParticipationRepository.save(participation)
+
+        val chatRoom = participation.gathering.chatRoom
+        chatService.createReceiptForUser(chatRoom!!, currentUser)
 
         return gatheringDetailsAssembler.assemble(participation.gathering)
     }
@@ -121,22 +128,28 @@ class GatheringParticipationServiceImpl(
     }
 
     @PreAuthorize("@permissionService.isGatheringParticipant(#gatheringId, authentication.principal.id)")
+    @Transactional
     override fun leaveGathering(gatheringId: Long) {
 
-        val currentUserId = authService.getCurrentUserId()
+        val currentUser = authService.getCurrentUser()
 
         val participation = gatheringParticipationRepository.findByGatheringIdAndUserIdAndStatus(
             gatheringId,
-            currentUserId,
+            currentUser.id!!,
             ParticipationStatus.JOINED
         ) ?: throw BadRequestException(GatheringExceptionMessages.USER_NOT_IN_GATHERING)
 
         participation.status = ParticipationStatus.LEFT
         gatheringParticipationRepository.save(participation)
+
+        val chatRoom = participation.gathering.chatRoom
+        chatService.deleteReceiptForUser(chatRoom!!, currentUser)
     }
 
     @PreAuthorize("@permissionService.isGatheringCreator(#gatheringId, authentication.principal.id)")
     override fun removeUserFromGathering(userId: Long, gatheringId: Long) {
+
+        val currentUser = authService.getCurrentUser()
 
         val participation = gatheringParticipationRepository.findByGatheringIdAndUserIdAndStatus(
             gatheringId,
@@ -146,6 +159,9 @@ class GatheringParticipationServiceImpl(
 
         participation.status = ParticipationStatus.REMOVED
         gatheringParticipationRepository.save(participation)
+
+        val chatRoom = participation.gathering.chatRoom
+        chatService.deleteReceiptForUser(chatRoom!!, currentUser)
     }
 
     /**
