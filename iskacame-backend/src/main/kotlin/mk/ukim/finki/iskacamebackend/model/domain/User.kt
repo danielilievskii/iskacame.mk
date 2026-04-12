@@ -2,6 +2,7 @@ package mk.ukim.finki.iskacamebackend.model.domain
 
 import jakarta.persistence.*
 import mk.ukim.finki.iskacamebackend.model.base.BaseEntity
+import mk.ukim.finki.iskacamebackend.model.enums.AuthProvider
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import java.time.Instant
 
@@ -18,7 +19,7 @@ class User(
     var email: String,
 
     @Column(name = "password")
-    var password: String,
+    var password: String? = null,
 
     @Column(name = "phone")
     var phone: String? = null,
@@ -39,5 +40,12 @@ class User(
     var enabled: Boolean = true,
 
     @Column(name = "disabled_at")
-    var disabledAt: Instant? = null
+    var disabledAt: Instant? = null,
+
+    @Column(name = "auth_provider")
+    @Enumerated(EnumType.STRING)
+    var authProvider: AuthProvider = AuthProvider.LOCAL,
+
+    @Column(name = "google_id", unique = true)
+    var googleId: String? = null
     ) : BaseEntity<Long>()

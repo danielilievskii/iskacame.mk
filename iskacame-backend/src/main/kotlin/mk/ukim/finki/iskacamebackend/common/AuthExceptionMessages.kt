@@ -29,4 +29,8 @@ object AuthExceptionMessages {
   const val EMAIL_NOT_VERIFIED = "Email is not verified."
 
   const val ACCOUNT_ALREADY_ENABLED = "User is already enabled."
+
+  const val INVALID_GOOGLE_TOKEN = "Invalid Google ID token."
+  const val GOOGLE_EMAIL_MISSING = "Google account does not have an email address."
+  const val ACCOUNT_EXISTS_WITH_LOCAL = "An account with this email already exists. Please sign in with your password."
 }

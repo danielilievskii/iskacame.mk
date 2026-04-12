@@ -54,6 +54,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
 
+    // Google OAuth ID token verification
+    implementation("com.google.api-client:google-api-client:2.7.2")
+
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 
     // MapStruct

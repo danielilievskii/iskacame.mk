@@ -1,6 +1,7 @@
 package mk.ukim.finki.iskacamebackend.service.intf
 
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.GoogleAuthRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.RefreshTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
@@ -88,6 +89,12 @@ interface AuthService {
   fun forgotPassword(request: ForgotPasswordRequest)
 
   fun resetPassword(request: ResetPasswordRequest)
+
+  /**
+   * Authenticates or registers a user via Google OAuth.
+   * Verifies the Google ID token, finds or creates the user, and returns JWT tokens.
+   */
+  fun googleSignIn(request: GoogleAuthRequest): AuthResponse
 
   /**
    * Returns the currently authenticated [User] from the current JWT

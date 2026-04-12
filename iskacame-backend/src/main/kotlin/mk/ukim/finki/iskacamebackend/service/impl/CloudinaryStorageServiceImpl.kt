@@ -42,6 +42,31 @@ class CloudinaryStorageServiceImpl(
     }
   }
 
+  override fun uploadFromUrl(url: String, publicId: String?): CloudinaryUploadResponse {
+
+    val params = mutableMapOf<String, Any>(
+      "resource_type" to "auto",
+      "overwrite" to true,
+      "invalidate" to true
+    )
+
+    publicId?.let {
+      params["public_id"] = it
+    }
+
+    try {
+      val response = cloudinary.uploader()
+        .upload(url, params)
+
+      return CloudinaryUploadResponse(
+        url = response["secure_url"] as String,
+        publicId = response["public_id"] as String
+      )
+    } catch (e: Exception) {
+      throw StorageException(StorageExceptionMessages.UPLOAD_FAILED)
+    }
+  }
+
   override fun deleteFile(publicId: String): Boolean {
 
     return try {

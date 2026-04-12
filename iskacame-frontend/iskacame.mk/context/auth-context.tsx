@@ -11,6 +11,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
     signIn: (identifier: string, password: string) => Promise<void>;
+    signInWithGoogle: (code: string, redirectUri: string) => Promise<void>;
     signOut: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -54,13 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState({ user: response.user, isLoading: false, isAuthenticated: true });
     }, []);
 
+    const signInWithGoogle = useCallback(async (code: string, redirectUri: string) => {
+        const response = await authService.googleSignIn({ code, redirectUri });
+        setState({ user: response.user, isLoading: false, isAuthenticated: true });
+    }, []);
+
     const signOut = useCallback(async () => {
         await authService.signOut();
         setState({ user: null, isLoading: false, isAuthenticated: false });
     }, []);
 
     return (
-        <AuthContext.Provider value={{ ...state, signIn, signOut, refreshUser }}>
+        <AuthContext.Provider value={{ ...state, signIn, signInWithGoogle, signOut, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

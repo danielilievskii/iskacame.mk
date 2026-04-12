@@ -78,3 +78,8 @@ export interface ConfirmEmailRequest {
     newEmail: string;
     token: string;
 }
+
+export interface GoogleAuthRequest {
+    code: string;
+    redirectUri: string;
+}

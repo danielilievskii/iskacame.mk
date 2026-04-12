@@ -1,8 +1,16 @@
 package mk.ukim.finki.iskacamebackend.service.impl
 
+import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import com.google.api.client.http.BasicAuthentication
+import com.google.api.client.http.GenericUrl
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
 import mk.ukim.finki.iskacamebackend.common.AuthExceptionMessages
 import mk.ukim.finki.iskacamebackend.common.GlobalExceptionMessages
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.GoogleAuthRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.RefreshTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
@@ -15,21 +23,26 @@ import mk.ukim.finki.iskacamebackend.events.PasswordResetEvent
 import mk.ukim.finki.iskacamebackend.dto.response.user.UserSearchDto
 import mk.ukim.finki.iskacamebackend.events.UserEnabledEvent
 import mk.ukim.finki.iskacamebackend.events.UserRegisteredEvent
+import mk.ukim.finki.iskacamebackend.exception.BadRequestException
 import mk.ukim.finki.iskacamebackend.exception.ConflictException
 import mk.ukim.finki.iskacamebackend.exception.CustomAuthenticationException
 import mk.ukim.finki.iskacamebackend.exception.ResourceNotFoundException
 import mk.ukim.finki.iskacamebackend.mapper.CurrentUserMapper
 import mk.ukim.finki.iskacamebackend.mapper.UserMapper
+import mk.ukim.finki.iskacamebackend.model.domain.AvatarImage
 import mk.ukim.finki.iskacamebackend.model.domain.User
+import mk.ukim.finki.iskacamebackend.model.enums.AuthProvider
 import mk.ukim.finki.iskacamebackend.model.enums.UserRole
 import mk.ukim.finki.iskacamebackend.model.enums.VerificationTokenPurpose
 import mk.ukim.finki.iskacamebackend.repository.UserRepository
 import mk.ukim.finki.iskacamebackend.security.jwt.JwtService
 import mk.ukim.finki.iskacamebackend.security.principal.UserPrincipal
 import mk.ukim.finki.iskacamebackend.service.intf.AuthService
+import mk.ukim.finki.iskacamebackend.service.intf.CloudinaryStorageService
 import mk.ukim.finki.iskacamebackend.service.intf.RefreshTokenService
 import mk.ukim.finki.iskacamebackend.service.intf.VerificationTokenService
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.DisabledException
@@ -51,7 +64,11 @@ class AuthServiceImpl(
   private val jwtService: JwtService,
   private val refreshTokenService: RefreshTokenService,
   private val verificationTokenService: VerificationTokenService,
-  private val eventPublisher: ApplicationEventPublisher
+  private val cloudinaryStorageService: CloudinaryStorageService,
+  private val eventPublisher: ApplicationEventPublisher,
+  @Value("\${google.client-id}") private val googleClientId: String,
+  @Value("\${google.client-secret}") private val googleClientSecret: String,
+  @Value("\${google.ios-client-id:}") private val googleIosClientId: String
 ) : AuthService {
 
   override fun signUp(request: SignUpRequest): UserDto {
@@ -214,6 +231,90 @@ class AuthServiceImpl(
     userRepository.save(user)
   }
 
+  override fun googleSignIn(request: GoogleAuthRequest): AuthResponse {
+
+    val httpTransport = NetHttpTransport()
+    val jsonFactory = GsonFactory.getDefaultInstance()
+
+    val tokenResponse = try {
+      AuthorizationCodeTokenRequest(httpTransport, jsonFactory, GenericUrl("https://oauth2.googleapis.com/token"), request.code)
+        .setRedirectUri(request.redirectUri)
+        .setClientAuthentication(BasicAuthentication(googleClientId, googleClientSecret))
+        .setGrantType("authorization_code")
+        .execute()
+    } catch (e: Exception) {
+      throw BadRequestException(AuthExceptionMessages.INVALID_GOOGLE_TOKEN)
+    }
+
+    val rawIdToken = tokenResponse["id_token"] as? String
+      ?: throw BadRequestException(AuthExceptionMessages.INVALID_GOOGLE_TOKEN)
+
+    val audiences = listOfNotNull(googleClientId, googleIosClientId.ifBlank { null })
+    val verifier = GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
+      .setAudience(audiences)
+      .build()
+
+    val idToken: GoogleIdToken = verifier.verify(rawIdToken)
+      ?: throw BadRequestException(AuthExceptionMessages.INVALID_GOOGLE_TOKEN)
+
+    val payload = idToken.payload
+    val googleId = payload.subject
+    val email = payload.email
+      ?: throw BadRequestException(AuthExceptionMessages.GOOGLE_EMAIL_MISSING)
+    val name = payload["name"] as? String ?: email.substringBefore("@")
+    val pictureUrl = payload["picture"] as? String
+
+    var user = userRepository.findByGoogleId(googleId)
+
+    if (user == null) {
+      val existingUser = userRepository.findByEmail(email)
+      if (existingUser != null) {
+        if (existingUser.authProvider == AuthProvider.LOCAL) {
+          throw ConflictException(AuthExceptionMessages.ACCOUNT_EXISTS_WITH_LOCAL)
+        }
+        user = existingUser
+      } else {
+        val username = generateUniqueUsername(email.substringBefore("@"))
+
+        var avatar: AvatarImage? = null
+        if (pictureUrl != null) {
+          try {
+            val uploadResponse = cloudinaryStorageService.uploadFromUrl(pictureUrl, "avatars/$username")
+            avatar = AvatarImage(url = uploadResponse.url, publicId = uploadResponse.publicId)
+          } catch (_: Exception) {
+            // continue without avatar
+          }
+        }
+
+        user = User(
+          name = name,
+          username = username,
+          email = email,
+          password = null,
+          roles = mutableSetOf(UserRole.USER),
+          emailVerified = true,
+          enabled = true,
+          authProvider = AuthProvider.GOOGLE,
+          googleId = googleId,
+          avatar = avatar
+        )
+        user = userRepository.save(user)
+      }
+    }
+
+    val userPrincipal = userMapper.toUserPrincipal(user)
+    val token = jwtService.generateToken(userPrincipal)
+    val refreshToken = jwtService.generateRefreshToken(userPrincipal)
+
+    refreshTokenService.create(user, refreshToken)
+
+    return AuthResponse(
+      token = token,
+      refreshToken = refreshToken,
+      user = currentUserMapper.toCurrentUserDto(user)
+    )
+  }
+
   override fun getCurrentUser(): User {
 
     val context = SecurityContextHolder.getContext()
@@ -257,5 +358,16 @@ class AuthServiceImpl(
     } ?: throw ResourceNotFoundException(GlobalExceptionMessages.USER_NOT_FOUND)
 
     return user
+  }
+
+  private fun generateUniqueUsername(base: String): String {
+    val sanitized = base.replace(Regex("[^a-zA-Z0-9_-]"), "").take(20)
+    var candidate = sanitized
+    var counter = 1
+    while (userRepository.existsByUsername(candidate)) {
+      candidate = "${sanitized}_$counter"
+      counter++
+    }
+    return candidate
   }
 }

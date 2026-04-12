@@ -3,6 +3,7 @@ package mk.ukim.finki.iskacamebackend.web
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ForgotPasswordRequest
+import mk.ukim.finki.iskacamebackend.dto.request.auth.GoogleAuthRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.RefreshTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResendTokenRequest
 import mk.ukim.finki.iskacamebackend.dto.request.auth.ResetPasswordRequest
@@ -93,5 +94,12 @@ class AuthController(
   fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Void> {
     authService.resetPassword(request)
     return ResponseEntity.noContent().build()
+  }
+
+  @PostMapping("/google")
+  @Operation(summary = "Sign in or register with Google")
+  fun googleAuth(@Valid @RequestBody request: GoogleAuthRequest): ResponseEntity<AuthResponse> {
+    val response = authService.googleSignIn(request)
+    return ResponseEntity.ok(response)
   }
 }

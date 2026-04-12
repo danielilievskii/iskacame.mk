@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { StatusBar } from 'expo-status-bar';
 import { Logo } from "@/components/ui/logo";
+import { GoogleSignInButton } from "@/components/ui/google-sign-in-button";
 import { primaryColor } from "@/constants/theme";
 
 export default function LoginScreen() {
@@ -121,6 +122,14 @@ export default function LoginScreen() {
                         }
                     </TouchableOpacity>
 
+                    <View style={styles.divider}>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dividerText}>or</Text>
+                        <View style={styles.dividerLine} />
+                    </View>
+
+                    <GoogleSignInButton />
+
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Don't have an account? </Text>
                         <Link href="/(auth)/register" asChild>
@@ -216,6 +225,21 @@ const styles = StyleSheet.create({
         color: primaryColor,
         fontSize: 14,
         fontWeight: '600',
+    },
+    divider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 16,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#252530',
+    },
+    dividerText: {
+        color: '#6B7280',
+        fontSize: 13,
+        marginHorizontal: 12,
     },
     forgotBtn: {
         alignSelf: 'flex-end',

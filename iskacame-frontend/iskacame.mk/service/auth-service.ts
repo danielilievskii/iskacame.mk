@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiRequest, TOKEN_KEY, REFRESH_TOKEN_KEY, setTokens, clearTokens } from '@/service/api';
 import type {
     AuthResponse,
+    GoogleAuthRequest,
     ResendTokenRequest,
     SignInRequest,
     SignUpRequest,
@@ -22,6 +23,16 @@ export const authService = {
 
     async signIn(data: SignInRequest): Promise<AuthResponse> {
         const response = await apiRequest<AuthResponse>('/api/auth/signIn', {
+            method: 'POST',
+            body: data,
+            auth: false,
+        });
+        await setTokens(response.token, response.refreshToken);
+        return response;
+    },
+
+    async googleSignIn(data: GoogleAuthRequest): Promise<AuthResponse> {
+        const response = await apiRequest<AuthResponse>('/api/auth/google', {
             method: 'POST',
             body: data,
             auth: false,
