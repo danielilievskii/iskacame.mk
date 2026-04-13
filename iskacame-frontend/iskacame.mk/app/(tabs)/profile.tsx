@@ -331,20 +331,22 @@ export default function ProfileScreen() {
                 ) : null}
             </View>
 
-            {/* Security card */}
-            <View style={styles.infoCard}>
-                <Text style={styles.sectionLabel}>SECURITY</Text>
-                <View style={{ height: 12 }} />
-                <TouchableOpacity style={styles.securityBtn} onPress={openEmailModal} activeOpacity={0.7}>
-                    <Text style={styles.securityBtnText}>Change email</Text>
-                    <Text style={styles.chevron}>&#8250;</Text>
-                </TouchableOpacity>
-                <View style={styles.divider} />
-                <TouchableOpacity style={styles.securityBtn} onPress={openPwModal} activeOpacity={0.7}>
-                    <Text style={styles.securityBtnText}>Change password</Text>
-                    <Text style={styles.chevron}>&#8250;</Text>
-                </TouchableOpacity>
-            </View>
+            {/* Security card — hidden for Google users */}
+            {user?.authProvider !== 'GOOGLE' && (
+                <View style={styles.infoCard}>
+                    <Text style={styles.sectionLabel}>SECURITY</Text>
+                    <View style={{ height: 12 }} />
+                    <TouchableOpacity style={styles.securityBtn} onPress={openEmailModal} activeOpacity={0.7}>
+                        <Text style={styles.securityBtnText}>Change email</Text>
+                        <Text style={styles.chevron}>&#8250;</Text>
+                    </TouchableOpacity>
+                    <View style={styles.divider} />
+                    <TouchableOpacity style={styles.securityBtn} onPress={openPwModal} activeOpacity={0.7}>
+                        <Text style={styles.securityBtnText}>Change password</Text>
+                        <Text style={styles.chevron}>&#8250;</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Sign out */}
             <TouchableOpacity

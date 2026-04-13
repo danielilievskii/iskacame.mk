@@ -30,9 +30,17 @@ export const chatService = {
     ): Promise<Client> {
         const token = await AsyncStorage.getItem(TOKEN_KEY);
         const wsUrl = getWsUrl();
+        console.log('[STOMP] Connecting to:', wsUrl);
 
         const client = new Client({
-            webSocketFactory: () => new WebSocket(wsUrl),
+            webSocketFactory: () => {
+                console.log('[STOMP] Creating WebSocket...');
+                const ws = new WebSocket(wsUrl);
+                ws.onopen = () => console.log('[STOMP] WebSocket opened');
+                ws.onerror = (e) => console.log('[STOMP] WebSocket error:', e);
+                ws.onclose = (e) => console.log('[STOMP] WebSocket closed:', e.code, e.reason);
+                return ws;
+            },
             connectHeaders: {
                 Authorization: `Bearer ${token ?? ''}`,
             },

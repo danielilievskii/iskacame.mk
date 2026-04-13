@@ -72,6 +72,15 @@ class ChatServiceImpl(
         return chatRoomReceiptRepository.save(receipt)
     }
 
+    private fun getOrCreateReceipt(chatRoom: ChatRoom, user: User): ChatRoomReceipt {
+        return chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoom.id!!, user.id!!)
+            ?: try {
+                createReceiptForUser(chatRoom = chatRoom, user = user)
+            } catch (e: org.springframework.dao.DataIntegrityViolationException) {
+                chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoom.id!!, user.id!!)!!
+            }
+    }
+
     override fun deleteReceiptForUser(chatRoom: ChatRoom, user: User) {
 
         val receipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoom.id!!, user.id!!)
@@ -95,8 +104,7 @@ class ChatServiceImpl(
 
         val savedMessage = chatMessageRepository.save(message)
 
-        val senderReceipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoomId, currentUser.id!!)
-            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
+        val senderReceipt = getOrCreateReceipt(chatRoom, currentUser)
 
         senderReceipt.lastSeenMessage = savedMessage
         senderReceipt.unseenMessagesCounter = 0
@@ -181,8 +189,8 @@ class ChatServiceImpl(
 
         val currentUser = authService.getCurrentUser()
 
-        val senderReceipt = chatRoomReceiptRepository.findByChatRoomIdAndUserId(chatRoomId, currentUser.id!!)
-            ?: throw ResourceNotFoundException(ChatExceptionMessages.CHAT_ROOM_RECEIPT_NOT_FOUND)
+        val chatRoom = findChatRoomById(chatRoomId)
+        val senderReceipt = getOrCreateReceipt(chatRoom, currentUser)
 
         val lastMessage = chatMessageRepository.findFirstByChatRoomIdOrderBySentAtDesc(chatRoomId)
             ?: return

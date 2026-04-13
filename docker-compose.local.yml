@@ -1,0 +1,90 @@
+services:
+  iskacame_db:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: ${PG_DB_USER}
+      POSTGRES_PASSWORD: ${PG_DB_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./iskacame-backend/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
+    ports:
+      - "61613:61613"
+      - "15672:15672"
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+
+  backend:
+    image: aesbube/iskacame-backend:latest
+    build:
+      context: ./iskacame-backend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - iskacame_db
+      - rabbitmq
+      - redis
+    environment:
+      PG_DB_HOST: iskacame_db
+      PG_DB_PORT: 5432
+      PG_DB: ${PG_DB}
+      PG_DB_USER: ${PG_DB_USER}
+      PG_DB_PASSWORD: ${PG_DB_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      CLOUDINARY_NAME: ${CLOUDINARY_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      VERIFICATION_TOKEN_EXPIRATION_MS: ${VERIFICATION_TOKEN_EXPIRATION_MS}
+      ENCRYPTION_SECRET_KEY: ${ENCRYPTION_SECRET_KEY}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 61613
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_IOS_CLIENT_ID: ${GOOGLE_IOS_CLIENT_ID}
+    ports:
+      - "8090:8090"
+
+#  frontend:
+#    image: aesbube/iskacame-frontend:latest
+#    build:
+#      context: ./iskacame-frontend/iskacame.mk
+#      dockerfile: Dockerfile
+#    restart: always
+#    depends_on:
+#      - backend
+#    env_file:
+#      - ./iskacame-frontend/iskacame.mk/.env
+#    ports:
+#      - "8081:8081"
+
+volumes:
+  db-data:
+  rabbitmq_data:
+  redis_data:

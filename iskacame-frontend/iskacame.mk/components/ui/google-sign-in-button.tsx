@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, Alert } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, Alert, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -7,33 +7,64 @@ import { useAuth } from '@/context/auth-context';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const redirectUri = makeRedirectUri({ scheme: 'iskacamemk' });
+const redirectUri = makeRedirectUri();
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 
 export function GoogleSignInButton() {
     const [loading, setLoading] = useState(false);
     const { signInWithGoogle } = useAuth();
 
     const [request, response, promptAsync] = Google.useAuthRequest({
-        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-        redirectUri,
+        clientId: GOOGLE_CLIENT_ID,
+        webClientId: GOOGLE_CLIENT_ID,
     });
 
     useEffect(() => {
         if (!response) return;
+        if (response.type !== 'success') return;
 
-        if (response.type === 'success' && response.params.code) {
-            setLoading(true);
-            signInWithGoogle(response.params.code, redirectUri)
-                .catch((err: any) => {
-                    Alert.alert('Google Sign-In failed', err.message ?? 'Something went wrong.');
-                })
-                .finally(() => setLoading(false));
-        }
+        const code = response.params?.code;
+        if (!code) return;
+
+        setLoading(true);
+        signInWithGoogle(code, redirectUri)
+            .catch((err: any) => {
+                Alert.alert('Google Sign-In failed', err.message ?? 'Something went wrong.');
+            })
+            .finally(() => setLoading(false));
     }, [response]);
 
+    useEffect(() => {
+        if (Platform.OS !== 'web') return;
+
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        if (!code) return;
+
+        window.history.replaceState({}, '', window.location.pathname);
+
+        setLoading(true);
+        signInWithGoogle(code, window.location.origin)
+            .catch((err: any) => {
+                Alert.alert('Google Sign-In failed', err.message ?? 'Something went wrong.');
+            })
+            .finally(() => setLoading(false));
+    }, []);
+
     const handlePress = async () => {
+        if (Platform.OS === 'web') {
+            const authUrl =
+                `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${GOOGLE_CLIENT_ID}` +
+                `&redirect_uri=${encodeURIComponent(window.location.origin)}` +
+                `&response_type=code` +
+                `&scope=${encodeURIComponent('openid email profile')}` +
+                `&access_type=offline` +
+                `&prompt=consent`;
+            window.location.href = authUrl;
+            return;
+        }
+
         setLoading(true);
         try {
             await promptAsync();

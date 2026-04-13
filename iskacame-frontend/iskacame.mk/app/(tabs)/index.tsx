@@ -1,21 +1,21 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    FlatList,
-    TouchableOpacity,
-    RefreshControl,
     Alert,
-    TextInput,
+    FlatList,
     Modal,
     Pressable,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
 import { gatheringService } from '@/service/gathering-service';
 import type { GatheringStatus, GatheringSummaryDto } from '@/service/dtos/gathering-types';
-import { StatusBadge, EmptyState, formatShortDate } from '@/components/ui/gathering-ui';
+import { EmptyState, formatShortDate, StatusBadge } from '@/components/ui/gathering-ui';
 import { primaryColor } from '@/constants/theme';
 
 type StatusFilter = 'ALL' | GatheringStatus;
@@ -68,9 +68,15 @@ export default function HomeScreen() {
         }
     }, []);
 
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     useFocusEffect(
         useCallback(() => {
             load();
+            intervalRef.current = setInterval(() => load(true), 10000);
+            return () => {
+                if (intervalRef.current) clearInterval(intervalRef.current);
+            };
         }, [load])
     );
 

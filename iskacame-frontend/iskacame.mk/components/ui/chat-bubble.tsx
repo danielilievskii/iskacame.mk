@@ -8,6 +8,7 @@ import {
     TextInput,
     FlatList,
     KeyboardAvoidingView,
+    Keyboard,
     Platform,
     ActivityIndicator,
     Image,
@@ -72,7 +73,9 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
             setMessages(response.content.reverse());
             setPage(0);
             setHasMore(!response.last);
+            return response.content.length;
         } catch {
+            return 0;
         } finally {
             setLoading(false);
         }
@@ -132,6 +135,9 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                                         if (prev.some((m) => m.id === msg.id)) return prev;
                                         return [...prev, msg];
                                     });
+                                    if (openRef.current && msg.sender.id !== user?.id) {
+                                        chatService.markSeen(chatRoomId).catch(() => {});
+                                    }
                                     if (!openRef.current && msg.sender.id !== user?.id) {
                                         setUnreadCount((c) => c + 1);
                                     }
@@ -158,7 +164,7 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
             client.activate();
         };
 
-        connect();
+        connect().catch((e) => console.error('[Chat] STOMP connect failed:', e));
 
         return () => {
             subscriptionRef.current?.unsubscribe();
@@ -175,9 +181,12 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
         if (open) {
             hasOpenedRef.current = true;
             setUnreadCount(0);
-            chatService.markSeen(chatRoomId).catch((e) => console.warn('[Chat] markSeen failed:', e));
-            loadMessages();
-        } else if (hasOpenedRef.current) {
+            loadMessages().then((count) => {
+                if (count > 0) {
+                    chatService.markSeen(chatRoomId).catch((e) => console.warn('[Chat] markSeen failed:', e));
+                }
+            });
+        } else if (hasOpenedRef.current && messages.length > 0) {
             chatService.markSeen(chatRoomId).catch((e) => console.warn('[Chat] markSeen failed:', e));
         }
     }, [open, chatRoomId, loadMessages]);
@@ -297,6 +306,7 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                         style={[cs.bubbleWrapper, isMe && cs.bubbleWrapperMe]}
                         onPress={() => setExpandedMsgId(isExpanded ? null : item.id)}
                         onLongPress={isMe ? () => {
+                            Keyboard.dismiss();
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                             setMenuMsgId(item.id);
                         } : undefined}
@@ -409,7 +419,6 @@ export default function ChatBubble({ chatRoomId, participants, initialUnreadCoun
                     </View>
                 </KeyboardAvoidingView>
 
-                {/* iOS-style action sheet for message actions */}
                 {menuMsgId !== null && (
                     <View style={cs.actionSheetOverlay}>
                         <Pressable style={cs.actionSheetBackdrop} onPress={() => setMenuMsgId(null)} />

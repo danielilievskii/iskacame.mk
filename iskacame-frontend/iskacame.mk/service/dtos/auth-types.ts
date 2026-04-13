@@ -5,6 +5,7 @@ export interface UserDto {
     email: string | null;
     avatarUrl: string | null;
     phone: string | null;
+    authProvider: 'LOCAL' | 'GOOGLE';
 }
 
 export interface UpdateUserRequest {
