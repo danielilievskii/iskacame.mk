@@ -185,6 +185,12 @@ http://localhost:8090/swagger-ui/index.html
    - `http://localhost:8081` (for web development)
 5. Set the client ID and secret in both backend `.env` and frontend `.env`
 
-## License
+## Authors
+
+- **Ljubica Damjanovikj** - 221173
+- **Nikola Jordanoski** - 223157
+- **Daniel Ilievski** - 223021
+
+## Acknowledgements
 
 This project is developed at the Faculty of Computer Science and Engineering (FINKI), Ss. Cyril and Methodius University in Skopje.
